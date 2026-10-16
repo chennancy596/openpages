@@ -25,7 +25,30 @@ opens upward and closes on Escape or an outside pointer action.
 
 Storage is local to the current browser/origin. It is not cloud synchronization
 and cannot survive clearing that browser's site data without a separate backup.
-This change does not migrate storage or alter native platform integrations.
+
+## Media Storage
+
+- Photo data URLs, legacy ink images and handwriting stroke arrays larger than
+  2 KB are written to the `openpages-media` IndexedDB store, keyed by a content
+  hash. localStorage keeps the journal with `opmedia:v1:<id>` references.
+- Media is written first; the localStorage save follows only after it is stored,
+  so a reference never points at missing media. Until then the indicator stays
+  on saving and closing the page asks for confirmation.
+- On launch, references are loaded back into memory before the first render.
+  Rendering, snapshots and JSON export always see full values, so backups stay
+  compatible with older versions.
+- Inline media from older versions moves to IndexedDB on the first launch.
+- Media no longer referenced by the last successful save is deleted 8 seconds
+  after that save. Cleanup is skipped for the session if media could not be read.
+- Without IndexedDB, the previous inline format is used unchanged.
+- A stored journal that cannot be parsed is copied to
+  `openpages.state.v1.unreadable-<time>` instead of being deleted.
+
+## Recently Deleted
+
+Deleting a page moves it to `state.trash` for 30 days. Restoring returns it to
+its original date: it replaces a blank page there, otherwise it is added as a
+new page group. Trash is included in JSON backups.
 
 ## Verification
 

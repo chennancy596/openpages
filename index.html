@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="./refinement.css?v=20260906-clarity" />
     <link rel="stylesheet" href="./handwriting.css?v=20260906-clarity" />
     <link rel="stylesheet" href="./product-polish.css?v=20260906-clarity" />
-    <link rel="stylesheet" href="./workspace.css?v=20260906-clarity" />
+    <link rel="stylesheet" href="./workspace.css?v=20261016-content" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -338,6 +338,11 @@
                 <div id="linkedPlansList"></div>
               </details>
 
+              <details class="linked-plans on-this-day" id="onThisDay" hidden>
+                <summary><svg aria-hidden="true"><use href="#icon-book"></use></svg><span>往年今日</span><small id="onThisDayMeta"></small></summary>
+                <div id="onThisDayList"></div>
+              </details>
+
               <details class="entry-context" id="entryContext">
                 <summary>
                   <span>心情与标签</span>
@@ -565,6 +570,7 @@
                   <div><dt>上次成功写入</dt><dd id="lastSavedTime">暂无</dd></div>
                   <div><dt>存储位置</dt><dd>当前浏览器 · 本机</dd></div>
                   <div><dt>跨设备同步</dt><dd>未启用</dd></div>
+                  <div><dt>上次导出备份</dt><dd id="lastBackupTime">还没有导出过</dd></div>
                 </dl>
                 <p id="saveDetailsNote">清除浏览器数据会移除本机记录。备份文件可另行保留。</p>
                 <button type="button" id="saveBackupButton"><svg aria-hidden="true"><use href="#icon-download"></use></svg>导出全部记录备份</button>
@@ -929,9 +935,9 @@
               <svg><use href="#icon-print"></use></svg>
               打印 / 保存为 PDF
             </button>
-            <label class="wide-button file-button" title="导入 OpenPages JSON，合并到本地" aria-label="导入 OpenPages JSON，合并到本地">
+            <label class="wide-button file-button" title="导入 OpenPages JSON 备份，替换本机记录" aria-label="导入 OpenPages JSON 备份，替换本机记录">
               <svg><use href="#icon-upload"></use></svg>
-              导入 OpenPages JSON
+              导入 OpenPages 备份
               <input id="importInput" type="file" accept="application/json" />
             </label>
             </div>
@@ -980,6 +986,11 @@
                   删除当前页
                 </button>
               </div>
+              <details class="trash-bin" id="trashBin">
+                <summary><span>最近删除</span><small id="trashMeta">空</small></summary>
+                <p class="trash-bin__note">删除的内页会在这里保留 30 天，可以恢复到原来的日期。</p>
+                <div class="trash-list" id="trashList"></div>
+              </details>
               <p class="workflow-note" id="workflowNote">内容默认只保存在当前设备；更换设备前请导出 JSON 备份。</p>
             </div>
           </details>
@@ -1031,6 +1042,6 @@
 
     <script src="./vendor/page-flip.browser.js?v=2.0.7" defer></script>
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261016-safe-load" defer></script>
+    <script src="./app.js?v=20261016-content" defer></script>
   </body>
 </html>

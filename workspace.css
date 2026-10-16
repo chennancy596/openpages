@@ -462,3 +462,18 @@ body.editor-shell[data-book=closed] .document-tools { visibility: hidden; }
 @media (prefers-reduced-motion: reduce) {
   body.editor-shell *, body.editor-shell *::before, body.editor-shell *::after { scroll-behavior: auto !important; transition-duration: 0ms !important; }
 }
+
+/* Recently deleted pages: kept 30 days in the maintenance group. */
+.trash-bin { border-top: 1px solid var(--line, rgba(73, 82, 75, 0.12)); margin-top: 12px; padding-top: 10px; }
+.trash-bin > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.82rem; list-style: none; }
+.trash-bin > summary::-webkit-details-marker { display: none; }
+.trash-bin > summary small { margin-left: auto; color: var(--muted); }
+.trash-bin__note { margin: 8px 0; color: var(--muted); font-size: 0.74rem; line-height: 1.6; }
+.trash-list { display: grid; gap: 6px; }
+.trash-item { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 6px; padding: 8px 0; border-top: 1px solid var(--line, rgba(73, 82, 75, 0.1)); }
+.trash-item > div { display: grid; gap: 2px; min-width: 0; }
+.trash-item strong { font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trash-item small { color: var(--muted); font-size: 0.7rem; }
+.trash-item button { min-height: 32px; padding: 4px 10px; font-size: 0.74rem; }
+.trash-item button[data-trash-action="purge"] { color: color-mix(in srgb, #9f4f46 86%, black); }
+.trash-empty { color: var(--muted); font-size: 0.74rem; }

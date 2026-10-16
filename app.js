@@ -512,6 +512,12 @@ const elements = {
   linkedPlans: $("#linkedPlans"),
   linkedPlansMeta: $("#linkedPlansMeta"),
   linkedPlansList: $("#linkedPlansList"),
+  onThisDay: $("#onThisDay"),
+  onThisDayMeta: $("#onThisDayMeta"),
+  onThisDayList: $("#onThisDayList"),
+  lastBackupTime: $("#lastBackupTime"),
+  trashMeta: $("#trashMeta"),
+  trashList: $("#trashList"),
   recentPages: $("#recentPages"),
   streakDays: $("#streakDays"),
   entryCount: $("#entryCount"),
@@ -580,6 +586,7 @@ function normalizeState(saved) {
   saved.customCoverColor = saved.customCoverColor || "#4f5b50";
   saved.paperTone = saved.paperTone || "washi";
   saved.decorativePrints = saved.decorativePrints !== false;
+  saved.trash = Array.isArray(saved.trash) ? saved.trash : [];
   return saved;
 }
 
@@ -623,6 +630,7 @@ function loadState() {
     paperTone: "washi",
     decorativePrints: true,
     health: { summaries: {}, source: "", connection: null },
+    trash: [],
     entries: {},
   };
 }
@@ -1234,6 +1242,7 @@ function loadEntryIntoForm() {
   renderPageAppearance();
   renderDayPageShelf();
   renderLinkedPlans();
+  renderOnThisDay();
   renderCustomTemplates();
   renderStickers();
   renderStats();
@@ -1315,6 +1324,46 @@ function renderLinkedPlans() {
     button.title = scale === "week" ? "打开原周计划" : "打开原月计划";
     button.addEventListener("click", () => openPageGroupForDate(key, index, { focusDate: originKey }));
     elements.linkedPlansList.append(button);
+  });
+}
+
+// Day One style "On this day": earlier years' day pages for the same date, only when they have content.
+function onThisDayPages(key) {
+  const selected = parseDate(key);
+  const pages = [];
+  for (let offset = 1; offset <= 10; offset += 1) {
+    const date = new Date(selected);
+    date.setFullYear(selected.getFullYear() - offset);
+    if (date.getDate() !== selected.getDate()) continue;
+    const pastKey = toDateKey(date);
+    const entry = state.entries[pastKey];
+    if (!entry) continue;
+    const index = pageGroupsForRead(entry, pastKey).findIndex((group) => pageScopeForMode(group.mode) === "day" && hasUserContent(group, pastKey));
+    if (index < 0) continue;
+    const group = entry.pageGroups[index];
+    const text = plainTextFromHtml(group.html || "").trim() || group.text?.trim() || group.focus?.trim() || "";
+    const excerpt = text.replace(/\s+/g, " ").slice(0, 80) || (group.photos?.length ? `${group.photos.length} 张照片` : group.strokes?.length ? "手写记录" : "");
+    pages.push({ key: pastKey, index, years: offset, title: group.title || "", excerpt });
+  }
+  return pages;
+}
+
+function renderOnThisDay() {
+  if (!elements.onThisDay) return;
+  const pages = pageScopeForMode(currentEntry().mode) === "day" ? onThisDayPages(state.selectedDate) : [];
+  elements.onThisDay.hidden = !pages.length;
+  elements.onThisDayMeta.textContent = pages.length ? `${pages.length} 年` : "";
+  elements.onThisDayList.replaceChildren();
+  pages.forEach(({ key, index, years, title, excerpt }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.innerHTML = `<small>${years} 年前 · ${escapeHtml(key)}</small><span>${escapeHtml(excerpt || title || "打开那一天")}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
+    button.title = `打开 ${key} 的日页`;
+    button.addEventListener("click", () => {
+      elements.onThisDay.open = false;
+      openPageGroupForDate(key, index);
+    });
+    elements.onThisDayList.append(button);
   });
 }
 
@@ -3745,9 +3794,16 @@ function deleteCurrentPage() {
     return;
   }
   const confirmed = confirm(hasMultipleGroups
-    ? `删除 ${key} 的第 ${index + 1} 组跨页？同一天的其他内页会保留。`
-    : `删除 ${key} 的整页记录？此操作不会影响其他日期。`);
+    ? `删除 ${key} 的第 ${index + 1} 组跨页？同一天的其他内页会保留，30 天内可在「最近删除」恢复。`
+    : `删除 ${key} 的整页记录？此操作不会影响其他日期，30 天内可在「最近删除」恢复。`);
   if (!confirmed) return;
+  syncEntryFromForm();
+  syncPageGroup(entry, key);
+  pruneTrash();
+  const deletedAt = new Date().toISOString();
+  state.trash.unshift(hasMultipleGroups
+    ? { id: crypto.randomUUID(), deletedAt, date: key, kind: "group", group: clonePageValue(entry.pageGroups[index]) }
+    : { id: crypto.randomUUID(), deletedAt, date: key, kind: "entry", entry: clonePageValue(entry) });
   if (hasMultipleGroups) {
     entry.pageGroups.splice(index, 1);
     entry.activePageGroup = Math.min(index, entry.pageGroups.length - 1);
@@ -3761,12 +3817,123 @@ function deleteCurrentPage() {
   selectedStickerId = null;
   loadEntryIntoForm();
   flushState();
-  notify(hasMultipleGroups ? "已删除当前跨页" : `已删除 ${key} 的记录`);
+  renderTrash();
+  notify(hasMultipleGroups ? "已删除，可在「最近删除」恢复" : `已删除 ${key} 的记录，可在「最近删除」恢复`);
+}
+
+const TRASH_RETENTION_DAYS = 30;
+
+function pruneTrash() {
+  const cutoff = Date.now() - TRASH_RETENTION_DAYS * 86_400_000;
+  state.trash = (Array.isArray(state.trash) ? state.trash : []).filter((item) => item && Date.parse(item.deletedAt) > cutoff);
+}
+
+function trashedGroups(item) {
+  if (item.kind === "group") return item.group ? [item.group] : [];
+  const entry = clonePageValue(item.entry);
+  if (!entry) return [];
+  normalizeEntry(entry, item.date);
+  return entry.pageGroups;
+}
+
+function renderTrash() {
+  if (!elements.trashList) return;
+  pruneTrash();
+  elements.trashMeta.textContent = state.trash.length ? `${state.trash.length} 页` : "空";
+  elements.trashList.replaceChildren();
+  if (!state.trash.length) {
+    const empty = document.createElement("span");
+    empty.className = "trash-empty";
+    empty.textContent = "没有最近删除的内页";
+    elements.trashList.append(empty);
+    return;
+  }
+  state.trash.forEach((item) => {
+    const group = trashedGroups(item)[0] || {};
+    const text = plainTextFromHtml(group.html || "").trim() || group.text?.trim() || "";
+    const daysLeft = Math.max(1, Math.ceil((Date.parse(item.deletedAt) + TRASH_RETENTION_DAYS * 86_400_000 - Date.now()) / 86_400_000));
+    const row = document.createElement("div");
+    row.className = "trash-item";
+    row.innerHTML = `<div><strong>${escapeHtml(item.date)} · ${escapeHtml(group.title || LAYOUT_LABELS[group.mode] || "内页")}</strong><small>${escapeHtml(text.replace(/\s+/g, " ").slice(0, 40) || "无文字内容")} · 剩 ${daysLeft} 天</small></div><button type="button" data-trash-action="restore">恢复</button><button type="button" data-trash-action="purge">彻底删除</button>`;
+    row.querySelector('[data-trash-action="restore"]').addEventListener("click", () => restoreTrashItem(item.id));
+    row.querySelector('[data-trash-action="purge"]').addEventListener("click", () => purgeTrashItem(item.id));
+    elements.trashList.append(row);
+  });
+}
+
+function restoreTrashItem(id) {
+  const item = state.trash.find((candidate) => candidate.id === id);
+  if (!item || pageTurnInProgress) return;
+  syncEntryFromForm();
+  const key = item.date;
+  const groups = trashedGroups(item).map((group) => clonePageValue(group));
+  if (!groups.length) return;
+  let entry = state.entries[key];
+  let target = 0;
+  if (!entry) {
+    entry = item.kind === "entry" ? clonePageValue(item.entry) : createEntry(key);
+    state.entries[key] = entry;
+    normalizeEntry(entry, key);
+    entry.pageGroups = groups;
+  } else {
+    normalizeEntry(entry, key);
+    const blank = entry.pageGroups.length === 1 && !hasUserContent(entry, key);
+    const ids = new Set(blank ? [] : entry.pageGroups.map((group) => group.id));
+    groups.forEach((group) => { if (ids.has(group.id)) group.id = crypto.randomUUID(); });
+    target = blank ? 0 : entry.pageGroups.length;
+    entry.pageGroups = blank ? groups : [...entry.pageGroups, ...groups];
+  }
+  entry.activePageGroup = target;
+  applyPageGroup(entry, entry.pageGroups[target], key);
+  state.trash = state.trash.filter((candidate) => candidate.id !== id);
+  state.calendarFocusDate = key;
+  if (key === state.selectedDate) loadEntryIntoForm();
+  else selectDate(key);
+  flushState();
+  renderTrash();
+  notify(`已恢复到 ${key}`);
+}
+
+function purgeTrashItem(id) {
+  if (!confirm("彻底删除这页？之后无法再恢复。")) return;
+  state.trash = state.trash.filter((candidate) => candidate.id !== id);
+  flushState();
+  renderTrash();
+  notify("已彻底删除");
+}
+
+const BACKUP_REMINDER_DAYS = 30;
+
+function renderBackupStatus() {
+  if (!elements.lastBackupTime) return;
+  const date = new Date(state.lastExportedAt || "");
+  elements.lastBackupTime.textContent = Number.isNaN(date.getTime())
+    ? "还没有导出过"
+    : date.toLocaleDateString("zh-CN", { year: "numeric", month: "long", day: "numeric" });
+}
+
+// A gentle once-per-session nudge, only when there is enough written to be worth protecting.
+function remindBackupIfDue() {
+  const written = Object.entries(state.entries).filter(([key, entry]) => hasMeaningfulContent(entry, key)).length;
+  if (written < 7) return;
+  const last = Date.parse(state.lastExportedAt || "");
+  const days = Number.isNaN(last) ? Infinity : (Date.now() - last) / 86_400_000;
+  if (days < BACKUP_REMINDER_DAYS) return;
+  try {
+    if (sessionStorage.getItem("openpages.backup-reminded")) return;
+    sessionStorage.setItem("openpages.backup-reminded", "1");
+  } catch {
+    // sessionStorage blocked: still show the reminder once for this page load.
+  }
+  window.setTimeout(() => notify(Number.isFinite(days) ? `已有 ${Math.floor(days)} 天没有导出备份，可在底部保存详情中导出` : `已写下 ${written} 天，建议导出一份备份`), 1600);
 }
 
 function exportData() {
   syncEntryFromForm();
+  state.lastExportedAt = new Date().toISOString();
   downloadJson({ ...state, exportedFrom: `OpenPages ${APP_VERSION}` }, `openpages-${state.selectedDate}.json`);
+  persistState();
+  renderBackupStatus();
   notify("已导出全部本地数据");
 }
 
@@ -3963,6 +4130,8 @@ function importData(file) {
       const importedCount = Object.keys(imported.entries).length;
       if (currentCount && !confirm(`导入会用备份中的 ${importedCount} 天记录替换本机现有的 ${currentCount} 天记录。建议先导出当前数据。继续导入？`)) return;
       state = normalizeState(imported);
+      renderTrash();
+      renderBackupStatus();
       selectedStickerId = null;
       applyGlobalSettings();
       loadEntryIntoForm();
@@ -5252,6 +5421,9 @@ async function startApp() {
   bindWorkspaceShell();
   registerServiceWorker();
   migrateInlineMedia();
+  renderTrash();
+  renderBackupStatus();
+  remindBackupIfDue();
   if (state.health?.connection?.connected && getNativeHealthBridge()?.isNative) {
     window.setTimeout(() => syncNativeHealth({ silent: true }), 450);
   }

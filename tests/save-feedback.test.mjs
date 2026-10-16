@@ -165,3 +165,16 @@ test("stored references are restored into the state and missing strokes stay an 
     JSON.stringify([target, [...missing]]);
   `), JSON.stringify([{ photos: [{ src: "data:image/png;base64,x" }], strokes: [{ points: [] }], other: { strokes: [] } }, ["gone"]]));
 });
+
+test("deleted pages older than 30 days leave the recently deleted list", () => {
+  const { run } = app();
+  assert.equal(run(`
+    const day = 86400000;
+    state.trash = [
+      { id: "new", date: "2026-09-01", kind: "group", deletedAt: new Date(Date.now() - 2 * day).toISOString(), group: {} },
+      { id: "old", date: "2026-08-01", kind: "group", deletedAt: new Date(Date.now() - 31 * day).toISOString(), group: {} },
+    ];
+    pruneTrash();
+    state.trash.map((item) => item.id).join(",");
+  `), "new");
+});
