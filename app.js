@@ -1,5 +1,8 @@
 const STORAGE_KEY = "openpages.state.v1";
 const APP_VERSION = "0.3.3-beta";
+// Where 意见反馈 opens (a questionnaire, a 小红书 profile or a GitHub Issues page). Empty hides the link.
+const FEEDBACK_URL = "";
+const LOCAL_STORAGE_SOFT_LIMIT = 4_000_000;
 const TEMPLATE_PACK_VERSION = 1;
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const STICKERS = {
@@ -586,6 +589,11 @@ const elements = {
   onThisDayMeta: $("#onThisDayMeta"),
   onThisDayList: $("#onThisDayList"),
   lastBackupTime: $("#lastBackupTime"),
+  storageWhere: $("#storageWhere"),
+  storageUsage: $("#storageUsage"),
+  aboutVersion: $("#aboutVersion"),
+  aboutVersionValue: $("#aboutVersionValue"),
+  feedbackLink: $("#feedbackLink"),
   trashMeta: $("#trashMeta"),
   trashList: $("#trashList"),
   recentPages: $("#recentPages"),
@@ -1073,6 +1081,7 @@ function flushState() {
       return false;
     }
     localStorage.setItem(STORAGE_KEY, payload.json);
+    warnIfStorageNearlyFull(payload.json.length);
     state.lastSavedAt = savedAt;
     knownStoredRevision = savedAt;
     dirtyEntryKeys.clear();
@@ -4582,6 +4591,94 @@ function purgeTrashItem(id) {
 
 const BACKUP_REMINDER_DAYS = 30;
 
+// How the app is running decides how safe the stored journal is.
+function runtimeContext() {
+  const ua = navigator.userAgent;
+  const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|CriOS|FxiOS/.test(ua);
+  const native = Boolean(getNativeHealthBridge()?.isNative);
+  return { standalone, isIOS, isSafari, native };
+}
+
+function formatMegabytes(bytes) {
+  return bytes >= 1_000_000 ? `${(bytes / 1_000_000).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1000))} KB`;
+}
+
+async function renderStorageInfo() {
+  const context = runtimeContext();
+  if (elements.storageWhere) {
+    elements.storageWhere.textContent = context.native ? "手机应用 · 本机"
+      : context.standalone ? "已安装的开页 · 本机"
+      : context.isSafari ? "Safari 网页 · 本机（7 天不打开可能被清理，建议添加到主屏幕）"
+      : "当前浏览器 · 本机";
+  }
+  if (!elements.storageUsage) return;
+  let textChars = 0;
+  try {
+    textChars = (localStorage.getItem(STORAGE_KEY) || "").length;
+  } catch {
+    // Storage blocked: shown as unknown below.
+  }
+  // Photos and handwriting are measured in their own store; the browser's estimate also counts the app's offline cache.
+  let media = 0;
+  if (mediaStoreAvailable) {
+    try {
+      await mediaTransaction("readonly", (store) => {
+        const request = store.openCursor();
+        request.addEventListener("success", () => {
+          const cursor = request.result;
+          if (!cursor) return;
+          media += typeof cursor.value === "string" ? cursor.value.length : JSON.stringify(cursor.value).length;
+          cursor.continue();
+        });
+      });
+    } catch {
+      media = 0;
+    }
+  }
+  const share = Math.round((textChars / 5_000_000) * 100);
+  elements.storageUsage.textContent = `文字 ${formatMegabytes(textChars)}（上限约 5 MB，已用 ${share}%）${media > 50_000 ? ` · 图片与手写 ${formatMegabytes(media)}` : ""}`;
+}
+
+// localStorage holds about 5 million characters; warn well before a save could fail.
+function warnIfStorageNearlyFull(chars) {
+  if (chars < LOCAL_STORAGE_SOFT_LIMIT) return;
+  try {
+    if (sessionStorage.getItem("openpages.storage-warned")) return;
+    sessionStorage.setItem("openpages.storage-warned", "1");
+  } catch {
+    // sessionStorage blocked: the warning may repeat.
+  }
+  window.setTimeout(() => notify("文字记录已接近浏览器上限，请先导出一份备份", { label: "导出", run: exportData }), 400);
+}
+
+// Safari clears a website's storage after 7 days without a visit; home-screen apps are exempt.
+function remindHomeScreenIfNeeded() {
+  const context = runtimeContext();
+  if (!context.isIOS || !context.isSafari || context.standalone || context.native) return;
+  try {
+    const last = Number(localStorage.getItem("openpages.hint.homescreen") || 0);
+    if (Date.now() - last < 7 * 86_400_000) return;
+    localStorage.setItem("openpages.hint.homescreen", String(Date.now()));
+  } catch {
+    return;
+  }
+  window.setTimeout(() => notify("Safari 里 7 天不打开，记录可能被系统清理", {
+    label: "怎么避免",
+    run: () => window.setTimeout(() => notify("点 Safari 的「分享」，选「添加到主屏幕」，从桌面图标打开"), 120),
+  }), 2400);
+}
+
+function renderAbout() {
+  if (elements.aboutVersion) elements.aboutVersion.textContent = `v${APP_VERSION}`;
+  if (elements.aboutVersionValue) elements.aboutVersionValue.textContent = APP_VERSION;
+  if (elements.feedbackLink) {
+    elements.feedbackLink.hidden = !FEEDBACK_URL;
+    if (FEEDBACK_URL) elements.feedbackLink.href = FEEDBACK_URL;
+  }
+}
+
 function renderBackupStatus() {
   if (!elements.lastBackupTime) return;
   const date = new Date(state.lastExportedAt || "");
@@ -4789,10 +4886,7 @@ async function copyProjectLink() {
 async function installApp() {
   if (!deferredInstallPrompt) {
     // Only Chromium browsers offer an install prompt; elsewhere, say where the browser's own option is.
-    const ua = navigator.userAgent;
-    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
-    const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|CriOS|FxiOS/.test(ua);
+    const { standalone, isIOS, isSafari } = runtimeContext();
     const message = standalone ? "开页已经安装在这台设备上"
       : isIOS ? "在 Safari 点「分享」，再选「添加到主屏幕」"
       : isSafari ? "在 Safari 菜单「文件」中选「添加到程序坞」"
@@ -5668,6 +5762,9 @@ function bindEvents() {
       // Without showPicker the browser's own date field handles the click.
     }
   });
+  elements.saveDetails?.addEventListener("toggle", () => {
+    if (elements.saveDetails.open) renderStorageInfo();
+  });
   elements.todayButton?.addEventListener("click", goToToday);
   elements.footerTodayButton?.addEventListener("click", goToToday);
   elements.topDatePicker.addEventListener("change", () => {
@@ -6175,7 +6272,10 @@ async function startApp() {
   migrateInlineMedia();
   renderTrash();
   renderBackupStatus();
+  renderAbout();
+  renderStorageInfo();
   remindBackupIfDue();
+  remindHomeScreenIfNeeded();
   if (state.health?.connection?.connected && getNativeHealthBridge()?.isNative) {
     window.setTimeout(() => syncNativeHealth({ silent: true }), 450);
   }

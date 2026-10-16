@@ -2,16 +2,22 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="开页 OpenPages 是一个开源、本地优先、电脑端和移动端都可用的电子手帐原型。"
+      content="开页 OpenPages：本地优先的电子手帐。一日一页、周月计划、手写与拼贴，记录只保存在你的设备上。"
     />
-    <meta name="theme-color" content="#ecebe4" />
-    <title>开页 OpenPages | 开源电子手帐</title>
+    <meta name="theme-color" content="#f4f6f5" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="开页" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <title>开页 OpenPages · 本地优先的电子手帐</title>
     <link rel="icon" href="./assets/openpages-mark.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=20261016-css" />
+    <link rel="stylesheet" href="./app.css?v=20261016-release" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -590,7 +596,8 @@
                 <strong>本机保存</strong>
                 <dl>
                   <div><dt>上次成功写入</dt><dd id="lastSavedTime">暂无</dd></div>
-                  <div><dt>存储位置</dt><dd>当前浏览器 · 本机</dd></div>
+                  <div><dt>存储位置</dt><dd id="storageWhere">当前浏览器 · 本机</dd></div>
+                  <div><dt>已用空间</dt><dd id="storageUsage">计算中…</dd></div>
                   <div><dt>跨设备同步</dt><dd>未启用</dd></div>
                   <div><dt>上次导出备份</dt><dd id="lastBackupTime">还没有导出过</dd></div>
                 </dl>
@@ -1026,6 +1033,20 @@
               <p class="workflow-note" id="workflowNote">内容默认只保存在当前设备；更换设备前请导出 JSON 备份。</p>
             </div>
           </details>
+
+          <details class="settings-group about-group">
+            <summary><span>关于开页</span><small id="aboutVersion">版本</small></summary>
+            <div class="settings-group__content about-content">
+              <p>开页是本地优先的电子手帐。你写下的文字、照片和手写都只保存在这台设备上，不上传，也没有统计或广告代码。</p>
+              <dl class="about-facts">
+                <div><dt>版本</dt><dd id="aboutVersionValue"></dd></div>
+                <div><dt>数据</dt><dd>只在本机 · 可随时导出 JSON / Markdown</dd></div>
+                <div><dt>开源许可</dt><dd>MIT</dd></div>
+              </dl>
+              <a class="wide-button" href="./privacypolicy.html" target="_blank" rel="noopener">隐私说明</a>
+              <a class="wide-button" id="feedbackLink" href="#" target="_blank" rel="noopener" hidden>意见反馈</a>
+            </div>
+          </details>
         </section>
       </aside>
     </div>
@@ -1074,6 +1095,6 @@
 
     <script src="./vendor/page-flip.browser.js?v=2.0.7" defer></script>
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261016-css" defer></script>
+    <script src="./app.js?v=20261016-release" defer></script>
   </body>
 </html>

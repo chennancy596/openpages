@@ -1,4 +1,4 @@
-const CACHE_NAME = "openpages-v64-css";
+const CACHE_NAME = "openpages-v65-release";
 const ASSETS = [
   "./",
   "./index.html",
@@ -10,6 +10,8 @@ const ASSETS = [
   "./manifest.webmanifest",
   "./service-worker.js",
   "./assets/icon.png",
+  "./assets/icon-192.png",
+  "./assets/apple-touch-icon.png",
   "./assets/icon.svg",
   "./assets/openpages-mark.svg",
   "./assets/paper-fiber.png",

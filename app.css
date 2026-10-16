@@ -13274,3 +13274,11 @@ body.editor-shell :is(#rightDock, #notebookSidebar, .workspace) select {
   -webkit-appearance: none !important;
   appearance: none !important;
 }
+
+/* About: plain facts in the settings panel. */
+body.editor-shell .about-content p { margin: 4px 0 12px; color: var(--ui-secondary); font: 13px/1.7 var(--font-ui); }
+body.editor-shell .about-facts { margin: 0 0 12px; display: grid; gap: 8px; }
+body.editor-shell .about-facts div { display: flex; justify-content: space-between; gap: 12px; font: 13px/1.5 var(--font-ui); }
+body.editor-shell .about-facts dt { color: var(--ui-secondary); }
+body.editor-shell .about-facts dd { margin: 0; color: var(--ui-content); text-align: right; }
+body.editor-shell .about-content .wide-button + .wide-button { margin-top: 8px; }

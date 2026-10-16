@@ -2,23 +2,37 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>OpenPages 健康数据隐私说明</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>开页 OpenPages 隐私说明</title>
     <style>
-      body { max-width: 680px; margin: 0 auto; padding: 32px 20px; color: #29302b; background: #f7f6f0; font: 16px/1.75 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+      body { max-width: 680px; margin: 0 auto; padding: 32px 20px calc(32px + env(safe-area-inset-bottom)); color: #29302b; background: #f7f6f0; font: 16px/1.75 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
       h1, h2 { line-height: 1.3; }
       h1 { font-size: 1.6rem; }
       h2 { margin-top: 2rem; font-size: 1.05rem; }
+      .updated { color: #5c6a63; font-size: .9rem; }
+      a { color: #355b49; }
     </style>
   </head>
   <body>
-    <h1>OpenPages 健康数据隐私说明</h1>
-    <p>OpenPages 仅在你主动授权后读取步数、活动能量、步行距离、睡眠和心率，用于在对应日期生成手帐摘要。</p>
-    <h2>数据处理</h2>
-    <p>健康摘要默认只保存在当前设备的 OpenPages 本地数据中，不用于广告，不出售，不用于训练模型，也不会在未启用同步服务时上传到 OpenPages 服务器。</p>
-    <h2>权限控制</h2>
-    <p>你可以在 Apple 健康或 Android Health Connect 中逐项允许、拒绝或撤销访问。撤销后 OpenPages 会停止读取新数据；你仍可在 OpenPages 中删除已保存的本地摘要。</p>
-    <h2>开源与导出</h2>
-    <p>OpenPages 核心代码采用 MIT License。你可以随时导出或删除自己的手帐数据，基础导出能力不会因订阅状态而受限。</p>
+    <h1>开页 OpenPages 隐私说明</h1>
+    <p class="updated">更新于 2026 年 10 月 16 日</p>
+
+    <h2>你的记录只在你的设备上</h2>
+    <p>你写下的文字、照片、手写、贴纸、页签、心情和设置，都保存在当前设备的浏览器存储（或手机应用的本地存储）里。开页没有账号，也没有服务器接收这些内容。</p>
+
+    <h2>不收集、不追踪</h2>
+    <p>开页不包含统计、广告或第三方追踪代码，运行时不向任何网络地址发送请求。离线也能完整使用。</p>
+
+    <h2>数据可能丢失的情况</h2>
+    <p>因为记录只在本机，以下情况会让它们消失：清除浏览器数据、卸载应用、更换设备。在 iPhone 的 Safari 里以网页方式使用时，如果 7 天没有打开，系统可能清理网站数据；把开页「添加到主屏幕」后从桌面图标打开，可以避免这种清理。</p>
+    <p>建议定期在「设置与备份」中导出 JSON 备份，并保存在你自己的文件夹或网盘里。导出、导入、Markdown 和打印始终免费。</p>
+
+    <h2>健康数据（仅手机安装版）</h2>
+    <p>只有在你主动连接后，开页才会通过 Apple 健康或 Android Health Connect 读取步数、活动能量、步行距离、睡眠和心率的日摘要，用于在对应日期生成手帐内容。你可以在系统设置中逐项允许、拒绝或撤销访问；撤销后开页停止读取，已保存的摘要可以在开页中删除。健康数据同样只保存在本机，不用于广告，不出售，不用于训练模型。</p>
+
+    <h2>开源</h2>
+    <p>开页的代码以 MIT 许可证开源，任何人都可以检查它如何处理数据。</p>
+
+    <p><a href="./index.html">返回开页</a></p>
   </body>
 </html>
