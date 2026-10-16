@@ -477,3 +477,196 @@ body.editor-shell[data-book=closed] .document-tools { visibility: hidden; }
 .trash-item button { min-height: 32px; padding: 4px 10px; font-size: 0.74rem; }
 .trash-item button[data-trash-action="purge"] { color: color-mix(in srgb, #9f4f46 86%, black); }
 .trash-empty { color: var(--muted); font-size: 0.74rem; }
+
+/* Page history: automatic and hand-saved versions of the current page, inside the save details. */
+body.editor-shell .save-details__panel { max-height: calc(100vh - 120px); overflow-y: auto; }
+body.editor-shell .page-history { border-top: 1px solid var(--ui-divider); margin: 12px 0; padding-top: 10px; }
+body.editor-shell .page-history > summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; list-style: none; }
+body.editor-shell .page-history > summary::-webkit-details-marker { display: none; }
+body.editor-shell .page-history > summary small { margin-left: auto; color: var(--ui-secondary); font-weight: 400; }
+body.editor-shell .save-details__panel .page-history__note { border-top: 0; padding-top: 0; margin: 8px 0; }
+body.editor-shell .page-history__list { max-height: 220px; overflow-y: auto; }
+body.editor-shell .page-history__list .trash-item { grid-template-columns: minmax(0, 1fr) auto; }
+body.editor-shell #savePageVersionButton { width: 100%; justify-content: flex-start; margin-top: 8px; padding: 0; border: 0; background: transparent; color: var(--ui-primary); font: inherit; cursor: pointer; }
+
+/* Mood chips: one tap records a mood, a second tap clears it. Replaces the old dropdown. */
+.entry-context .mood-chips { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.entry-context .mood-chips button {
+  min-height: 32px; padding: 0 11px; border: 1px solid color-mix(in srgb, var(--page-accent, #667b72) 22%, transparent);
+  border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: 0.76rem; cursor: pointer; box-shadow: none;
+}
+.entry-context .mood-chips button:hover { color: var(--ink); background: color-mix(in srgb, var(--page-accent, #667b72) 7%, transparent); }
+.entry-context .mood-chips button[aria-checked="true"] {
+  border-color: color-mix(in srgb, var(--page-accent, #667b72) 70%, transparent);
+  background: color-mix(in srgb, var(--page-accent, #667b72) 14%, transparent);
+  color: color-mix(in srgb, var(--page-accent, #667b72) 80%, var(--ink)); font-weight: 600;
+}
+.entry-context .mood-chips button:focus-visible { outline: 2px solid var(--page-accent, #667b72); outline-offset: 2px; }
+
+/* Daily prompt: a single suggestion on a blank day page, like Day One's daily prompt. */
+.daily-prompt {
+  display: grid; gap: 6px; margin: 4px 0 14px; padding: 12px 14px;
+  border-left: 2px solid color-mix(in srgb, var(--page-accent, #667b72) 55%, transparent);
+  background: color-mix(in srgb, var(--page-accent, #667b72) 6%, transparent); border-radius: 0 6px 6px 0;
+}
+.daily-prompt[hidden] { display: none !important; }
+.daily-prompt__label { color: color-mix(in srgb, var(--page-accent, #667b72) 72%, var(--muted)); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.08em; }
+.daily-prompt p { margin: 0; color: var(--ink); font-size: 1rem; line-height: 1.6; }
+.daily-prompt__actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.daily-prompt__actions button {
+  min-height: 30px; padding: 0 10px; border: 1px solid color-mix(in srgb, var(--page-accent, #667b72) 24%, transparent);
+  border-radius: 4px; background: transparent; color: var(--muted); font: inherit; font-size: 0.74rem; cursor: pointer;
+}
+.daily-prompt__actions button:first-child { color: color-mix(in srgb, var(--page-accent, #667b72) 82%, var(--ink)); border-color: color-mix(in srgb, var(--page-accent, #667b72) 46%, transparent); }
+.daily-prompt__actions button:hover { background: color-mix(in srgb, var(--page-accent, #667b72) 9%, transparent); color: var(--ink); }
+/* The fold's summary shows the recorded mood and tags; with nothing recorded it stays quiet. */
+body.editor-shell #entryContextMeta[data-recorded="true"] { display: inline; margin-left: 4px; color: color-mix(in srgb, var(--page-accent, #667b72) 78%, var(--ink)); font-weight: 600; }
+
+/* ---- Polish pass: alignment and state consistency ---- */
+
+/* Closed cover shows only the notebook: no blank chrome bands, no live page controls under it. */
+body.editor-shell:is([data-book=closed], [data-book=opening]) .document-chrome { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+body.editor-shell:is([data-book=closed], [data-book=opening]) .document-footer { visibility: hidden; background: transparent !important; border-color: transparent !important; }
+
+/* Top bar date in the app's own format; the native field sits on top, invisible, as the picker. */
+body.editor-shell .top-date { position: relative; display: inline-flex; align-items: center; height: 32px; min-width: 0; }
+body.editor-shell .top-date__text { display: inline-flex; align-items: center; gap: 6px; padding: 0 8px; border-radius: 6px; font: 500 13px/32px var(--font-ui); color: var(--ui-content, #2f3a33); white-space: nowrap; pointer-events: none; }
+body.editor-shell .top-date__text::after { content: ""; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); opacity: .55; }
+body.editor-shell .top-date:hover .top-date__text { background: color-mix(in srgb, var(--ui-primary, #2f5a45) 7%, transparent); }
+body.editor-shell .top-date:has(#topDatePicker:focus-visible) .top-date__text { outline: 2px solid var(--ui-primary, #2f5a45); outline-offset: 1px; }
+body.editor-shell .top-date:has(#topDatePicker:disabled) .top-date__text { opacity: .45; }
+body.editor-shell #topDatePicker { position: absolute !important; inset: 0 !important; width: 100% !important; max-width: none !important; height: 100% !important; padding: 0 !important; opacity: 0 !important; cursor: pointer; }
+
+/* Page folds use a chevron; "+" read as "add something". */
+body.editor-shell .page-meta summary::after,
+body.editor-shell .entry-context > summary::after {
+  content: "" !important; display: inline-block; width: 5px !important; height: 5px; margin-left: 6px !important;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg); opacity: .55; transition: transform .15s ease;
+}
+body.editor-shell .page-meta details[open] > summary::after,
+body.editor-shell .entry-context[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+
+/* Headers on facing pages share one height, so their rules line up across the spine. */
+body.editor-shell[data-book=open] .paper-page > .paper-header { min-height: 54px; box-sizing: border-box; }
+body.editor-shell[data-book=open] .paper-page--right .weekly-view .section-title { min-height: 54px; margin-top: -10px; box-sizing: border-box; align-items: center; }
+
+/* Settings: a native checkbox at its own size, beside its label. */
+body.editor-shell .print-toggle { justify-content: flex-start; }
+body.editor-shell .print-toggle input[type=checkbox] { flex: none; width: 16px !important; height: 16px !important; min-height: 0 !important; margin: 0 !important; padding: 0 !important; accent-color: var(--ui-primary, #2f5a45); }
+body.editor-shell .settings-field--wide { grid-column: 1 / -1; }
+
+/* Sidebar: two lines of excerpt at most. */
+body.editor-shell .recent-page span { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+/* The closed notebook fits the stage instead of running under the footer. */
+body.editor-shell:is([data-book=closed], [data-book=opening]) .journal-spread {
+  height: min(calc(100dvh - 236px), 680px) !important; min-height: 0 !important;
+  width: min(88vw, 430px, calc((100dvh - 236px) * 0.632)) !important;
+}
+/* Month, reading, travel and five-year right pages: the heading sits on the same line as the left title. */
+@media (min-width: 761px) {
+  body.editor-shell[data-book=open] .paper-page--right .collection-view { padding-top: 0 !important; }
+  body.editor-shell[data-book=open] .paper-page--right .collection-heading { height: 54px; min-height: 54px; box-sizing: border-box; padding-bottom: 12px !important; align-items: center; align-self: start; }
+  body.editor-shell[data-book=open] .paper-page--right .collection-heading > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; width: 100%; }
+}
+body.editor-shell .spread-nav > .add-spread-button[hidden] { display: none !important; }
+/* Every disclosure in the app uses the same chevron, pointing down when closed and up when open. */
+body.editor-shell :is(.date-browser, .settings-group, .page-extras, .trash-bin, .page-history) > summary::after {
+  content: "" !important; display: inline-block; flex: none; width: 5px !important; height: 5px !important; margin-left: auto;
+  border: 0 !important; border-right: 1.5px solid currentColor !important; border-bottom: 1.5px solid currentColor !important; border-radius: 0 !important;
+  background: none !important; transform: translateY(-2px) rotate(45deg); opacity: .55; transition: transform .15s ease;
+}
+body.editor-shell :is(.settings-group, .trash-bin, .page-history) > summary > small { margin-left: auto; }
+body.editor-shell :is(.settings-group, .trash-bin, .page-history) > summary::after { margin-left: 10px; }
+body.editor-shell :is(.date-browser, .settings-group, .page-extras, .trash-bin, .page-history)[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+/* Review: the search box has one border (its container), and the date filter uses the shared chevron. */
+body.editor-shell [data-panel="review"] .search-field input { border: 0 !important; border-radius: 0 !important; background: transparent !important; box-shadow: none !important; }
+body.editor-shell .review-date-range > summary { display: flex; align-items: center; gap: 6px; list-style: none; cursor: pointer; }
+body.editor-shell .review-date-range > summary::-webkit-details-marker { display: none; }
+body.editor-shell .review-date-range > summary::after { content: ""; width: 5px; height: 5px; margin-left: auto; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); opacity: .55; transition: transform .15s ease; }
+body.editor-shell .review-date-range[open] > summary::after { transform: translateY(1px) rotate(-135deg); }
+/* Footer position stays on one line: "10月16日 · 28 字" beside "1–2 / 2 页". */
+body.editor-shell .spread-position :is(small, strong) { white-space: nowrap; }
+@media (max-width: 760px) {
+  body.editor-shell .spread-position { flex-direction: row !important; align-items: baseline !important; gap: 8px !important; min-width: 0; }
+  body.editor-shell .spread-position small { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  body.editor-shell .spread-position strong { flex: none; }
+}
+body.editor-shell .spread-scope__words::before { content: " · "; }
+@media (max-width: 760px) {
+  body.editor-shell #spreadScopeLabel:has(.spread-scope__words) .spread-scope__date { display: none; }
+  body.editor-shell .spread-scope__words::before { content: ""; }
+}
+
+/* ---- Apple HIG pass: legibility, contrast, touch targets, feedback ---- */
+
+/* Contrast: secondary text reaches 4.5:1 on its surface (was 4.46 in the sidebar, 2.2 for page numbers). */
+:root { --op-gray: #5c6a63; }
+body.editor-shell .page-number { color: #66736b !important; font-size: 12px !important; }
+body.editor-shell .tag-pill, body.editor-shell .tag-pill__label { color: color-mix(in srgb, var(--page-accent, #667b72) 60%, #1f2622) !important; }
+
+/* Legibility: no UI text below 12px (Apple's floor is 11pt; Chinese needs a little more). */
+body.editor-shell [data-calendar-scale] { font-size: 13px !important; }
+body.editor-shell :is(#onThisDayMeta, #entryContextMeta, #pageHistoryMeta, #taskCount, #moodLabel, .tag-pill__label, .local-indicator, .trash-empty, .trash-item small, .review-page__meta, .recent-page span) { font-size: 12px !important; }
+body.editor-shell .page-meta summary small { font-size: 12px !important; line-height: 1.4 !important; }
+body.editor-shell .daily-stamp small { font-size: 12px !important; letter-spacing: 0; white-space: nowrap; }
+body.editor-shell :is(#onThisDayList, #linkedPlansList) small { font-size: 12px !important; }
+
+/* Today: like Calendar, a quiet pill that appears once you have moved away from today. */
+body.editor-shell .today-button { height: 28px; margin-left: 6px; padding: 0 12px; border: 1px solid var(--ui-divider); border-radius: 999px; background: var(--ui-surface); color: var(--ui-primary); font: 500 13px/26px var(--font-ui); cursor: pointer; white-space: nowrap; }
+body.editor-shell .today-button:hover { background: var(--ui-selected); }
+body.editor-shell .today-button[hidden] { display: none !important; }
+
+/* Autosave makes a permanent Save button redundant (as in Notes and Pages). It returns only to retry a failed write; ⌘S still saves. */
+body.editor-shell .save-controls:not(:has([data-state=error])) #saveNowButton { display: none !important; }
+
+/* Toast: a translucent capsule above the footer, centered, with an optional action. */
+body.editor-shell .action-toast {
+  left: 50% !important; right: auto !important; bottom: calc(var(--footer-height) + 16px + env(safe-area-inset-bottom)) !important;
+  display: inline-flex; align-items: center; gap: 14px; width: max-content; max-width: min(420px, calc(100vw - 32px));
+  padding: 10px 18px !important; border: 0 !important; border-radius: 999px !important;
+  background: rgba(36, 40, 37, 0.78) !important; -webkit-backdrop-filter: saturate(180%) blur(20px); backdrop-filter: saturate(180%) blur(20px);
+  color: #fff !important; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18) !important;
+  font: 500 14px/1.4 var(--font-ui) !important; transform: translate(-50%, 10px) !important;
+}
+body.editor-shell .action-toast.is-visible { transform: translate(-50%, 0) !important; }
+body.editor-shell .action-toast.has-action { pointer-events: auto !important; }
+body.editor-shell .action-toast button { flex: none; min-height: 32px; padding: 0 4px; border: 0; background: none; color: #b9e3c6; font: 600 14px/1 var(--font-ui); cursor: pointer; }
+body.editor-shell .action-toast button:focus-visible { outline: 2px solid #b9e3c6; outline-offset: 2px; border-radius: 4px; }
+
+/* Touch targets: at least 44pt on touch screens. Where the bar has no room, the hit area grows invisibly. */
+@media (pointer: coarse) {
+  body.editor-shell :is(#prevDayButton, #nextDayButton, #sidebarToggle, #prevSpreadButton, #nextSpreadButton, #bookmarkPageButton, #addSpreadButton, .tag-pill__remove, [data-calendar-scale], [data-mobile-page-target], .today-button) { position: relative; }
+  body.editor-shell :is(#prevDayButton, #nextDayButton, #sidebarToggle, #prevSpreadButton, #nextSpreadButton, #bookmarkPageButton, #addSpreadButton, .tag-pill__remove, [data-calendar-scale], [data-mobile-page-target], .today-button)::after {
+    content: ""; position: absolute; left: 50%; top: 50%; width: max(100%, 44px); height: max(100%, 44px); transform: translate(-50%, -50%);
+  }
+  body.editor-shell .editor-toolbar :is(button, summary) { min-width: 44px !important; min-height: 44px !important; }
+  body.editor-shell .document-tools [data-open-mobile-panel] { min-height: 44px !important; }
+  body.editor-shell :is(#entryTitle, #tagInput) { min-height: 44px !important; }
+  body.editor-shell :is(.save-details, .page-history) > summary { min-height: 44px !important; }
+  body.editor-shell .entry-context .mood-chips button { min-height: 44px; padding: 0 14px; }
+  body.editor-shell .daily-prompt__actions button { min-height: 44px; padding: 0 14px; }
+  body.editor-shell .prompt-row button { min-width: 44px !important; min-height: 44px !important; }
+  body.editor-shell .page-meta summary { min-height: 44px !important; }
+  body.editor-shell :is(.trash-item button, #savePageVersionButton, #saveBackupButton) { min-height: 44px !important; }
+}
+/* Phones: 今天 lives in the footer (as in iOS Calendar), where the hidden Save button left room. */
+body.editor-shell .today-button--footer { display: none; }
+@media (max-width: 760px) {
+  body.editor-shell .topbar .today-button { display: none !important; }
+  body.editor-shell .today-button--footer:not([hidden]) { display: inline-flex; align-items: center; height: 34px; margin-left: auto; }
+}
+/* Today button: pinned by id, since .date-nav/.document-footer button rules in older layers use !important. */
+body.editor-shell :is(#todayButton, #footerTodayButton) {
+  height: 28px !important; min-width: 0 !important; margin-left: 6px !important; padding: 0 12px !important;
+  border: 1px solid var(--ui-divider) !important; border-radius: 999px !important;
+  background: var(--ui-surface) !important; color: var(--ui-primary) !important; box-shadow: none !important;
+  font: 500 13px/26px var(--font-ui) !important;
+}
+body.editor-shell :is(#todayButton, #footerTodayButton):hover { background: var(--ui-selected) !important; }
+body.editor-shell #footerTodayButton { display: none !important; }
+body.editor-shell :is(#todayButton, #footerTodayButton)[hidden] { display: none !important; }
+@media (max-width: 760px) {
+  body.editor-shell #todayButton { display: none !important; }
+  body.editor-shell #footerTodayButton:not([hidden]) { display: inline-flex !important; align-items: center; height: 34px !important; margin-left: auto !important; }
+}

@@ -43,6 +43,60 @@ const STICKERS = {
   "art-lamp": { text: "灯", label: "夜读台灯插画", className: "art-sticker art-lamp" },
 };
 const DEFAULT_TASK_TEXTS = ["写下今天最重要的一件事", "给自己留一个小小的奖励"];
+// Mood is recorded only when chosen; "" means not recorded.
+const MOOD_LABELS = {
+  sunny: "晴朗",
+  calm: "平静",
+  spark: "有灵感",
+  busy: "忙碌",
+  tired: "疲惫",
+  low: "低落",
+  tense: "紧绷",
+};
+// One prompt a day for the blank daily page, chosen by date so every window shows the same one.
+// Written to be answerable in a sentence; none asks for a streak, a score or a goal.
+const DAILY_PROMPTS = [
+  "今天最想记住的一刻是：",
+  "今天吃到的最好吃的东西：",
+  "今天听到的一句话：",
+  "此刻窗外是什么样子：",
+  "今天让我笑出来的事：",
+  "今天花时间最多的事，和它带来的感受：",
+  "今天比昨天轻松一点的地方：",
+  "今天想感谢的一个人，和原因：",
+  "今天身体最明显的感受：",
+  "今天做完的一件小事：",
+  "今天一直在想的问题：",
+  "如果给今天起个名字，会叫：",
+  "今天读到、看到或听到的好东西：",
+  "今天的天气和我的心情像不像：",
+  "今天遇到的一个小麻烦，我是怎么过去的：",
+  "今天想对自己说的一句话：",
+  "今天去过的地方：",
+  "今天和谁说了话，聊了什么：",
+  "今天学会的一件事：",
+  "今天想放下的一件事：",
+  "今天最安静的时刻：",
+  "明天想记得做的一件事：",
+  "最近一直期待的事：",
+  "今天收到或送出的一份心意：",
+  "今天注意到的一个颜色、气味或声音：",
+  "今天有没有哪一刻觉得自己做得不错：",
+  "今天让我有点累的事：",
+  "此刻最想吃什么：",
+  "今天拍下的照片里，最想留住的是：",
+  "如果今天重来一次，想换个做法的地方：",
+  "这周到现在为止，最难忘的瞬间：",
+  "今天读到的一个词或一句话：",
+  "一件最近才开始喜欢的东西：",
+  "今天的晚饭和一起吃饭的人：",
+  "今天有什么事比预想中顺利：",
+  "最近反复想起的一个人：",
+  "今天为自己做的一件小事：",
+  "今天路上看到的风景：",
+  "今天的情绪像什么天气：",
+  "一年后的我读到这一页，最想知道什么：",
+];
 const INK_PALETTES = {
   stationery: {
     label: "文具基础",
@@ -359,6 +413,9 @@ const elements = {
   pageHeading: $("#pageHeading"),
   datePicker: $("#datePicker"),
   topDatePicker: $("#topDatePicker"),
+  topDateText: $("#topDateText"),
+  todayButton: $("#todayButton"),
+  footerTodayButton: $("#footerTodayButton"),
   calendarScaleButtons: $$('[data-calendar-scale]'),
   prevDayButton: $("#prevDayButton"),
   nextDayButton: $("#nextDayButton"),
@@ -375,6 +432,11 @@ const elements = {
   entryModeLabel: $("#entryModeLabel"),
   rightPageModeLabel: $("#rightPageModeLabel"),
   moodSelect: $("#moodSelect"),
+  moodChips: $("#moodChips"),
+  dailyPrompt: $("#dailyPrompt"),
+  dailyPromptText: $("#dailyPromptText"),
+  useDailyPromptButton: $("#useDailyPromptButton"),
+  nextDailyPromptButton: $("#nextDailyPromptButton"),
   editorLabel: $("#editorLabel"),
   bulletKey: $("#bulletKey"),
   bulletIndexNote: $("#bulletIndexNote"),
@@ -418,6 +480,11 @@ const elements = {
   saveVersionButton: $("#saveVersionButton"),
   restoreLastVersionButton: $("#restoreLastVersionButton"),
   versionCount: $("#versionCount"),
+  saveDetails: $("#saveDetails"),
+  pageHistory: $("#pageHistory"),
+  pageHistoryMeta: $("#pageHistoryMeta"),
+  pageHistoryList: $("#pageHistoryList"),
+  savePageVersionButton: $("#savePageVersionButton"),
   taskInput: $("#taskInput"),
   addTaskButton: $("#addTaskButton"),
   dailyStampButton: $("#dailyStampButton"),
@@ -444,6 +511,7 @@ const elements = {
   customCoverColor: $("#customCoverColor"),
   paperToneSelect: $("#paperToneSelect"),
   decorativePrintToggle: $("#decorativePrintToggle"),
+  coverDisplaySelect: $("#coverDisplaySelect"),
   themePreviewTitle: $("#themePreviewTitle"),
   themePreviewMeta: $("#themePreviewMeta"),
   themeApplyState: $("#themeApplyState"),
@@ -527,6 +595,8 @@ const elements = {
 };
 
 let state = loadState();
+let knownStoredRevision = readStoredRevision();
+const dirtyEntryKeys = new Set();
 let selectedStickerId = null;
 let drawMode = "pen";
 let drawActive = false;
@@ -586,6 +656,7 @@ function normalizeState(saved) {
   saved.customCoverColor = saved.customCoverColor || "#4f5b50";
   saved.paperTone = saved.paperTone || "washi";
   saved.decorativePrints = saved.decorativePrints !== false;
+  saved.coverDisplay = ["daily", "always", "never"].includes(saved.coverDisplay) ? saved.coverDisplay : "daily";
   saved.trash = Array.isArray(saved.trash) ? saved.trash : [];
   return saved;
 }
@@ -629,6 +700,7 @@ function loadState() {
     customCoverColor: "#4f5b50",
     paperTone: "washi",
     decorativePrints: true,
+    coverDisplay: "daily",
     health: { summaries: {}, source: "", connection: null },
     trash: [],
     entries: {},
@@ -756,6 +828,12 @@ function scheduleMediaCleanup() {
   clearTimeout(mediaCleanupTimer);
   mediaCleanupTimer = setTimeout(() => {
     const keep = new Set([...storedMediaRefs, ...mediaWritesInFlight]);
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY) || "";
+      for (const match of raw.matchAll(/opmedia:v1:([0-9a-z-]+)/g)) keep.add(match[1]);
+    } catch {
+      return;
+    }
     mediaTransaction("readwrite", (store) => {
       const request = store.openKeyCursor();
       request.addEventListener("success", () => {
@@ -807,12 +885,23 @@ async function hydrateStoredMedia() {
   mediaStoreAvailable = Boolean(db);
   if (!db) return;
   navigator.storage?.persist?.().catch(() => {});
-  const refs = collectMediaRefs(state);
-  storedMediaRefs = refs;
-  if (!refs.size) {
-    mediaHydrated = true;
+  storedMediaRefs = collectMediaRefs(state);
+  const missing = await resolveMediaInto(state);
+  if (!missing) {
+    // Reading failed: new media is stored inline and nothing is deleted from IndexedDB this session.
+    mediaStoreAvailable = false;
+    window.setTimeout(() => notify("图片和手写暂时读取失败，请刷新页面；本次不会清理已存内容"), 600);
     return;
   }
+  mediaHydrated = true;
+  if (missing.size) window.setTimeout(() => notify(`有 ${missing.size} 份图片或手写没有找到，可从备份导入恢复`), 600);
+}
+
+// Replaces media references in `target` with the stored values.
+// Resolves to the set of ids that were not found, or null when IndexedDB could not be read.
+async function resolveMediaInto(target) {
+  const refs = collectMediaRefs(target);
+  if (!refs.size) return new Set();
   const media = new Map();
   try {
     await mediaTransaction("readonly", (store) => {
@@ -824,16 +913,12 @@ async function hydrateStoredMedia() {
       });
     });
   } catch {
-    // Reading failed: new media is stored inline and nothing is deleted from IndexedDB this session.
-    mediaStoreAvailable = false;
-    window.setTimeout(() => notify("图片和手写暂时读取失败，请刷新页面；本次不会清理已存内容"), 600);
-    return;
+    return null;
   }
   media.forEach((_, id) => persistedMediaIds.add(id));
   const missing = new Set();
-  replaceMediaRefs(state, media, missing);
-  mediaHydrated = true;
-  if (missing.size) window.setTimeout(() => notify(`有 ${missing.size} 份图片或手写没有找到，可从备份导入恢复`), 600);
+  replaceMediaRefs(target, media, missing);
+  return missing;
 }
 
 // Moves media still stored inline in localStorage into IndexedDB on first launch after the upgrade.
@@ -844,7 +929,9 @@ function migrateInlineMedia() {
 }
 
 function persistState() {
+  autoSaveVersionBeforeEdit();
   syncCurrentPageGroup();
+  dirtyEntryKeys.add(state.selectedDate);
   hasPendingChanges = true;
   setSaveState("saving");
   clearTimeout(saveTimer);
@@ -853,9 +940,121 @@ function persistState() {
   }, 180);
 }
 
+// The lastSavedAt of the journal currently in localStorage, read without parsing the whole payload.
+// Only the top-level key is unescaped in the JSON, so text inside entries cannot match.
+function readStoredRevision() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY) || "";
+    return raw.match(/"lastSavedAt":"([^"]+)"/)?.[1] || null;
+  } catch {
+    return null;
+  }
+}
+
+// Another window (tab, installed PWA) of the same origin saved the journal.
+// This window adopts the stored journal but keeps the pages it has unsaved edits for,
+// so neither window silently overwrites what the other wrote.
+// `saved` must already be parsed; `refs` are the media references it held on disk.
+function adoptExternalState(saved, refs, { keepEdited = false } = {}) {
+  normalizeState(saved);
+  const key = state.selectedDate;
+  const localEntry = state.entries[key];
+  if (keepEdited) {
+    new Set([...dirtyEntryKeys, key]).forEach((dirtyKey) => {
+      if (state.entries[dirtyKey]) saved.entries[dirtyKey] = state.entries[dirtyKey];
+    });
+    const remoteTrash = new Set(saved.trash.map((item) => item.id));
+    saved.trash = [...saved.trash, ...state.trash.filter((item) => !remoteTrash.has(item.id))];
+  } else if (localEntry && saved.entries[key]) {
+    const remoteEntry = saved.entries[key];
+    normalizeEntry(remoteEntry, key);
+    const index = Number(localEntry.activePageGroup) || 0;
+    if (index !== remoteEntry.activePageGroup && remoteEntry.pageGroups[index]) {
+      remoteEntry.activePageGroup = index;
+      applyPageGroup(remoteEntry, remoteEntry.pageGroups[index], key);
+    }
+  }
+  saved.selectedDate = state.selectedDate;
+  saved.calendarFocusDate = state.calendarFocusDate;
+  const currentPageChanged = !keepEdited
+    && JSON.stringify(localEntry?.pageGroups || null) !== JSON.stringify(saved.entries[key]?.pageGroups || null);
+  state = saved;
+  knownStoredRevision = saved.lastSavedAt || null;
+  storedMediaRefs = refs;
+  return currentPageChanged;
+}
+
+function parseStoredJournal(raw) {
+  try {
+    const saved = JSON.parse(raw || "null");
+    return saved && saved.version === 1 && saved.entries && typeof saved.entries === "object" ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
+function handleExternalStorageChange(event) {
+  if (event.key !== STORAGE_KEY || !event.newValue) return;
+  const revision = event.newValue.match(/"lastSavedAt":"([^"]+)"/)?.[1] || null;
+  if (revision !== knownStoredRevision) syncExternalState(event.newValue);
+}
+
+async function syncExternalState(raw) {
+  const saved = parseStoredJournal(raw);
+  if (!saved) return;
+  const refs = collectMediaRefs(saved);
+  // Media is loaded before the swap, so this window never renders or re-saves bare references.
+  if (refs.size && !(await resolveMediaInto(saved))) return;
+  // Skip if this version is already known, or a newer save replaced it while media was loading.
+  if (saved.lastSavedAt === knownStoredRevision || saved.lastSavedAt !== readStoredRevision()) return;
+  syncEntryFromForm();
+  const editing = hasPendingChanges || drawActive || pageTurnInProgress;
+  const currentPageChanged = adoptExternalState(saved, refs, { keepEdited: editing });
+  // Edits still pending here are written on top of the adopted journal.
+  if (editing) persistState();
+  applyGlobalSettings();
+  if (currentPageChanged) {
+    loadEntryIntoForm();
+    notify("另一个窗口更新了这一页，已显示最新内容");
+  } else {
+    renderPageGroupNavigation();
+    renderCalendar();
+    renderStats();
+    renderSearch();
+    renderPageHistory();
+  }
+  renderTrash();
+  renderBackupStatus();
+}
+
+// A window frozen in the background can miss storage events; check again when it returns.
+function checkStoredRevision() {
+  const revision = readStoredRevision();
+  if (!revision || revision === knownStoredRevision) return;
+  try {
+    syncExternalState(localStorage.getItem(STORAGE_KEY));
+  } catch {
+    // Unreadable storage: keep the in-memory journal.
+  }
+}
+
 function flushState() {
   clearTimeout(saveTimer);
   try {
+    const storedRevision = readStoredRevision();
+    const stored = storedRevision && storedRevision !== knownStoredRevision
+      ? parseStoredJournal(localStorage.getItem(STORAGE_KEY))
+      : null;
+    if (stored) {
+      // Another window saved since this one last read storage. Merge first so its pages survive;
+      // their media stays as references, which the serializer writes back unchanged.
+      adoptExternalState(stored, collectMediaRefs(stored), { keepEdited: true });
+      resolveMediaInto(state).then(() => {
+        renderCalendar();
+        renderStats();
+        renderTrash();
+      });
+    }
     syncAllPageGroups();
     const savedAt = new Date().toISOString();
     const payload = serializeStateForStorage({ ...state, lastSavedAt: savedAt });
@@ -868,6 +1067,8 @@ function flushState() {
     }
     localStorage.setItem(STORAGE_KEY, payload.json);
     state.lastSavedAt = savedAt;
+    knownStoredRevision = savedAt;
+    dirtyEntryKeys.clear();
     storedMediaRefs = payload.refs;
     hasPendingChanges = false;
     setSaveState("saved");
@@ -922,19 +1123,73 @@ function handleBeforeUnload(event) {
   event.returnValue = "";
 }
 
-function notify(message) {
-  if (!elements.actionToast) return;
-  elements.actionToast.textContent = message;
-  elements.actionToast.classList.add("is-visible");
+function scheduleToastHide(delay) {
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => {
-    elements.actionToast.classList.remove("is-visible");
-  }, 2200);
-  if ("vibrate" in navigator) navigator.vibrate(8);
+    // An action toast stays while the pointer or keyboard focus is on it.
+    if (elements.actionToast.matches(".has-action:is(:hover, :focus-within)")) return scheduleToastHide(1500);
+    elements.actionToast.classList.remove("is-visible", "has-action");
+  }, delay);
+}
+
+// `action` adds one button (e.g. 撤销) and keeps the toast up long enough to reach it.
+function notify(message, action = null) {
+  if (!elements.actionToast) return;
+  elements.actionToast.replaceChildren(document.createTextNode(message));
+  elements.actionToast.classList.toggle("has-action", Boolean(action));
+  if (action) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = action.label;
+    button.addEventListener("click", () => {
+      elements.actionToast.classList.remove("is-visible", "has-action");
+      action.run();
+    }, { once: true });
+    elements.actionToast.append(button);
+  }
+  elements.actionToast.classList.add("is-visible");
+  scheduleToastHide(action ? 8000 : 2200);
+  // A light tap confirms the person's own action; toasts the app shows by itself stay silent.
+  if ("vibrate" in navigator && navigator.userActivation?.isActive) navigator.vibrate(8);
+}
+
+// The cover is shown on the first launch of each day by default; reopening the same day goes
+// straight to the page. The day is remembered per device, outside the journal and its backups.
+const COVER_OPENED_KEY = "openpages.cover.openedOn";
+
+function shouldShowCover() {
+  if (state.coverDisplay === "always") return true;
+  if (state.coverDisplay === "never") return false;
+  try {
+    return localStorage.getItem(COVER_OPENED_KEY) !== todayKey();
+  } catch {
+    return true;
+  }
+}
+
+function rememberCoverOpened() {
+  try {
+    localStorage.setItem(COVER_OPENED_KEY, todayKey());
+  } catch {
+    // Storage blocked: the cover is shown again next time.
+  }
+}
+
+function openNotebookWithoutCover() {
+  elements.body.dataset.book = "open";
+  elements.journalSpread.classList.add("is-opened-once");
 }
 
 function openNotebook() {
   if (elements.body.dataset.book === "open" || elements.body.dataset.book === "opening") return;
+  rememberCoverOpened();
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    openNotebookWithoutCover();
+    if (elements.body.dataset.inputMode === "write" && window.matchMedia("(pointer: fine)").matches) {
+      elements.journalEditor.focus({ preventScroll: true });
+    }
+    return;
+  }
   elements.body.dataset.book = "opening";
   elements.journalSpread.classList.add("is-opening-cover");
   window.setTimeout(() => {
@@ -968,14 +1223,15 @@ function currentEntry() {
 function createEntry(key) {
   const date = parseDate(key);
   return {
-    title: `${date.getMonth() + 1}月${date.getDate()}日手帐`,
+    title: defaultDayTitle(key),
     bookmarked: false,
     mode: "daily",
-    mood: "calm",
+    mood: "",
     text: "",
     html: "",
     focus: "",
-    tasks: DEFAULT_TASK_TEXTS.map((text) => ({ id: crypto.randomUUID(), text, done: false })),
+    // No example tasks: a new page starts empty and the input carries the suggestion instead.
+    tasks: [],
     tags: [],
     fragments: [],
     bullets: [],
@@ -1005,7 +1261,8 @@ function normalizeEntry(entry, key) {
   if (!Array.isArray(entry.fragments)) entry.fragments = [];
   if (!Array.isArray(entry.bullets)) entry.bullets = [];
   if (!Array.isArray(entry.photos)) entry.photos = [];
-  if (!Array.isArray(entry.strokes)) entry.strokes = [];
+  // A media reference stands in for strokes until it is loaded from IndexedDB.
+  if (!Array.isArray(entry.strokes) && !isMediaRef(entry.strokes)) entry.strokes = [];
   if (!Array.isArray(entry.versions)) entry.versions = [];
   if (!entry.metrics) entry.metrics = fresh.metrics;
   if (entry.stamp === undefined) entry.stamp = "";
@@ -1017,6 +1274,11 @@ function normalizeEntry(entry, key) {
     entry.html = "";
   }
   ensurePageGroups(entry, key);
+  const legacyTitle = `${parseDate(key).getMonth() + 1}月${parseDate(key).getDate()}日手帐`;
+  [entry, ...entry.pageGroups].forEach((page) => {
+    if (page.title === legacyTitle) page.title = defaultDayTitle(key);
+    if (page.mode === "weekly" && /^\d+\/\d+ - \d+\/\d+ · 周计划$/.test(page.title || "")) page.title = defaultWeekTitle(key);
+  });
   stripLegacyDateScaffold(entry);
   entry.pageGroups.forEach((group) => stripLegacyDateScaffold(group));
 }
@@ -1184,6 +1446,59 @@ function isLegacyBulletScaffold(text) {
   return /^Key\s+•\s*任务\s*○\s*事件\s*-\s*笔记\s*>\s*迁移\s*Daily Log\s*•\s*○\s*-\s*Collection$/i.test(compact);
 }
 
+const WEEKDAY_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+
+function defaultDayTitle(key) {
+  const date = parseDate(key);
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${WEEKDAY_NAMES[date.getDay()]}`;
+}
+
+// Titles the app generated for a day page: old ("10月16日手帐"), current ("10月16日 星期五"), or a continuation.
+function isDefaultDayTitle(title) {
+  return /^\d+月\d+日手帐$/.test(title || "")
+    || /^\d+月\d+日 星期[一二三四五六日]$/.test(title || "")
+    || /^\d+月\d+日 · 续页 \d+$/.test(title || "");
+}
+
+// One spelling for a week everywhere: "10月12日–18日", or "10月26日–11月1日" across months.
+function weekRangeText(weekStartKey) {
+  const start = parseDate(weekStartKey);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  const endLabel = end.getMonth() === start.getMonth() ? `${end.getDate()}日` : `${end.getMonth() + 1}月${end.getDate()}日`;
+  return `${start.getMonth() + 1}月${start.getDate()}日–${endLabel}`;
+}
+
+function defaultWeekTitle(weekStartKey) {
+  return `${weekRangeText(weekStartKey)} · 周计划`;
+}
+
+// The top bar names the date in the app's own format; the native date field differs by
+// browser and system language (e.g. 16/10/2026), so it stays underneath as the picker.
+function renderTopDate() {
+  if (!elements.topDateText) return;
+  const key = calendarFocusKey();
+  const date = parseDate(key);
+  const scope = pageScopeForMode(currentEntry().mode);
+  const year = key.slice(0, 4) === todayKey().slice(0, 4) ? "" : `${date.getFullYear()}年`;
+  let text = `${year}${date.getMonth() + 1}月${date.getDate()}日 ${WEEKDAY_NAMES[date.getDay()].replace("星期", "周")}`;
+  if (scope === "month") text = `${date.getFullYear()}年${date.getMonth() + 1}月`;
+  if (scope === "week") text = `${year}${weekRangeText(calendarStorageKey("week", key))}`;
+  elements.topDateText.textContent = text;
+  if (elements.todayButton) {
+    const scale = scope === "month" ? "month" : scope === "week" ? "week" : "day";
+    const onToday = calendarStorageKey(scale, key) === calendarStorageKey(scale, todayKey());
+    elements.todayButton.hidden = onToday;
+    if (elements.footerTodayButton) elements.footerTodayButton.hidden = onToday;
+  }
+}
+
+function goToToday() {
+  if (pageTurnInProgress) return;
+  const scope = pageScopeForMode(currentEntry().mode);
+  navigateToCalendarPage(todayKey(), scope === "month" ? "month" : scope === "week" ? "week" : "day");
+}
+
 function formatDateLabel(key) {
   const date = parseDate(key);
   return new Intl.DateTimeFormat("zh-CN", {
@@ -1218,8 +1533,9 @@ function loadEntryIntoForm() {
   const focusedDate = calendarFocusKey();
   elements.datePicker.value = focusedDate;
   elements.topDatePicker.value = focusedDate;
+  renderTopDate();
   elements.entryTitle.value = entry.title;
-  elements.moodSelect.value = entry.mood;
+  elements.moodSelect.value = entry.mood || "";
   elements.journalEditor.innerHTML = sanitizeEditorHtml(entry.html || "");
   elements.journalText.value = entry.text || "";
   elements.focusInput.value = entry.focus;
@@ -1248,34 +1564,76 @@ function loadEntryIntoForm() {
   renderStats();
   renderSearch();
   renderPlusPanel();
+  renderPageHistory();
+  renderMood();
+  renderDailyPrompt();
   restoreInk();
+}
+
+// A day entry can also hold the week or month plan that starts on it. Navigation, counts and
+// page numbers only cover pages of the kind being shown, so a diary never turns into a plan.
+function scopedGroupIndexes(entry, scope) {
+  return entry.pageGroups
+    .map((group, index) => (pageScopeForMode(group.mode) === scope ? index : -1))
+    .filter((index) => index >= 0);
+}
+
+// Each page group is a spread of two numbered pages: position 0 is pages 1–2.
+function pageRangeLabel(position) {
+  return `${position * 2 + 1}–${position * 2 + 2}`;
+}
+
+function stepPageGroup(step) {
+  const entry = currentEntry();
+  const index = entry.activePageGroup || 0;
+  const scoped = scopedGroupIndexes(entry, pageScopeForMode(entry.pageGroups[index]?.mode || entry.mode));
+  const target = scoped[scoped.indexOf(index) + step];
+  if (target !== undefined) selectPageGroup(target);
+}
+
+// CJK characters count one each, other scripts count by word, as in most Chinese editors.
+function countWords(text) {
+  const cjk = /[\u3400-\u9fff\uf900-\ufaff]/g;
+  const characters = (text.match(cjk) || []).length;
+  const words = (text.replace(cjk, " ").match(/[\p{L}\p{N}]+(?:['’-][\p{L}\p{N}]+)*/gu) || []).length;
+  return characters + words;
+}
+
+function renderSpreadScope(scope = pageScopeForMode(currentEntry().mode)) {
+  if (!elements.spreadScopeLabel) return;
+  const date = parseDate(state.selectedDate);
+  const label = scope === "month" ? `${date.getMonth() + 1}月计划` : scope === "week" ? "本周计划" : `${date.getMonth() + 1}月${date.getDate()}日`;
+  const words = countWords(currentEntry().text || "");
+  // On phones the top bar already shows the date, so the footer keeps only the count there.
+  elements.spreadScopeLabel.innerHTML = `<span class="spread-scope__date">${escapeHtml(label)}</span>${words ? `<span class="spread-scope__words">${words} 字</span>` : ""}`;
 }
 
 function renderPageGroupNavigation() {
   const entry = currentEntry();
   const index = entry.activePageGroup || 0;
-  const count = entry.pageGroups.length;
   const mode = entry.pageGroups[index]?.mode || entry.mode || "daily";
   const scope = pageScopeForMode(mode);
-  const leftPage = index * 2 + 1;
+  const scoped = scopedGroupIndexes(entry, scope);
+  const position = Math.max(0, scoped.indexOf(index));
+  const total = Math.max(1, scoped.length);
+  const leftPage = position * 2 + 1;
   const rightPage = leftPage + 1;
-  if (elements.spreadScopeLabel) {
-    const date = parseDate(state.selectedDate);
-    elements.spreadScopeLabel.textContent = scope === "month" ? `${date.getMonth() + 1}月计划` : scope === "week" ? "本周计划" : `${date.getMonth() + 1}月${date.getDate()}日`;
-  }
+  renderSpreadScope(scope);
   if (elements.spreadPosition) {
     const label = LAYOUT_LABELS[mode] || MODE_COPY[mode]?.editorLabel || "自由内页";
-    elements.spreadPosition.textContent = `第 ${index + 1} 组 / 共 ${count} 组`;
+    elements.spreadPosition.textContent = `${pageRangeLabel(position)} / ${total * 2} 页`;
     elements.spreadPosition.title = label;
   }
   if (elements.saveNowButton) elements.saveNowButton.disabled = pageTurnInProgress;
   if (elements.leftPageNumber) elements.leftPageNumber.textContent = String(leftPage).padStart(3, "0");
   if (elements.rightPageNumber) elements.rightPageNumber.textContent = String(rightPage).padStart(3, "0");
-  if (elements.prevSpreadButton) elements.prevSpreadButton.disabled = pageTurnInProgress || index === 0;
-  if (elements.nextSpreadButton) elements.nextSpreadButton.disabled = pageTurnInProgress || index >= count - 1;
+  if (elements.prevSpreadButton) elements.prevSpreadButton.disabled = pageTurnInProgress || position === 0;
+  if (elements.nextSpreadButton) elements.nextSpreadButton.disabled = pageTurnInProgress || position >= total - 1;
   if (elements.addSpreadButton) {
+    // Plans are one spread per week or month; adding pages belongs to diary days.
+    elements.addSpreadButton.hidden = scope !== "day";
     elements.addSpreadButton.disabled = pageTurnInProgress;
-    elements.addSpreadButton.setAttribute("aria-label", `续一页，当前第 ${index + 1} 组，共 ${count} 组`);
+    elements.addSpreadButton.setAttribute("aria-label", `在后面续两页，当前第 ${pageRangeLabel(position)} 页，共 ${total * 2} 页`);
   }
   if (elements.bookmarkPageButton) {
     const label = entry.bookmarked ? "移除当前内页书签" : "为当前内页添加书签";
@@ -1320,7 +1678,7 @@ function renderLinkedPlans() {
   links.forEach(({ key, index, scale, text }) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.innerHTML = `<small>${scale === "week" ? "周计划 · 当天安排" : "月计划 · 本月主线"}</small><span>${escapeHtml(text)}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
+    button.innerHTML = `<small>${scale === "week" ? "周计划 · 当天安排" : "月计划 · 本月重点"}</small><span>${escapeHtml(text)}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
     button.title = scale === "week" ? "打开原周计划" : "打开原月计划";
     button.addEventListener("click", () => openPageGroupForDate(key, index, { focusDate: originKey }));
     elements.linkedPlansList.append(button);
@@ -1377,7 +1735,7 @@ function renderDayPageShelf() {
     elements.recordPageCategory.textContent = `追加到 ${date.getMonth() + 1}月${date.getDate()}日`;
   }
   if (!entry) {
-    elements.dayPageShelfMeta.textContent = `${date.getMonth() + 1}月${date.getDate()}日 · 0 张`;
+    elements.dayPageShelfMeta.textContent = `${date.getMonth() + 1}月${date.getDate()}日 · 还没有内页`;
     const empty = document.createElement("span");
     empty.className = "day-page-shelf__empty";
     empty.textContent = "还没有记录内页";
@@ -1389,14 +1747,14 @@ function renderDayPageShelf() {
   const dayPages = entry.pageGroups
     .map((group, index) => ({ group, index }))
     .filter(({ group }) => pageScopeForMode(group.mode) === "day");
-  elements.dayPageShelfMeta.textContent = `${date.getMonth() + 1}月${date.getDate()}日 · ${dayPages.length} 张`;
+  elements.dayPageShelfMeta.textContent = `${date.getMonth() + 1}月${date.getDate()}日 · 共 ${dayPages.length * 2} 页`;
   dayPages.forEach(({ group, index }, shelfIndex) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "day-page-shelf__item";
     button.classList.toggle("is-active", key === state.selectedDate && index === (entry.activePageGroup || 0));
     const label = LAYOUT_LABELS[group.mode] || MODE_COPY[group.mode]?.editorLabel || "自由内页";
-    button.innerHTML = `<span>${String(shelfIndex + 1).padStart(2, "0")}</span><strong>${escapeHtml(label)}</strong>`;
+    button.innerHTML = `<span>${pageRangeLabel(shelfIndex)}</span><strong>${escapeHtml(label)}</strong>`;
     button.setAttribute("aria-label", `打开 ${key} 的${label}`);
     button.addEventListener("click", () => openPageGroupForDate(key, index));
     elements.dayPageShelfList.append(button);
@@ -1411,6 +1769,8 @@ function renderStamp() {
     busy: "忙",
     tired: "休",
     spark: "閃",
+    low: "雨",
+    tense: "張",
   };
   elements.dailyStampIcon.textContent = entry.stamp || stampMap[entry.mood] || "印";
   elements.dailyStampButton.classList.toggle("is-stamped", Boolean(entry.stamp));
@@ -1429,7 +1789,7 @@ function applyDailyStamp() {
 
 function migrateOpenTasks() {
   const entry = currentEntry();
-  const openTasks = entry.tasks.filter((task) => !task.done);
+  const openTasks = entry.tasks.filter((task) => !task.done && !DEFAULT_TASK_TEXTS.includes(task.text));
   if (!openTasks.length) {
     elements.workflowNote.textContent = "今天没有未完成任务。";
     notify("今天没有需要迁移的任务");
@@ -1510,12 +1870,8 @@ function createCalendarPage(key, mode, appearance = {}) {
   fillEntryFromTemplate(fresh, modePresets()[mode]);
   const date = parseDate(key);
   if (mode === "monthly") fresh.title = `${date.getFullYear()}年${date.getMonth() + 1}月 · 月计划`;
-  if (mode === "weekly") {
-    const end = new Date(date);
-    end.setDate(date.getDate() + 6);
-    fresh.title = `${date.getMonth() + 1}/${date.getDate()} - ${end.getMonth() + 1}/${end.getDate()} · 周计划`;
-  }
-  if (mode === "daily") fresh.title = `${date.getMonth() + 1}月${date.getDate()}日手帐`;
+  if (mode === "weekly") fresh.title = defaultWeekTitle(key);
+  if (mode === "daily") fresh.title = defaultDayTitle(key);
   fresh.pageStyle = mode === "monthly" ? "grid" : mode === "weekly" ? "line" : appearance.pageStyle || state.pageStyle || "dot";
   fresh.pagePalette = appearance.pagePalette || "shiro";
   fresh.pageAccent = appearance.pageAccent || PAGE_PALETTES[fresh.pagePalette] || PAGE_PALETTES.shiro;
@@ -1598,8 +1954,7 @@ function navigateToCalendarPage(focusKey, scale = "day") {
     selectDate(targetKey);
   }
 
-  const labels = { month: "已打开月计划", week: "已打开周计划", day: "已打开日记" };
-  notify(labels[calendarScaleForMode(mode)] || labels.day);
+  // No toast: the page itself changes, and the top bar names the new date and scale.
 }
 
 function openCalendarScale(scale) {
@@ -1953,7 +2308,7 @@ function addPageGroup() {
   fresh.pageIllustration = entry.pageIllustration || state.pageIllustration || "botanical";
   entry.pageGroups.push(capturePageGroup(fresh));
   selectPageGroup(entry.pageGroups.length - 1, { openPicker: true });
-  notify("已续一组空白跨页，请选择内页样式");
+  notify("已续两页，可以为它们选择内页样式");
 }
 
 function setDateNavigationDisabled(disabled) {
@@ -1992,7 +2347,7 @@ function shiftDate(days) {
 function syncEntryFromForm() {
   const entry = currentEntry();
   const values = {
-    title: elements.entryTitle.value.trim() || "未命名手帐",
+    title: elements.entryTitle.value.trim() || (pageScopeForMode(entry.mode) === "day" ? defaultDayTitle(state.selectedDate) : "未命名手帐"),
     mood: elements.moodSelect.value,
     html: sanitizeEditorHtml(elements.journalEditor.innerHTML),
     text: editorPlainText(),
@@ -2068,6 +2423,69 @@ function insertEditorHtml(html) {
   syncEntryFromForm();
 }
 
+function renderMood() {
+  const mood = currentEntry().mood || "";
+  elements.moodSelect.value = mood;
+  $$("#moodChips [data-mood]").forEach((button) => {
+    button.setAttribute("aria-checked", String(button.dataset.mood === mood));
+  });
+  renderEntryContextMeta();
+}
+
+// Tapping the chosen mood again clears it, so a page can stay without a mood.
+function setMood(mood) {
+  elements.moodSelect.value = elements.moodSelect.value === mood ? "" : mood;
+  syncEntryFromForm();
+  renderMood();
+  renderStamp();
+}
+
+// The folded "心情与标签" row shows what is recorded, so it can stay closed.
+function renderEntryContextMeta() {
+  if (!elements.entryContextMeta) return;
+  const entry = currentEntry();
+  const copy = MODE_COPY[entry.mode] || MODE_COPY.daily;
+  const tags = copy.showTags ? entry.tags : [];
+  const recorded = [
+    copy.showMood && MOOD_LABELS[entry.mood],
+    tags.length && `${tags.slice(0, 2).map((tag) => `#${tag}`).join(" ")}${tags.length > 2 ? ` 等 ${tags.length} 个` : ""}`,
+  ].filter(Boolean);
+  elements.entryContextMeta.dataset.recorded = String(recorded.length > 0);
+  elements.entryContextMeta.textContent = recorded.length
+    ? recorded.join(" · ")
+    : [copy.showMood && "心情", copy.showTags && "页签", copy.prompts.length && "提示"].filter(Boolean).join(" · ");
+}
+
+const dailyPromptOffsets = new Map();
+
+function dailyPromptFor(key) {
+  const date = parseDate(key);
+  const dayOfYear = Math.round((date - new Date(date.getFullYear(), 0, 1)) / 86_400_000);
+  const index = (dayOfYear + date.getFullYear() * 11 + (dailyPromptOffsets.get(key) || 0)) % DAILY_PROMPTS.length;
+  return DAILY_PROMPTS[index];
+}
+
+// Shown only on a blank daily page; it disappears as soon as anything is written.
+function renderDailyPrompt() {
+  if (!elements.dailyPrompt) return;
+  const entry = currentEntry();
+  const visible = (entry.mode || "daily") === "daily" && !hasUserContent(entry) && !editorPlainText();
+  elements.dailyPrompt.hidden = !visible;
+  if (visible) elements.dailyPromptText.textContent = dailyPromptFor(state.selectedDate);
+}
+
+function useDailyPrompt() {
+  insertEditorHtml(`<p>${escapeHtml(dailyPromptFor(state.selectedDate))}</p>`);
+  renderDailyPrompt();
+  renderSpreadScope();
+}
+
+function nextDailyPrompt() {
+  const key = state.selectedDate;
+  dailyPromptOffsets.set(key, (dailyPromptOffsets.get(key) || 0) + 1);
+  renderDailyPrompt();
+}
+
 function renderTags() {
   const entry = currentEntry();
   elements.tagList.innerHTML = "";
@@ -2093,6 +2511,7 @@ function renderTags() {
     pill.append(label, remove);
     elements.tagList.append(pill);
   });
+  renderEntryContextMeta();
 }
 
 function addTag() {
@@ -2405,8 +2824,7 @@ function renderHealthConnection() {
 function renderPlusPanel() {
   if (!elements.versionCount) return;
   const versions = currentEntry().versions || [];
-  elements.versionCount.textContent = versions.length ? `${versions.length} 个本地快照` : "尚无快照";
-  elements.restoreLastVersionButton.disabled = versions.length === 0;
+  elements.versionCount.textContent = versions.length ? `本页 ${versions.length} 个版本` : "编辑时自动留存";
   const hasRecentHealth = recentDateKeys(state.selectedDate, 7).some((key) => Boolean(state.health?.summaries?.[key]));
   elements.healthWeeklyReportButton.disabled = !hasRecentHealth;
 }
@@ -2420,31 +2838,116 @@ function recentDateKeys(endKey, count) {
   });
 }
 
+// Page history: an automatic copy is kept before a page is edited (at most every 30 minutes),
+// plus copies saved by hand. Restoring first keeps the current content, so it can be undone.
+const VERSION_FIELDS = [
+  "title", "mode", "mood", "text", "html", "focus", "tasks", "tags", "fragments", "bullets",
+  "metrics", "stamp", "pagePalette", "pageAccent", "habits", "week", "modules", "strokes",
+];
+const AUTO_VERSION_GAP_MS = 30 * 60_000;
+const AUTO_VERSION_LIMIT = 6;
+const AUTO_VERSION_DAYS = 30;
+const MANUAL_VERSION_LIMIT = 12;
+const autoVersionTimes = new Map();
+
+function versionData(source) {
+  return Object.fromEntries(VERSION_FIELDS.map((field) => [field, clonePageValue(source[field])]));
+}
+
+function pruneVersions(versions) {
+  const cutoff = Date.now() - AUTO_VERSION_DAYS * 86_400_000;
+  const auto = versions.filter((version) => version.kind === "auto" && Date.parse(version.savedAt) >= cutoff);
+  const kept = versions.filter((version) => version.kind !== "auto");
+  const keepIds = new Set([
+    ...auto.slice(-AUTO_VERSION_LIMIT),
+    ...kept.slice(-MANUAL_VERSION_LIMIT),
+  ].map((version) => version.id));
+  return versions.filter((version) => keepIds.has(version.id));
+}
+
+function addEntryVersion(entry, data, kind) {
+  const previous = entry.versions[entry.versions.length - 1];
+  if (previous && JSON.stringify(previous.data) === JSON.stringify(data)) return false;
+  entry.versions = pruneVersions([...entry.versions, { id: crypto.randomUUID(), savedAt: new Date().toISOString(), kind, data }]);
+  return true;
+}
+
+// Called before an edit is copied into the page group, so the group still holds the earlier content.
+function autoSaveVersionBeforeEdit() {
+  const key = state.selectedDate;
+  const entry = state.entries?.[key];
+  const group = entry?.pageGroups?.[entry.activePageGroup || 0];
+  if (!group || !Array.isArray(entry.versions)) return;
+  const historyKey = `${key}:${group.id}`;
+  const last = autoVersionTimes.get(historyKey);
+  if (last && Date.now() - last < AUTO_VERSION_GAP_MS) return;
+  autoVersionTimes.set(historyKey, Date.now());
+  if (!hasUserContent(group, key)) return;
+  if (addEntryVersion(entry, versionData(group), "auto")) renderPageHistory();
+}
+
 function saveEntryVersion() {
   syncEntryFromForm();
   const entry = currentEntry();
-  const fields = [
-    "title", "mode", "mood", "text", "html", "focus", "tasks", "tags", "fragments", "bullets",
-    "metrics", "stamp", "pagePalette", "pageAccent", "habits", "week", "strokes",
-  ];
-  const data = Object.fromEntries(fields.map((field) => [field, JSON.parse(JSON.stringify(entry[field]))]));
-  entry.versions.push({ id: crypto.randomUUID(), savedAt: new Date().toISOString(), data });
-  entry.versions = entry.versions.slice(-12);
+  if (!addEntryVersion(entry, versionData(entry), "manual")) {
+    notify("当前内容和最近一个版本相同");
+    return;
+  }
   renderPlusPanel();
+  renderPageHistory();
   persistState();
-  notify("已保存当前页面快照");
+  notify("已保存当前版本");
 }
 
-function restoreLastEntryVersion() {
+function restoreEntryVersion(id) {
+  if (pageTurnInProgress) return;
+  syncEntryFromForm();
   const entry = currentEntry();
-  const snapshot = entry.versions?.[entry.versions.length - 1];
+  const snapshot = entry.versions.find((version) => version.id === id);
   if (!snapshot) return;
-  const approved = window.confirm(`恢复 ${new Date(snapshot.savedAt).toLocaleString("zh-CN")} 的页面内容？当前照片和贴纸会保留。`);
-  if (!approved) return;
-  Object.assign(entry, JSON.parse(JSON.stringify(snapshot.data)));
+  addEntryVersion(entry, versionData(entry), "restore");
+  Object.assign(entry, clonePageValue(snapshot.data));
+  inkRedoByDate.set(pageHistoryKey(), []);
+  autoVersionTimes.set(pageHistoryKey(), Date.now());
   loadEntryIntoForm();
   persistState();
-  notify("已恢复最近页面快照");
+  notify(`已恢复 ${formatVersionTime(snapshot.savedAt)} 的版本，恢复前的内容也已留存`);
+}
+
+function formatVersionTime(value) {
+  return new Date(value).toLocaleString("zh-CN", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+}
+
+function renderPageHistory() {
+  if (!elements.pageHistoryList) return;
+  const versions = currentEntry().versions || [];
+  elements.pageHistoryMeta.textContent = versions.length ? `${versions.length} 个版本` : "暂无";
+  elements.pageHistoryList.replaceChildren();
+  if (!versions.length) {
+    const empty = document.createElement("span");
+    empty.className = "trash-empty";
+    empty.textContent = "这一页还没有历史版本。";
+    elements.pageHistoryList.append(empty);
+    return;
+  }
+  const kindLabels = { auto: "编辑前", restore: "恢复前", manual: "手动" };
+  [...versions].reverse().forEach((version) => {
+    const text = plainTextFromHtml(version.data?.html || "").trim() || version.data?.text?.trim() || "";
+    const strokes = Array.isArray(version.data?.strokes) ? version.data.strokes.length : 0;
+    const summary = text.replace(/\s+/g, " ").slice(0, 36) || (strokes ? `${strokes} 笔手写` : "无文字内容");
+    const row = document.createElement("div");
+    row.className = "trash-item";
+    row.innerHTML = `<div><strong>${escapeHtml(formatVersionTime(version.savedAt))} · ${kindLabels[version.kind] || "手动"}</strong><small>${escapeHtml(summary)}</small></div><button type="button">恢复</button>`;
+    row.querySelector("button").addEventListener("click", () => restoreEntryVersion(version.id));
+    elements.pageHistoryList.append(row);
+  });
+}
+
+function openPageHistory() {
+  closeMobilePanel();
+  elements.saveDetails.open = true;
+  elements.pageHistory.open = true;
+  renderPageHistory();
 }
 
 function generateHealthWeeklyReport() {
@@ -2738,14 +3241,16 @@ function renderCalendar() {
 function renderTasks() {
   const entry = currentEntry();
   elements.taskList.innerHTML = "";
-  const done = entry.tasks.filter((task) => task.done).length;
-  elements.taskCount.textContent = `${done}/${entry.tasks.length}`;
-  if (!entry.tasks.length) {
-    appendEmptyState(elements.taskList, "没有待办。");
+  // Older pages still hold the two example tasks; unless ticked, they are not real tasks.
+  const tasks = entry.tasks.filter((task) => task.done || !DEFAULT_TASK_TEXTS.includes(task.text));
+  const done = tasks.filter((task) => task.done).length;
+  elements.taskCount.textContent = tasks.length ? `${done}/${tasks.length}` : "";
+  if (!tasks.length) {
+    appendEmptyState(elements.taskList, "还没有待办。");
     return;
   }
 
-  entry.tasks.forEach((task) => {
+  tasks.forEach((task) => {
     const item = document.createElement("li");
     item.classList.toggle("is-done", task.done);
 
@@ -2811,7 +3316,7 @@ function renderRecentPages(entries) {
   if (!elements.recentPages) return;
   elements.recentPages.innerHTML = "";
   const recent = entries
-    .slice()
+    .filter(([key, entry]) => pageGroupsForRead(entry, key).some((group) => pageScopeForMode(group.mode) === "day" && hasUserContent(group, key)))
     .sort(([left], [right]) => right.localeCompare(left))
     .slice(0, 6);
 
@@ -2826,12 +3331,20 @@ function renderRecentPages(entries) {
   recent.forEach(([key, entry]) => {
     const groups = pageGroupsForRead(entry, key);
     const activeIndex = entry.activePageGroup || 0;
-    const index = hasUserContent(groups[activeIndex], key) ? activeIndex : Math.max(0, groups.findIndex((group) => hasUserContent(group, key)));
+    // "Recent pages" are diary pages; a week or month plan stored on the same date is not one.
+    const isWrittenDayPage = (group) => group && pageScopeForMode(group.mode) === "day" && hasUserContent(group, key);
+    const firstWritten = groups.findIndex(isWrittenDayPage);
+    if (firstWritten < 0) return;
+    const index = isWrittenDayPage(groups[activeIndex]) ? activeIndex : firstWritten;
     const primary = groups[index];
     const button = document.createElement("button");
     button.type = "button";
     button.className = "recent-page";
-    button.innerHTML = `<strong>${escapeHtml(formatDateLabel(key))}</strong><span>${escapeHtml(primary.title || "未命名日页")}${groups.length > 1 ? ` · ${groups.length} 组` : ""}</span>`;
+    const excerpt = (plainTextFromHtml(primary.html || "").trim() || primary.text?.trim() || "").replace(/\s+/g, " ");
+    const subtitle = primary.title && !isDefaultDayTitle(primary.title) ? primary.title : (excerpt.length > 28 ? `${excerpt.slice(0, 27)}…` : excerpt) || primary.title || "未命名日页";
+    const sameYear = key.slice(0, 4) === todayKey().slice(0, 4);
+    const dayPageCount = scopedGroupIndexes(entry, "day").length * 2;
+    button.innerHTML = `<strong>${sameYear ? "" : `${key.slice(0, 4)}年`}${escapeHtml(formatDateLabel(key))}</strong><span>${escapeHtml(subtitle)}${dayPageCount > 2 ? ` · 共 ${dayPageCount} 页` : ""}</span>`;
     button.addEventListener("click", () => openPageGroupForDate(key, index));
     elements.recentPages.append(button);
   });
@@ -2950,12 +3463,10 @@ function applyModeTemplate(mode, template) {
   if (!template) return;
   if (usesBuiltIn && CALENDAR_PAGE_MODES.has(mode)) {
     openCalendarScale(mode === "monthly" ? "month" : "week");
-    notify(mode === "monthly" ? "已打开月计划" : "已打开周计划");
     return;
   }
   if (usesBuiltIn && mode === "daily") {
-    const date = parseDate(calendarStorageKey("day", calendarFocusKey()));
-    template = { ...template, title: `${date.getMonth() + 1}月${date.getDate()}日手帐` };
+    template = { ...template, title: defaultDayTitle(calendarStorageKey("day", calendarFocusKey())) };
   }
   syncEntryFromForm();
   const sourceAppearance = currentEntry();
@@ -3098,7 +3609,7 @@ function applyTemplateNonDestructively(entry, template) {
   const generatedTasks = new Set([...DEFAULT_TASK_TEXTS, ...presets.flatMap((preset) => preset.tasks)]);
   const generatedFragments = new Set(presets.flatMap((preset) => preset.fragments));
 
-  if (generatedTitles.has(entry.title) || /^\d+月\d+日手帐$/.test(entry.title)) entry.title = template.title;
+  if (generatedTitles.has(entry.title) || isDefaultDayTitle(entry.title)) entry.title = template.title;
   if (!entry.focus.trim() || generatedFocus.has(entry.focus)) entry.focus = template.focus;
   if (
     (!entry.text.trim() && !entry.html.trim()) ||
@@ -3202,9 +3713,7 @@ function renderMode() {
     elements.entryContext.hidden = !showContext;
     elements.entryContext.setAttribute("aria-hidden", String(!showContext));
     if (!showContext) elements.entryContext.open = false;
-    if (elements.entryContextMeta) {
-      elements.entryContextMeta.textContent = [copy.showMood && "心情", copy.showTags && "页签", copy.prompts.length && "提示"].filter(Boolean).join(" · ");
-    }
+    renderEntryContextMeta();
   }
   promptButtons.forEach((button, index) => {
     const prompt = copy.prompts[index];
@@ -3292,7 +3801,7 @@ function renderMonthlyCollection(root, data) {
       ${days.join("")}
     </div>
     <div class="collection-fields collection-fields--split">
-      <label><span>本月主线 · 最多三件</span><textarea data-module-field="priorities" placeholder="只留下真正重要的事，也可以空着">${moduleValue(data.priorities)}</textarea></label>
+      <label><span>本月重点 · 最多三件</span><textarea data-module-field="priorities" placeholder="只留下真正重要的事，也可以空着">${moduleValue(data.priorities)}</textarea></label>
       <label><span>无日期备忘</span><textarea data-module-field="memo" placeholder="不确定哪天做的事，先放在这里">${moduleValue(data.memo)}</textarea></label>
     </div>`;
 }
@@ -3539,7 +4048,7 @@ function renderSearch() {
   const matches = invalidRange ? [] : filterJournalPages(pages, filters);
   const hasFilters = filters.query || filters.tag || filters.start || filters.end || filters.type !== "all" || reviewScope !== "all";
   elements.reviewDateLabel.textContent = filters.start || filters.end ? `${filters.start || "最早"} 至 ${filters.end || "今天以后"}` : "不限";
-  elements.reviewSummary.textContent = invalidRange ? "结束日期不能早于开始日期" : `${matches.length} 组内页${matches.length > reviewLimit ? ` · 已显示 ${reviewLimit} 组` : ""}`;
+  elements.reviewSummary.textContent = invalidRange ? "结束日期不能早于开始日期" : `共 ${matches.length} 条${matches.length > reviewLimit ? ` · 已显示 ${reviewLimit} 条` : ""}`;
   elements.reviewResetButton.hidden = !hasFilters;
   elements.reviewMoreButton.hidden = matches.length <= reviewLimit;
   elements.searchResults.replaceChildren();
@@ -3553,11 +4062,22 @@ function renderSearch() {
     button.type = "button";
     button.className = "review-page";
     const label = LAYOUT_LABELS[group.mode] || "自由内页";
+    // The date column already says which day it is; the meta line adds what the column cannot.
+    const sameYear = key.slice(0, 4) === todayKey().slice(0, 4);
+    const scope = pageScopeForMode(group.mode);
+    const position = Math.max(0, scopedGroupIndexes(state.entries[key], scope).indexOf(index));
+    const meta = [
+      !sameYear && `${date.getFullYear()}年`,
+      scope === "day" && WEEKDAY_NAMES[date.getDay()],
+      label,
+      `第 ${pageRangeLabel(position)} 页`,
+    ].filter(Boolean).join(" · ");
+    const title = isDefaultDayTitle(group.title) ? "" : group.title || label;
     button.innerHTML = `
       <span class="review-page__date" aria-hidden="true"><small>${date.getMonth() + 1}月</small><strong>${String(date.getDate()).padStart(2, "0")}</strong></span>
       <span class="review-page__body">
-        <small class="review-page__meta">${escapeHtml(key)} · ${escapeHtml(label)} · 第 ${index + 1} 组</small>
-        <strong class="review-page__title">${escapeHtml(group.title || label)}</strong>
+        <small class="review-page__meta">${escapeHtml(meta)}</small>
+        ${title ? `<strong class="review-page__title">${escapeHtml(title)}</strong>` : ""}
         <span class="review-page__excerpt">${reviewExcerpt(group, key, filters.query)}</span>
       </span>
       ${group.bookmarked ? '<svg class="review-page__bookmark" aria-label="已夹书签"><use href="#icon-bookmark"></use></svg>' : ""}`;
@@ -3596,7 +4116,7 @@ function renderWeek() {
   end.setDate(start.getDate() + 6);
   const focusKey = calendarFocusKey();
   if (elements.weekRangeLabel) {
-    elements.weekRangeLabel.textContent = `${start.getMonth() + 1}月${start.getDate()}日 - ${end.getMonth() + 1}月${end.getDate()}日`;
+    elements.weekRangeLabel.textContent = weekRangeText(toDateKey(start));
   }
   elements.weekGrid.innerHTML = "";
 
@@ -3656,7 +4176,7 @@ function renderWeek() {
       const linked = document.createElement("button");
       linked.type = "button";
       linked.className = "week-day__linked";
-      linked.innerHTML = `<strong>${linkedPageCount} 张记录</strong><span>${escapeHtml(linkedExcerpt || "打开当天内页")}</span>`;
+      linked.innerHTML = `<strong>当天记录</strong><span>${escapeHtml(linkedExcerpt || "打开当天内页")}</span>`;
       linked.addEventListener("click", () => openPageGroupForDate(key, firstLinked.pageIndex));
       card.append(linked);
     }
@@ -3793,17 +4313,15 @@ function deleteCurrentPage() {
     notify("当前页还没有需要删除的内容");
     return;
   }
-  const confirmed = confirm(hasMultipleGroups
-    ? `删除 ${key} 的第 ${index + 1} 组跨页？同一天的其他内页会保留，30 天内可在「最近删除」恢复。`
-    : `删除 ${key} 的整页记录？此操作不会影响其他日期，30 天内可在「最近删除」恢复。`);
-  if (!confirmed) return;
+  // No confirmation dialog: the page goes to 最近删除 and the toast offers 撤销, as in Apple's apps.
   syncEntryFromForm();
   syncPageGroup(entry, key);
   pruneTrash();
   const deletedAt = new Date().toISOString();
+  const trashId = crypto.randomUUID();
   state.trash.unshift(hasMultipleGroups
-    ? { id: crypto.randomUUID(), deletedAt, date: key, kind: "group", group: clonePageValue(entry.pageGroups[index]) }
-    : { id: crypto.randomUUID(), deletedAt, date: key, kind: "entry", entry: clonePageValue(entry) });
+    ? { id: trashId, deletedAt, date: key, kind: "group", group: clonePageValue(entry.pageGroups[index]) }
+    : { id: trashId, deletedAt, date: key, kind: "entry", entry: clonePageValue(entry) });
   if (hasMultipleGroups) {
     entry.pageGroups.splice(index, 1);
     entry.activePageGroup = Math.min(index, entry.pageGroups.length - 1);
@@ -3818,7 +4336,31 @@ function deleteCurrentPage() {
   loadEntryIntoForm();
   flushState();
   renderTrash();
-  notify(hasMultipleGroups ? "已删除，可在「最近删除」恢复" : `已删除 ${key} 的记录，可在「最近删除」恢复`);
+  notify(hasMultipleGroups ? "已删除这两页" : "已删除这一天的记录", { label: "撤销", run: () => undoDelete(trashId, index) });
+}
+
+// Puts a just-deleted page back exactly where it was; anything else goes through 最近删除.
+function undoDelete(trashId, index) {
+  const item = state.trash.find((candidate) => candidate.id === trashId);
+  if (!item || pageTurnInProgress) return;
+  const entry = state.entries[item.date];
+  if (item.kind !== "group" || !entry) {
+    restoreTrashItem(trashId);
+    return;
+  }
+  syncEntryFromForm();
+  normalizeEntry(entry, item.date);
+  syncPageGroup(entry, item.date);
+  const position = Math.min(index, entry.pageGroups.length);
+  entry.pageGroups.splice(position, 0, clonePageValue(item.group));
+  entry.activePageGroup = position;
+  applyPageGroup(entry, entry.pageGroups[position], item.date);
+  state.trash = state.trash.filter((candidate) => candidate.id !== trashId);
+  if (item.date === state.selectedDate) loadEntryIntoForm();
+  else selectDate(item.date);
+  flushState();
+  renderTrash();
+  notify("已撤销删除");
 }
 
 const TRASH_RETENTION_DAYS = 30;
@@ -3956,7 +4498,7 @@ function exportCurrentDayMarkdown() {
     "---",
     `date: ${state.selectedDate}`,
     `title: ${JSON.stringify(entry.title)}`,
-    `mood: ${entry.mood}`,
+    ...(MOOD_LABELS[entry.mood] ? [`mood: ${MOOD_LABELS[entry.mood]}`] : []),
     `mode: ${entry.mode || "daily"}`,
     `tags: [${entry.tags.map((tag) => JSON.stringify(tag)).join(", ")}]`,
     "---",
@@ -4096,7 +4638,7 @@ async function copyProjectLink() {
   const url = window.location.href;
   try {
     await navigator.clipboard.writeText(url);
-    notify("已复制当前体验链接");
+    notify("已复制应用链接");
   } catch {
     const input = document.createElement("input");
     input.value = url;
@@ -4104,7 +4646,7 @@ async function copyProjectLink() {
     input.select();
     document.execCommand("copy");
     input.remove();
-    notify("已复制当前体验链接");
+    notify("已复制应用链接");
   }
 }
 
@@ -4158,6 +4700,7 @@ function applyGlobalSettings() {
   elements.customCoverColor.value = state.customCoverColor || "#4f5b50";
   elements.paperToneSelect.value = state.paperTone || "washi";
   elements.decorativePrintToggle.checked = state.decorativePrints !== false;
+  if (elements.coverDisplaySelect) elements.coverDisplaySelect.value = state.coverDisplay || "daily";
   inkColor = state.inkColor || INK_PALETTES.stationery.colors[0];
   inkSize = Number(state.inkSize || 4);
   inkBrush = INK_BRUSHES[state.inkBrush] ? state.inkBrush : "fountain";
@@ -4844,7 +5387,7 @@ function restoreInk() {
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const entry = currentEntry();
-  if (entry.strokes?.length) {
+  if (Array.isArray(entry.strokes) && entry.strokes.length) {
     replayStrokes(entry.strokes);
     updateInkHistoryButtons();
     return;
@@ -4957,6 +5500,16 @@ function bindEvents() {
     if (!elements.datePicker.value) return;
     navigateToCalendarPage(elements.datePicker.value, "day");
   });
+  // Clicking anywhere on the date opens the calendar, not just the small native icon.
+  elements.topDatePicker.addEventListener("click", () => {
+    try {
+      elements.topDatePicker.showPicker?.();
+    } catch {
+      // Without showPicker the browser's own date field handles the click.
+    }
+  });
+  elements.todayButton?.addEventListener("click", goToToday);
+  elements.footerTodayButton?.addEventListener("click", goToToday);
   elements.topDatePicker.addEventListener("change", () => {
     if (!elements.topDatePicker.value) return;
     navigateToCalendarPage(elements.topDatePicker.value, "day");
@@ -4966,15 +5519,25 @@ function bindEvents() {
   });
   elements.prevDayButton.addEventListener("click", () => shiftDate(-1));
   elements.nextDayButton.addEventListener("click", () => shiftDate(1));
-  elements.prevSpreadButton.addEventListener("click", () => selectPageGroup((currentEntry().activePageGroup || 0) - 1));
-  elements.nextSpreadButton.addEventListener("click", () => selectPageGroup((currentEntry().activePageGroup || 0) + 1));
+  elements.prevSpreadButton.addEventListener("click", () => stepPageGroup(-1));
+  elements.nextSpreadButton.addEventListener("click", () => stepPageGroup(1));
   elements.addSpreadButton.addEventListener("click", addPageGroup);
 
   [elements.entryTitle, elements.moodSelect, elements.focusInput, elements.modeFocusInput].forEach((input) => {
     input.addEventListener("input", syncEntryFromForm);
     input.addEventListener("change", syncEntryFromForm);
   });
-  elements.journalEditor.addEventListener("input", syncEntryFromForm);
+  elements.journalEditor.addEventListener("input", () => {
+    syncEntryFromForm();
+    renderDailyPrompt();
+    renderSpreadScope();
+  });
+  elements.moodChips?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-mood]");
+    if (button) setMood(button.dataset.mood);
+  });
+  elements.useDailyPromptButton?.addEventListener("click", useDailyPrompt);
+  elements.nextDailyPromptButton?.addEventListener("click", nextDailyPrompt);
   elements.journalEditor.addEventListener("blur", syncEntryFromForm);
   elements.journalEditor.addEventListener("focus", () => {
     if (elements.body.dataset.inputMode !== "write") setMobilePage("write");
@@ -5073,6 +5636,11 @@ function bindEvents() {
     persistState();
     if (window.matchMedia("(max-width: 760px)").matches) window.setTimeout(closeMobilePanel, 140);
   });
+  elements.coverDisplaySelect?.addEventListener("change", () => {
+    state.coverDisplay = elements.coverDisplaySelect.value;
+    persistState();
+    notify(selectedOptionLabel(elements.coverDisplaySelect));
+  });
   elements.decorativePrintToggle.addEventListener("change", () => {
     state.decorativePrints = elements.decorativePrintToggle.checked;
     applyGlobalSettings();
@@ -5137,7 +5705,8 @@ function bindEvents() {
   elements.manageHealthButton?.addEventListener("click", manageNativeHealthAccess);
   elements.healthWeeklyReportButton?.addEventListener("click", generateHealthWeeklyReport);
   elements.saveVersionButton?.addEventListener("click", saveEntryVersion);
-  elements.restoreLastVersionButton?.addEventListener("click", restoreLastEntryVersion);
+  elements.restoreLastVersionButton?.addEventListener("click", openPageHistory);
+  elements.savePageVersionButton?.addEventListener("click", saveEntryVersion);
   elements.privacyButton.addEventListener("click", () => {
     elements.body.classList.toggle("is-private");
   });
@@ -5208,8 +5777,14 @@ function bindEvents() {
       event.preventDefault();
       toggleFocusMode();
     }
-    if (event.altKey && event.key === "ArrowLeft") shiftDate(-1);
-    if (event.altKey && event.key === "ArrowRight") shiftDate(1);
+    // Date shortcuts only act outside text fields: there, arrows and Option+arrows move the caret.
+    const isFormControl = isEditing || target instanceof HTMLSelectElement || target?.closest?.("[role=radiogroup]");
+    const panelOpen = elements.rightDock.classList.contains("is-open");
+    if (!isFormControl && !panelOpen && !event.metaKey && !event.ctrlKey && !event.isComposing) {
+      if (event.key === "ArrowLeft") { event.preventDefault(); shiftDate(-1); }
+      if (event.key === "ArrowRight") { event.preventDefault(); shiftDate(1); }
+      if (!event.altKey && !event.shiftKey && event.key.toLowerCase() === "t") goToToday();
+    }
   });
 
   $$("[data-open-mobile-panel]").forEach((button) => {
@@ -5289,7 +5864,10 @@ function bindEvents() {
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden" && hasPendingChanges) flushState();
+    if (document.visibilityState === "visible") checkStoredRevision();
   });
+  window.addEventListener("storage", handleExternalStorageChange);
+  window.addEventListener("pageshow", (event) => { if (event.persisted) checkStoredRevision(); });
   window.addEventListener("beforeunload", handleBeforeUnload);
 }
 
@@ -5418,6 +5996,7 @@ async function startApp() {
   bindEvents();
   setupCanvas();
   loadEntryIntoForm();
+  if (!shouldShowCover()) openNotebookWithoutCover();
   bindWorkspaceShell();
   registerServiceWorker();
   migrateInlineMedia();

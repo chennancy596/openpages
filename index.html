@@ -15,7 +15,7 @@
     <link rel="stylesheet" href="./refinement.css?v=20260906-clarity" />
     <link rel="stylesheet" href="./handwriting.css?v=20260906-clarity" />
     <link rel="stylesheet" href="./product-polish.css?v=20260906-clarity" />
-    <link rel="stylesheet" href="./workspace.css?v=20261016-content" />
+    <link rel="stylesheet" href="./workspace.css?v=20261016-hig" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -160,7 +160,7 @@
         <section class="open-card" hidden>
           <span class="card-kicker">LOCAL FIRST</span>
           <h2>数据先归你</h2>
-          <p>默认保存在浏览器本地，可导出 JSON。这个原型使用 MIT License，适合继续做成社区项目。</p>
+          <p>记录只保存在这台设备的浏览器里，不会上传。换设备或清理浏览器前，请先导出备份。</p>
         </section>
       </aside>
 
@@ -173,16 +173,20 @@
             <h1 id="pageHeading">今日手帐</h1>
           </div>
           <div class="date-nav" aria-label="日期记录导航">
-            <button type="button" id="prevDayButton" title="前一天">‹</button>
+            <button type="button" id="prevDayButton" title="前一天（←）" aria-label="前一天">‹</button>
             <div class="date-control">
               <div class="calendar-scale-nav" aria-label="日期层级">
                 <button type="button" data-calendar-scale="day" class="is-active" aria-pressed="true">日记</button>
                 <button type="button" data-calendar-scale="week" aria-pressed="false">周计划</button>
                 <button type="button" data-calendar-scale="month" aria-pressed="false">月计划</button>
               </div>
-              <input id="topDatePicker" type="date" aria-label="记录日期" />
+              <span class="top-date">
+                <span class="top-date__text" id="topDateText" aria-hidden="true"></span>
+                <input id="topDatePicker" type="date" aria-label="记录日期" />
+              </span>
             </div>
-            <button type="button" id="nextDayButton" title="后一天">›</button>
+            <button type="button" id="nextDayButton" title="后一天（→）" aria-label="后一天">›</button>
+            <button type="button" id="todayButton" class="today-button" title="回到今天（T）" hidden>今天</button>
           </div>
           <div class="topbar-actions">
             <button class="icon-button action-button" id="focusModeButton" type="button" title="专注书写" aria-label="进入专注书写">
@@ -320,7 +324,7 @@
             <div class="page-flip-engine" id="pageFlipEngine" aria-hidden="true" hidden></div>
             <button class="daily-stamp" id="dailyStampButton" type="button" aria-label="今日印章">
               <span id="dailyStampIcon">未</span>
-              <small>今日印章</small>
+              <small aria-hidden="true">印章</small>
             </button>
             <section class="paper-page paper-page--left">
               <span class="page-number" id="leftPageNumber">001</span>
@@ -349,16 +353,19 @@
                   <small id="entryContextMeta">提示与页签</small>
                 </summary>
                 <div class="entry-context__content">
-                  <label class="mood-select">
-                    <span>心情</span>
-                    <select id="moodSelect">
-                      <option value="sunny">晴朗</option>
-                      <option value="calm">平静</option>
-                      <option value="busy">忙碌</option>
-                      <option value="tired">疲惫</option>
-                      <option value="spark">灵感</option>
-                    </select>
-                  </label>
+                  <div class="mood-select">
+                    <span id="moodLabel">心情</span>
+                    <input type="hidden" id="moodSelect" value="" />
+                    <div class="mood-chips" id="moodChips" role="radiogroup" aria-labelledby="moodLabel">
+                      <button type="button" role="radio" aria-checked="false" data-mood="sunny">晴朗</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="calm">平静</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="spark">有灵感</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="busy">忙碌</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="tired">疲惫</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="low">低落</button>
+                      <button type="button" role="radio" aria-checked="false" data-mood="tense">紧绷</button>
+                    </div>
+                  </div>
                   <div class="prompt-row">
                     <button type="button" data-prompt="今天最想记住的一刻是：">记一刻</button>
                     <button type="button" data-prompt="此刻我正在感谢：">感谢</button>
@@ -395,6 +402,15 @@
                   <span>需要成文时，可以整理进左侧正文。</span>
                 </div>
                 <button type="button" data-sync-bullets>整理到左页</button>
+              </section>
+
+              <section class="daily-prompt" id="dailyPrompt" aria-label="今日写作提示" hidden>
+                <span class="daily-prompt__label">今日提示</span>
+                <p id="dailyPromptText"></p>
+                <div class="daily-prompt__actions">
+                  <button type="button" id="useDailyPromptButton">用这句开头</button>
+                  <button type="button" id="nextDailyPromptButton">换一个</button>
+                </div>
               </section>
 
               <section class="field grow" aria-labelledby="editorLabel">
@@ -506,7 +522,7 @@
                   <input id="focusInput" maxlength="64" placeholder="今天最值得完成的一件事" />
                 </label>
                 <div class="task-input-row">
-                  <input id="taskInput" placeholder="添加一个小任务" />
+                  <input id="taskInput" placeholder="写下今天最重要的一件事" />
                   <button id="addTaskButton" type="button">添加</button>
                 </div>
                 <ul class="task-list" id="taskList"></ul>
@@ -551,9 +567,9 @@
               <strong id="spreadPosition">1 / 1</strong>
             </span>
             <button type="button" id="nextSpreadButton" title="下一组内页" aria-label="下一组内页">›</button>
-            <button class="add-spread-button" type="button" id="addSpreadButton" title="续一页">
+            <button class="add-spread-button" type="button" id="addSpreadButton" title="在这一天后面续两页">
               <span aria-hidden="true">＋</span>
-              <strong>续一页</strong>
+              <strong>续页</strong>
             </button>
             <button type="button" id="bookmarkPageButton" class="bookmark-page-button" title="为当前内页添加书签" aria-label="为当前内页添加书签" aria-pressed="false">
               <svg aria-hidden="true"><use href="#icon-bookmark"></use></svg>
@@ -572,11 +588,18 @@
                   <div><dt>跨设备同步</dt><dd>未启用</dd></div>
                   <div><dt>上次导出备份</dt><dd id="lastBackupTime">还没有导出过</dd></div>
                 </dl>
+                <details class="page-history" id="pageHistory">
+                  <summary><span>本页历史</span><small id="pageHistoryMeta">暂无</small></summary>
+                  <p class="page-history__note">编辑已有内容前自动留存，最多每 30 分钟一份，保留 30 天。恢复前会先留存当前内容。</p>
+                  <div class="trash-list page-history__list" id="pageHistoryList"></div>
+                  <button type="button" id="savePageVersionButton">手动留存当前版本</button>
+                </details>
                 <p id="saveDetailsNote">清除浏览器数据会移除本机记录。备份文件可另行保留。</p>
                 <button type="button" id="saveBackupButton"><svg aria-hidden="true"><use href="#icon-download"></use></svg>导出全部记录备份</button>
               </div>
             </details>
             <button type="button" id="saveNowButton" title="立即保存全部改动到本机">保存</button>
+            <button type="button" id="footerTodayButton" class="today-button today-button--footer" title="回到今天" hidden>今天</button>
           </div>
         </footer>
       </main>
@@ -828,7 +851,7 @@
                 </button>
                 <button class="theme-preset" type="button" data-theme-preset="night" aria-pressed="false">
                   <span class="theme-preset__sample" aria-hidden="true"><i></i></span>
-                  <span><strong>夜读皮革</strong><small>驼棕封皮 · 生成内页</small></span>
+                  <span><strong>夜读皮革</strong><small>驼棕封皮 · 本色内页</small></span>
                   <svg aria-hidden="true"><use href="#icon-check"></use></svg>
                 </button>
               </fieldset>
@@ -870,10 +893,18 @@
               <span>内页纸色</span>
               <select id="paperToneSelect">
                 <option value="washi">白和纸</option>
-                <option value="ivory">生成纸</option>
+                <option value="ivory">本色纸</option>
                 <option value="gray">冷灰纸</option>
                 <option value="blue">淡蓝纸</option>
                 <option value="sakura">樱粉纸</option>
+              </select>
+            </label>
+            <label class="field settings-field settings-field--wide">
+              <span>打开时的封面</span>
+              <select id="coverDisplaySelect">
+                <option value="daily">每天第一次打开时显示</option>
+                <option value="always">每次打开都显示</option>
+                <option value="never">直接进入内页</option>
               </select>
             </label>
             <label class="print-toggle">
@@ -892,14 +923,14 @@
                   <div><strong>Plus 内测</strong><span>Beta 期间开放体验</span></div>
                   <span class="plus-badge">PLUS</span>
                 </div>
-                <p>适合收费的部分放在持续服务和高级工作流中；本地书写、基础笔刷、健康授权和数据导出始终保留。</p>
+                <p>Beta 期间全部开放。本地书写、基础笔刷、健康授权和数据导出会一直免费。</p>
                 <div class="plus-feature-list">
                   <div><span><strong>专业笔刷库</strong><small>六种笔迹，支持压感与纸感</small></span><em>已启用</em></div>
                   <div><span><strong>七日健康回顾</strong><small>将授权范围内的趋势整理到手帐</small></span><button id="healthWeeklyReportButton" type="button">生成</button></div>
-                  <div><span><strong>页面版本快照</strong><small id="versionCount">尚无快照</small></span><button id="saveVersionButton" type="button">保存</button></div>
+                  <div><span><strong>页面历史版本</strong><small id="versionCount">编辑时自动留存</small></span><button id="saveVersionButton" type="button">留存</button></div>
                 </div>
-                <button class="wide-button" id="restoreLastVersionButton" type="button" disabled>恢复最近快照</button>
-                <small class="plus-card__footnote">正式商业版可在此接入 App Store / Google Play 订阅；开源自托管与导出能力不受影响。</small>
+                <button class="wide-button" id="restoreLastVersionButton" type="button">查看本页历史</button>
+                <small class="plus-card__footnote">以后若推出订阅，只用于同步等持续服务，不会锁住你已经写下的内容。</small>
               </section>
             </div>
           </details>
@@ -911,18 +942,10 @@
               <svg><use href="#icon-download"></use></svg>
               安装到当前设备
             </button>
-            <button class="wide-button" id="copyShareLinkButton" type="button" title="复制当前体验链接">
+            <button class="wide-button" id="copyShareLinkButton" type="button" title="复制开页的网址，发给朋友或在其他设备打开">
               <svg><use href="#icon-check"></use></svg>
-              复制体验链接
+              复制应用链接
             </button>
-              <a class="wide-button release-link" href="../release/openpages-0.3.0-beta-pwa.zip" download title="下载可上传服务器的离线 PWA 包">
-              <svg><use href="#icon-download"></use></svg>
-              下载 PWA 分享包
-            </a>
-              <a class="wide-button release-link" href="../release/openpages-0.3.0-beta-source.zip" download title="下载开源源码包">
-              <svg><use href="#icon-download"></use></svg>
-              下载源码包
-            </a>
             <button class="wide-button" id="exportButton" type="button" title="导出全部本地数据 JSON" aria-label="导出全部本地数据 JSON">
               <svg><use href="#icon-download"></use></svg>
               导出全部本地数据
@@ -1042,6 +1065,6 @@
 
     <script src="./vendor/page-flip.browser.js?v=2.0.7" defer></script>
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261016-content" defer></script>
+    <script src="./app.js?v=20261016-hig" defer></script>
   </body>
 </html>
