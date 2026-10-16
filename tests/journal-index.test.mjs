@@ -18,7 +18,7 @@ function app() {
     crypto: webcrypto,
     setTimeout, clearTimeout, console,
   });
-  vm.runInContext(source.slice(0, source.lastIndexOf("\napplyGlobalSettings();")), context);
+  vm.runInContext(source.slice(0, source.lastIndexOf("\nstartApp();")), context);
   return (code) => vm.runInContext(code, context);
 }
 

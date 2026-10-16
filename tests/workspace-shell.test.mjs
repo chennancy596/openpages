@@ -36,7 +36,7 @@ function app() {
   for (const selector of [".workspace", ".sidebar", "#journalSpread", "#penOptions", "#inkOptionsToggle", "#rightDock", "#dockCloseButton", "#dockOverlay"]) nodes.set(selector, node());
   const context = vm.createContext({ document, localStorage: { getItem: () => null }, crypto: webcrypto, setTimeout, clearTimeout, console, node });
   const run = (code) => vm.runInContext(code, context);
-  run(source.slice(0, source.lastIndexOf("\napplyGlobalSettings();")));
+  run(source.slice(0, source.lastIndexOf("\nstartApp();")));
   run('elements.mobilePageButtons = [node({mobilePageTarget:"write"}), node({mobilePageTarget:"ink"})];');
   return { run, nodes, document, context };
 }

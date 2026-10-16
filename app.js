@@ -627,6 +627,214 @@ function loadState() {
   };
 }
 
+// Large media (photos, legacy ink images, handwriting strokes) lives in IndexedDB.
+// localStorage keeps the journal text plus "opmedia:" references, so it stays far below its quota.
+// The in-memory state always holds the full values, so rendering, export and snapshots are unchanged.
+const MEDIA_DB_NAME = "openpages-media";
+const MEDIA_STORE = "media";
+const MEDIA_REF_PREFIX = "opmedia:v1:";
+const MEDIA_INLINE_LIMIT = 2048;
+let mediaDbPromise = null;
+let mediaStoreAvailable = false;
+const persistedMediaIds = new Set();
+const mediaWritesInFlight = new Set();
+let storedMediaRefs = new Set();
+let mediaCleanupTimer = null;
+let mediaHydrated = false;
+const strokeRefCache = new WeakMap();
+const dataUrlRefCache = new Map();
+
+function hashMediaValue(text) {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let index = 0; index < text.length; index += 1) {
+    const code = text.charCodeAt(index);
+    h1 = Math.imul(h1 ^ code, 2654435761);
+    h2 = Math.imul(h2 ^ code, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return `${(h2 >>> 0).toString(36)}${(h1 >>> 0).toString(36)}-${text.length.toString(36)}`;
+}
+
+function isMediaRef(value) {
+  return typeof value === "string" && value.startsWith(MEDIA_REF_PREFIX);
+}
+
+function openMediaDb() {
+  if (mediaDbPromise) return mediaDbPromise;
+  mediaDbPromise = new Promise((resolve) => {
+    if (typeof indexedDB === "undefined") return resolve(null);
+    try {
+      const request = indexedDB.open(MEDIA_DB_NAME, 1);
+      request.addEventListener("upgradeneeded", () => request.result.createObjectStore(MEDIA_STORE));
+      request.addEventListener("success", () => resolve(request.result));
+      request.addEventListener("error", () => resolve(null));
+      request.addEventListener("blocked", () => resolve(null));
+    } catch {
+      resolve(null);
+    }
+  });
+  return mediaDbPromise;
+}
+
+function mediaTransaction(mode, work) {
+  return openMediaDb().then((db) => new Promise((resolve, reject) => {
+    if (!db) return reject(new Error("IndexedDB unavailable"));
+    const transaction = db.transaction(MEDIA_STORE, mode);
+    const result = work(transaction.objectStore(MEDIA_STORE));
+    transaction.addEventListener("complete", () => resolve(result));
+    transaction.addEventListener("error", () => reject(transaction.error));
+    transaction.addEventListener("abort", () => reject(transaction.error || new Error("aborted")));
+  }));
+}
+
+// Serializes state for localStorage, moving large values out into references.
+function serializeStateForStorage(snapshot) {
+  if (!mediaStoreAvailable) return { json: JSON.stringify(snapshot), refs: new Set(), pending: new Map() };
+  const refs = new Set();
+  const pending = new Map();
+  const reference = (value, id) => {
+    refs.add(id);
+    if (!persistedMediaIds.has(id)) pending.set(id, value);
+    return `${MEDIA_REF_PREFIX}${id}`;
+  };
+  const json = JSON.stringify(snapshot, (key, value) => {
+    if (isMediaRef(value)) {
+      refs.add(value.slice(MEDIA_REF_PREFIX.length));
+      return value;
+    }
+    if (typeof value === "string" && value.length > MEDIA_INLINE_LIMIT && value.startsWith("data:")) {
+      if (!dataUrlRefCache.has(value)) dataUrlRefCache.set(value, hashMediaValue(value));
+      return reference(value, dataUrlRefCache.get(value));
+    }
+    if (key === "strokes" && Array.isArray(value) && value.length) {
+      // Finished strokes never change, so length plus the last stroke identifies an unchanged array.
+      const cached = strokeRefCache.get(value);
+      if (cached && cached.length === value.length && cached.last === value[value.length - 1]) {
+        return cached.id ? reference(value, cached.id) : value;
+      }
+      const text = JSON.stringify(value);
+      const id = text.length > MEDIA_INLINE_LIMIT ? hashMediaValue(text) : "";
+      strokeRefCache.set(value, { length: value.length, last: value[value.length - 1], id });
+      if (id) return reference(value, id);
+    }
+    return value;
+  });
+  return { json, refs, pending };
+}
+
+function writePendingMedia(pending) {
+  const fresh = [...pending].filter(([id]) => !mediaWritesInFlight.has(id));
+  if (!fresh.length) return;
+  fresh.forEach(([id]) => mediaWritesInFlight.add(id));
+  mediaTransaction("readwrite", (store) => fresh.forEach(([id, value]) => store.put(value, id)))
+    .then(() => {
+      fresh.forEach(([id]) => persistedMediaIds.add(id));
+      fresh.forEach(([id]) => mediaWritesInFlight.delete(id));
+      if (hasPendingChanges) flushState();
+    })
+    .catch((error) => {
+      fresh.forEach(([id]) => mediaWritesInFlight.delete(id));
+      hasPendingChanges = true;
+      setSaveState("error");
+      notify(error?.name === "QuotaExceededError" ? "设备空间不足，图片和手写未能保存，请先导出备份" : "图片和手写保存失败，请先导出备份");
+    });
+}
+
+// Deletes stored media that the last successful save no longer references.
+function scheduleMediaCleanup() {
+  if (!mediaStoreAvailable || !mediaHydrated) return;
+  clearTimeout(mediaCleanupTimer);
+  mediaCleanupTimer = setTimeout(() => {
+    const keep = new Set([...storedMediaRefs, ...mediaWritesInFlight]);
+    mediaTransaction("readwrite", (store) => {
+      const request = store.openKeyCursor();
+      request.addEventListener("success", () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        if (!keep.has(cursor.key)) {
+          store.delete(cursor.key);
+          persistedMediaIds.delete(cursor.key);
+          dataUrlRefCache.forEach((id, value) => { if (id === cursor.key) dataUrlRefCache.delete(value); });
+        }
+        cursor.continue();
+      });
+    }).catch(() => {});
+  }, 8000);
+}
+
+function collectMediaRefs(value, found = new Set()) {
+  if (isMediaRef(value)) found.add(value.slice(MEDIA_REF_PREFIX.length));
+  else if (Array.isArray(value)) value.forEach((item) => collectMediaRefs(item, found));
+  else if (value && typeof value === "object") Object.values(value).forEach((item) => collectMediaRefs(item, found));
+  return found;
+}
+
+function replaceMediaRefs(value, media, missing) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      if (isMediaRef(item)) value[index] = resolveMediaRef(item, media, missing, null);
+      else replaceMediaRefs(item, media, missing);
+    });
+  } else if (value && typeof value === "object") {
+    Object.entries(value).forEach(([key, item]) => {
+      if (isMediaRef(item)) value[key] = resolveMediaRef(item, media, missing, key);
+      else replaceMediaRefs(item, media, missing);
+    });
+  }
+}
+
+function resolveMediaRef(ref, media, missing, key) {
+  const id = ref.slice(MEDIA_REF_PREFIX.length);
+  if (media.has(id)) return clonePageValue(media.get(id));
+  missing.add(id);
+  // Strokes must stay an array for the canvas code; images keep the reference so nothing else is overwritten.
+  return key === "strokes" ? [] : ref;
+}
+
+// Loads referenced media back into the in-memory state before the first render.
+async function hydrateStoredMedia() {
+  const db = await openMediaDb();
+  mediaStoreAvailable = Boolean(db);
+  if (!db) return;
+  navigator.storage?.persist?.().catch(() => {});
+  const refs = collectMediaRefs(state);
+  storedMediaRefs = refs;
+  if (!refs.size) {
+    mediaHydrated = true;
+    return;
+  }
+  const media = new Map();
+  try {
+    await mediaTransaction("readonly", (store) => {
+      refs.forEach((id) => {
+        const request = store.get(id);
+        request.addEventListener("success", () => {
+          if (request.result !== undefined) media.set(id, request.result);
+        });
+      });
+    });
+  } catch {
+    // Reading failed: new media is stored inline and nothing is deleted from IndexedDB this session.
+    mediaStoreAvailable = false;
+    window.setTimeout(() => notify("图片和手写暂时读取失败，请刷新页面；本次不会清理已存内容"), 600);
+    return;
+  }
+  media.forEach((_, id) => persistedMediaIds.add(id));
+  const missing = new Set();
+  replaceMediaRefs(state, media, missing);
+  mediaHydrated = true;
+  if (missing.size) window.setTimeout(() => notify(`有 ${missing.size} 份图片或手写没有找到，可从备份导入恢复`), 600);
+}
+
+// Moves media still stored inline in localStorage into IndexedDB on first launch after the upgrade.
+function migrateInlineMedia() {
+  if (!mediaStoreAvailable) return;
+  const raw = localStorage.getItem(STORAGE_KEY) || "";
+  if (raw.includes('"data:') || raw.includes('"strokes":[{')) flushState();
+}
+
 function persistState() {
   syncCurrentPageGroup();
   hasPendingChanges = true;
@@ -642,10 +850,20 @@ function flushState() {
   try {
     syncAllPageGroups();
     const savedAt = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...state, lastSavedAt: savedAt }));
+    const payload = serializeStateForStorage({ ...state, lastSavedAt: savedAt });
+    if (payload.pending.size) {
+      // Media goes to IndexedDB first; the text save follows once it is stored.
+      hasPendingChanges = true;
+      setSaveState("saving");
+      writePendingMedia(payload.pending);
+      return false;
+    }
+    localStorage.setItem(STORAGE_KEY, payload.json);
     state.lastSavedAt = savedAt;
+    storedMediaRefs = payload.refs;
     hasPendingChanges = false;
     setSaveState("saved");
+    scheduleMediaCleanup();
     return true;
   } catch (error) {
     hasPendingChanges = true;
@@ -5023,14 +5241,20 @@ function bindWorkspaceShell() {
   elements.rightDock.setAttribute("aria-hidden", String(elements.rightDock.inert));
 }
 
-applyGlobalSettings();
-setSaveState(state.lastSavedAt ? "saved" : "ready");
-bindInstallPrompt();
-bindEvents();
-setupCanvas();
-loadEntryIntoForm();
-bindWorkspaceShell();
-registerServiceWorker();
-if (state.health?.connection?.connected && getNativeHealthBridge()?.isNative) {
-  window.setTimeout(() => syncNativeHealth({ silent: true }), 450);
+async function startApp() {
+  await hydrateStoredMedia();
+  applyGlobalSettings();
+  setSaveState(state.lastSavedAt ? "saved" : "ready");
+  bindInstallPrompt();
+  bindEvents();
+  setupCanvas();
+  loadEntryIntoForm();
+  bindWorkspaceShell();
+  registerServiceWorker();
+  migrateInlineMedia();
+  if (state.health?.connection?.connected && getNativeHealthBridge()?.isNative) {
+    window.setTimeout(() => syncNativeHealth({ silent: true }), 450);
+  }
 }
+
+startApp();

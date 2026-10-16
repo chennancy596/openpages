@@ -32,7 +32,7 @@ function app() {
     clearTimeout: (id) => timers.delete(id),
   });
   const run = (code) => vm.runInContext(code, context);
-  run(source.slice(0, source.lastIndexOf("\napplyGlobalSettings();")));
+  run(source.slice(0, source.lastIndexOf("\nstartApp();")));
   run('state.selectedDate = "2026-09-05"; state.entries[state.selectedDate] = createEntry(state.selectedDate);');
   return { run, nodes, storage, timers };
 }
@@ -132,4 +132,36 @@ test("unchanged editor blur does not restart autosave or refresh its timestamp",
     syncEntryFromForm();
   `);
   assert.equal(timers.size, 0);
+});
+
+test("large media is stored first and the text save then keeps only references", () => {
+  const { run, storage } = app();
+  run(`
+    mediaStoreAvailable = true;
+    var queued = null;
+    writePendingMedia = (pending) => { queued = pending; };
+    currentEntry().photos = [{ id: "p1", name: "a.jpg", src: "data:image/jpeg;base64," + "A".repeat(5000) }];
+    currentEntry().strokes = Array.from({ length: 40 }, (_, s) => ({ brush: "pencil", points: [{ x: s, y: 1 }, { x: s, y: 2 }] }));
+  `);
+  assert.equal(run("flushState()"), false);
+  assert.equal(storage.value, null);
+  assert.equal(run("hasPendingChanges"), true);
+  assert.equal(run("queued.size"), 2);
+  run("queued.forEach((_, id) => persistedMediaIds.add(id));");
+  assert.equal(run("flushState()"), true);
+  assert.doesNotMatch(storage.value, /data:image/);
+  const entry = JSON.parse(storage.value).entries["2026-09-05"];
+  assert.match(entry.photos[0].src, /^opmedia:v1:/);
+  assert.match(entry.strokes, /^opmedia:v1:/);
+  assert.match(run("currentEntry().photos[0].src"), /^data:image/);
+});
+
+test("stored references are restored into the state and missing strokes stay an array", () => {
+  const { run } = app();
+  assert.equal(run(`
+    const target = { photos: [{ src: "opmedia:v1:img" }], strokes: "opmedia:v1:ink", other: { strokes: "opmedia:v1:gone" } };
+    const missing = new Set();
+    replaceMediaRefs(target, new Map([["img", "data:image/png;base64,x"], ["ink", [{ points: [] }]]]), missing);
+    JSON.stringify([target, [...missing]]);
+  `), JSON.stringify([{ photos: [{ src: "data:image/png;base64,x" }], strokes: [{ points: [] }], other: { strokes: [] } }, ["gone"]]));
 });
