@@ -73,7 +73,7 @@ iOS：
 ```text
 openpages/
   index.html
-  styles.css
+  app.css
   app.js
   assets/
   src-tauri/

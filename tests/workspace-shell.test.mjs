@@ -105,7 +105,10 @@ test("old bitmap handwriting keeps its original aspect ratio", () => {
 test("all responsive canvas ratios match the logical drawing surface", () => {
   const html = read("index.html");
   assert.match(html, /id="inkCanvas" width="900" height="1260"/);
-  const ratios = [...read("workspace.css").matchAll(/aspect-ratio:\s*(\d+)\s*\/\s*(\d+)/g)];
+  // The editor shell's canvas rules, which override the older #inkCanvas ratios by specificity;
+  // photo frames and swatches have their own ratios.
+  const canvasRules = [...read("app.css").matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(([, selector]) => selector.includes("inkCanvas") && selector.includes("editor-shell"));
+  const ratios = canvasRules.flatMap(([, , body]) => [...body.matchAll(/aspect-ratio:\s*(\d+)\s*\/\s*(\d+)/g)]);
   assert.ok(ratios.length > 0);
   for (const [, width, height] of ratios) assert.equal(Number(width) / Number(height), 900 / 1260);
 });
@@ -117,11 +120,11 @@ test("moving toolbars does not duplicate element IDs", () => {
 });
 
 test("the new shell is included in build and offline assets", () => {
-  for (const name of ["index.html", "scripts/build-web.mjs", "service-worker.js"]) assert.ok(read(name).includes("workspace.css"), name);
+  for (const name of ["index.html", "scripts/build-web.mjs", "service-worker.js"]) assert.ok(read(name).includes("app.css"), name);
 });
 
 test("core brand text colors meet 4.5:1 on their intended surfaces", () => {
-  const css = read("workspace.css");
+  const css = read("app.css");
   const color = (token) => css.match(new RegExp(`${token}: (#[0-9a-f]{6})`))[1];
   const luminance = (hex) => hex.slice(1).match(/../g).map((part) => parseInt(part, 16) / 255).map((value) => value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4).reduce((sum, value, i) => sum + value * [.2126, .7152, .0722][i], 0);
   for (const [text, surface] of [["--op-forest", "--op-white"], ["--op-gray", "--op-white"], ["--op-ink", "--op-mist"]]) {

@@ -13,7 +13,9 @@ opens upward and closes on Escape or an outside pointer action.
 
 ## Save Contract
 
-- An edit immediately enters the pending state. Autosave is debounced by 180ms.
+- An edit immediately enters the pending state. Autosave is debounced by 180ms
+  and then runs in the browser's idle time (at most 800ms later), so the write
+  never lands between keystrokes.
 - Only a successful localStorage write changes the indicator to saved.
 - The successful timestamp is serialized with the data, never advanced on failure.
 - Ctrl/Cmd+S captures the current form and writes immediately. The Save button
@@ -45,6 +47,13 @@ and cannot survive clearing that browser's site data without a separate backup.
 - Without IndexedDB, the previous inline format is used unchanged.
 - A stored journal that cannot be parsed is copied to
   `openpages.state.v1.unreadable-<time>` instead of being deleted.
+
+## Page Turns
+
+A turn lasts 460ms (400ms on narrow screens), driven by one CSS variable for all
+layers. Navigation is never refused during a turn: a new tap settles the
+current turn (its final content is applied at once) and continues, and taps in
+quick succession switch without animation.
 
 ## Deleting and Undo
 

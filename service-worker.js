@@ -1,13 +1,9 @@
-const CACHE_NAME = "openpages-v62-fulltest";
+const CACHE_NAME = "openpages-v64-css";
 const ASSETS = [
   "./",
   "./index.html",
   "./privacypolicy.html",
-  "./styles.css",
-  "./refinement.css",
-  "./handwriting.css",
-  "./product-polish.css",
-  "./workspace.css",
+  "./app.css",
   "./generated/runtime-bridge-v2.js",
   "./vendor/page-flip.browser.js",
   "./app.js",

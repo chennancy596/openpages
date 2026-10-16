@@ -7,7 +7,7 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const dist = join(root, "dist");
 const generated = join(root, "generated");
 const vendor = join(root, "vendor");
-const files = ["index.html", "privacypolicy.html", "styles.css", "refinement.css", "handwriting.css", "product-polish.css", "workspace.css", "app.js", "manifest.webmanifest", "service-worker.js", "assets", "generated", "vendor"];
+const files = ["index.html", "privacypolicy.html", "app.css", "app.js", "manifest.webmanifest", "service-worker.js", "assets", "generated", "vendor"];
 
 await mkdir(vendor, { recursive: true });
 await cp(join(root, "node_modules/page-flip/dist/js/page-flip.browser.js"), join(vendor, "page-flip.browser.js"));

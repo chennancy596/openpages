@@ -16,6 +16,7 @@ function app() {
     },
     localStorage: { getItem: () => null, setItem() {} },
     crypto: webcrypto,
+    performance,
     setTimeout, clearTimeout, console,
   });
   vm.runInContext(source.slice(0, source.lastIndexOf("\nstartApp();")), context);
@@ -145,4 +146,18 @@ test("scaffold written by older templates is still recognised as generated, not 
     [old.text, old.focus, old.tags.join(",")].join(" | ");
   `);
   assert.equal(result, " |  | 我的页签");
+});
+
+test("a tap during a page turn settles it with its final content instead of being ignored", () => {
+  const run = app();
+  const result = run(`
+    finishPageTurn = () => { pageTurnInProgress = false; };
+    let committed = "";
+    pageTurnInProgress = true;
+    pendingTurnCommit = () => { committed = "目标页"; };
+    const settled = settlePageTurn();
+    [settled, committed, pageTurnInProgress, pendingTurnCommit === null, isRushing()].join(",");
+  `);
+  assert.equal(result, "true,目标页,false,true,true");
+  assert.equal(run("lastRushAt = -Infinity; isRushing()"), false);
 });

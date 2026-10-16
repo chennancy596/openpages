@@ -938,7 +938,12 @@ function persistState() {
   setSaveState("saving");
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
-    flushState();
+    // The write (tens of ms for a year of pages) runs when the browser is idle, not between keystrokes.
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(() => { if (hasPendingChanges) flushState(); }, { timeout: 800 });
+    } else {
+      flushState();
+    }
   }, 180);
 }
 
@@ -1021,7 +1026,7 @@ async function syncExternalState(raw) {
   } else {
     renderPageGroupNavigation();
     renderCalendar();
-    renderStats();
+    scheduleStats();
     renderSearch();
     renderPageHistory();
   }
@@ -1053,7 +1058,7 @@ function flushState() {
       adoptExternalState(stored, collectMediaRefs(stored), { keepEdited: true });
       resolveMediaInto(state).then(() => {
         renderCalendar();
-        renderStats();
+        scheduleStats();
         renderTrash();
       });
     }
@@ -1106,7 +1111,7 @@ function setSaveState(stateName) {
 }
 
 function saveNow() {
-  if (pageTurnInProgress) return false;
+  settlePageTurn();
   syncEntryFromForm();
   const saved = flushState();
   if (saved) notify("全部改动已保存到本机");
@@ -1203,7 +1208,7 @@ function openNotebook() {
     if (elements.body.dataset.inputMode === "write" && window.matchMedia("(pointer: fine)").matches) {
       elements.journalEditor.focus({ preventScroll: true });
     }
-  }, 1120);
+  }, 640);
 }
 
 function appendEmptyState(parent, text, tagName = "li") {
@@ -1496,7 +1501,7 @@ function renderTopDate() {
 }
 
 function goToToday() {
-  if (pageTurnInProgress) return;
+  settlePageTurn();
   const scope = pageScopeForMode(currentEntry().mode);
   navigateToCalendarPage(todayKey(), scope === "month" ? "month" : scope === "week" ? "week" : "day");
 }
@@ -1563,7 +1568,7 @@ function loadEntryIntoForm() {
   renderOnThisDay();
   renderCustomTemplates();
   renderStickers();
-  renderStats();
+  scheduleStats();
   renderSearch();
   renderPlusPanel();
   renderPageHistory();
@@ -1626,15 +1631,15 @@ function renderPageGroupNavigation() {
     elements.spreadPosition.textContent = `${pageRangeLabel(position)} / ${total * 2} 页`;
     elements.spreadPosition.title = label;
   }
-  if (elements.saveNowButton) elements.saveNowButton.disabled = pageTurnInProgress;
+
   if (elements.leftPageNumber) elements.leftPageNumber.textContent = String(leftPage).padStart(3, "0");
   if (elements.rightPageNumber) elements.rightPageNumber.textContent = String(rightPage).padStart(3, "0");
-  if (elements.prevSpreadButton) elements.prevSpreadButton.disabled = pageTurnInProgress || position === 0;
-  if (elements.nextSpreadButton) elements.nextSpreadButton.disabled = pageTurnInProgress || position >= total - 1;
+  if (elements.prevSpreadButton) elements.prevSpreadButton.disabled = position === 0;
+  if (elements.nextSpreadButton) elements.nextSpreadButton.disabled = position >= total - 1;
   if (elements.addSpreadButton) {
     // Plans are one spread per week or month; adding pages belongs to diary days.
     elements.addSpreadButton.hidden = scope !== "day";
-    elements.addSpreadButton.disabled = pageTurnInProgress;
+    elements.addSpreadButton.disabled = false;
     elements.addSpreadButton.setAttribute("aria-label", `在后面续两页，当前第 ${pageRangeLabel(position)} 页，共 ${total * 2} 页`);
   }
   if (elements.bookmarkPageButton) {
@@ -1651,7 +1656,7 @@ function togglePageBookmark() {
   persistState();
   renderPageGroupNavigation();
   renderSearch();
-  renderStats();
+  scheduleStats();
   notify(currentEntry().bookmarked ? "已夹入书签" : "已移除书签");
 }
 
@@ -1785,7 +1790,7 @@ function applyDailyStamp() {
   const current = options.indexOf(entry.stamp);
   entry.stamp = options[(current + 1) % options.length];
   renderStamp();
-  renderStats();
+  scheduleStats();
   notify(`已盖今日印章：${entry.stamp}`);
   persistState();
 }
@@ -1912,7 +1917,8 @@ function activateCalendarPageForDate(key, scale) {
 }
 
 function openPageGroupForDate(key, index, options = {}) {
-  if (!key || pageTurnInProgress) return;
+  settlePageTurn();
+  if (!key) return;
   syncEntryFromForm();
   const entry = state.entries[key];
   if (!entry) return;
@@ -1937,7 +1943,8 @@ function openPageGroupForDate(key, index, options = {}) {
 }
 
 function navigateToCalendarPage(focusKey, scale = "day") {
-  if (!focusKey || pageTurnInProgress) return;
+  settlePageTurn();
+  if (!focusKey) return;
   syncEntryFromForm();
   state.calendarFocusDate = focusKey;
   const targetKey = calendarStorageKey(scale, focusKey);
@@ -1983,15 +1990,47 @@ function renderCalendarScaleNavigation(mode = currentEntry().mode) {
   if (elements.body.dataset.view === "today") elements.pageHeading.textContent = labels[2];
 }
 
+// Page turns are short and never block input. A new tap during a turn settles it at once
+// (its final content is applied) and continues; taps in quick succession skip the animation,
+// like flicking through paper.
+const TURN_MS_WIDE = 460;
+const TURN_MS_NARROW = 400;
+const RUSH_WINDOW_MS = 650;
+let pendingTurnCommit = null;
+let lastRushAt = -Infinity;
+
+function turnDurationNow() {
+  return window.matchMedia("(max-width: 760px)").matches ? TURN_MS_NARROW : TURN_MS_WIDE;
+}
+
+function settlePageTurn() {
+  if (!pageTurnInProgress) return false;
+  clearTimeout(pageTurnSwapTimer);
+  const commit = pendingTurnCommit;
+  pendingTurnCommit = null;
+  commit?.();
+  lastRushAt = performance.now();
+  finishPageTurn();
+  return true;
+}
+
+// True when the person is moving through pages quickly; the next turn then happens without animation.
+function isRushing() {
+  const rushing = performance.now() - lastRushAt < RUSH_WINDOW_MS;
+  if (rushing) lastRushAt = performance.now();
+  return rushing;
+}
+
 function selectDate(key) {
-  if (!key || key === state.selectedDate || pageTurnInProgress) return;
+  settlePageTurn();
+  if (!key || key === state.selectedDate) return;
   syncEntryFromForm();
   pageTurnCompletion = null;
   const previousKey = state.selectedDate;
   const preservedMobilePage = mobilePageForTransition(currentEntry().mode, state.entries[key]?.mode || "daily", elements.journalSpread.dataset.mobilePage);
   const direction = key > state.selectedDate ? "forward" : "backward";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (elements.body.dataset.book !== "open" || reduceMotion) {
+  if (elements.body.dataset.book !== "open" || reduceMotion || isRushing()) {
     commitSelectedDate(key);
     setMobilePage(preservedMobilePage);
     return;
@@ -2001,8 +2040,8 @@ function selectDate(key) {
   const spread = elements.journalSpread;
   const turnClass = `is-turning-${direction}`;
   spread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped");
-  const isNarrowScreen = window.matchMedia("(max-width: 760px)").matches;
-  const turnDuration = isNarrowScreen ? 740 : 920;
+  const turnDuration = turnDurationNow();
+  spread.style.setProperty("--turn-duration", `${turnDuration}ms`);
   const previousSpread = capturePageFlipSnapshot();
   commitSelectedDate(key);
   setMobilePage(preservedMobilePage);
@@ -2017,14 +2056,19 @@ function selectDate(key) {
   setDateNavigationDisabled(true);
 
   if (!usesPageFlipEngine) {
-    pageTurnSwapTimer = window.setTimeout(() => {
+    pendingTurnCommit = () => {
       commitSelectedDate(key);
       setMobilePage(preservedMobilePage);
       spread.classList.add("is-turn-content-swapped");
+    };
+    pageTurnSwapTimer = window.setTimeout(() => {
+      const commit = pendingTurnCommit;
+      pendingTurnCommit = null;
+      commit?.();
     }, Math.round(turnDuration * 0.48));
   }
 
-  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 120);
+  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 80);
 }
 
 function clonePageForFlip(source) {
@@ -2202,6 +2246,11 @@ function preparePageTurnFace(direction) {
 function finishPageTurn() {
   if (!pageTurnInProgress) return;
   window.clearTimeout(pageTurnSwapTimer);
+  if (pendingTurnCommit) {
+    const commit = pendingTurnCommit;
+    pendingTurnCommit = null;
+    commit();
+  }
   window.clearTimeout(pageTurnFallbackTimer);
   elements.journalSpread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped", "is-pageflip-engine-active");
   elements.pageTurnSheet?.replaceChildren();
@@ -2247,7 +2296,7 @@ function commitPageGroup(index) {
 }
 
 function selectPageGroup(index, options = {}) {
-  if (pageTurnInProgress) return;
+  settlePageTurn();
   const entry = currentEntry();
   const previousIndex = entry.activePageGroup || 0;
   const targetIndex = Math.min(Math.max(index, 0), entry.pageGroups.length - 1);
@@ -2262,7 +2311,7 @@ function selectPageGroup(index, options = {}) {
     renderPageGroupNavigation();
     if (options.openPicker) openMobilePanel("templates");
   };
-  if (elements.body.dataset.book !== "open" || reduceMotion) {
+  if (elements.body.dataset.book !== "open" || reduceMotion || isRushing()) {
     commitPageGroup(targetIndex);
     setMobilePage(preservedMobilePage);
     complete();
@@ -2274,8 +2323,8 @@ function selectPageGroup(index, options = {}) {
   const spread = elements.journalSpread;
   const turnClass = `is-turning-${direction}`;
   spread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped");
-  const isNarrowScreen = window.matchMedia("(max-width: 760px)").matches;
-  const turnDuration = isNarrowScreen ? 740 : 920;
+  const turnDuration = turnDurationNow();
+  spread.style.setProperty("--turn-duration", `${turnDuration}ms`);
   const previousSpread = capturePageFlipSnapshot();
   commitPageGroup(targetIndex);
   setMobilePage(preservedMobilePage);
@@ -2290,17 +2339,22 @@ function selectPageGroup(index, options = {}) {
   setDateNavigationDisabled(true);
 
   if (!usesPageFlipEngine) {
-    pageTurnSwapTimer = window.setTimeout(() => {
+    pendingTurnCommit = () => {
       commitPageGroup(targetIndex);
       setMobilePage(preservedMobilePage);
       spread.classList.add("is-turn-content-swapped");
+    };
+    pageTurnSwapTimer = window.setTimeout(() => {
+      const commit = pendingTurnCommit;
+      pendingTurnCommit = null;
+      commit?.();
     }, Math.round(turnDuration * 0.48));
   }
-  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 120);
+  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 80);
 }
 
 function addPageGroup() {
-  if (pageTurnInProgress) return;
+  settlePageTurn();
   syncEntryFromForm();
   const entry = currentEntry();
   if (pageScopeForMode(entry.mode) !== "day") {
@@ -2321,22 +2375,10 @@ function addPageGroup() {
   notify("已续两页，可以为它们选择内页样式");
 }
 
+// Navigation stays enabled during a turn (a tap settles it and moves on); only aria-busy reflects it.
 function setDateNavigationDisabled(disabled) {
-  elements.prevDayButton.disabled = disabled;
-  elements.nextDayButton.disabled = disabled;
-  elements.datePicker.disabled = disabled;
-  elements.topDatePicker.disabled = disabled;
-  elements.calendarScaleButtons.forEach((button) => {
-    button.disabled = disabled;
-  });
   elements.journalSpread.setAttribute("aria-busy", String(disabled));
-  if (disabled) {
-    elements.prevSpreadButton.disabled = true;
-    elements.nextSpreadButton.disabled = true;
-    elements.addSpreadButton.disabled = true;
-  } else {
-    renderPageGroupNavigation();
-  }
+  if (!disabled) renderPageGroupNavigation();
 }
 
 function shiftDate(days) {
@@ -2553,7 +2595,7 @@ function renderFragments() {
     remove.addEventListener("click", () => {
       entry.fragments = entry.fragments.filter((candidate) => candidate.id !== fragment.id);
       renderFragments();
-      renderStats();
+      scheduleStats();
       renderSearch();
       persistState();
     });
@@ -2568,7 +2610,7 @@ function addFragment() {
   currentEntry().fragments.unshift({ id: crypto.randomUUID(), text, createdAt: new Date().toISOString() });
   elements.fragmentInput.value = "";
   renderFragments();
-  renderStats();
+  scheduleStats();
   renderSearch();
   notify("已贴上灵感便签");
   persistState();
@@ -2598,7 +2640,7 @@ function renderBullets() {
     marker.addEventListener("click", () => {
       bullet.done = !bullet.done;
       renderBullets();
-      renderStats();
+      scheduleStats();
       persistState();
     });
 
@@ -2612,7 +2654,7 @@ function renderBullets() {
     remove.addEventListener("click", () => {
       entry.bullets = entry.bullets.filter((candidate) => candidate.id !== bullet.id);
       renderBullets();
-      renderStats();
+      scheduleStats();
       renderSearch();
       persistState();
     });
@@ -2654,7 +2696,7 @@ function addBullet() {
   });
   elements.bulletInput.value = "";
   renderBullets();
-  renderStats();
+  scheduleStats();
   renderSearch();
   notify("已记录一条子弹");
   persistState();
@@ -2705,7 +2747,7 @@ function renderPhotos() {
     remove.addEventListener("click", () => {
       entry.photos = entry.photos.filter((candidate) => candidate.id !== photo.id);
       renderPhotos();
-      renderStats();
+      scheduleStats();
       renderSearch();
       notify("照片已移除");
       persistState();
@@ -2758,7 +2800,7 @@ async function addPhotos(files) {
     }
   }
   renderPhotos();
-  renderStats();
+  scheduleStats();
   renderSearch();
   persistState();
   notify(`已加入 ${images.length} 张图片`);
@@ -2910,7 +2952,7 @@ function saveEntryVersion() {
 }
 
 function restoreEntryVersion(id) {
-  if (pageTurnInProgress) return;
+  settlePageTurn();
   syncEntryFromForm();
   const entry = currentEntry();
   const snapshot = entry.versions.find((version) => version.id === id);
@@ -3083,7 +3125,7 @@ async function syncNativeHealth({ silent = false } = {}) {
     state.health.connection.lastSync = new Date().toISOString();
     renderHealth();
     renderHealthConnection();
-    renderStats();
+    scheduleStats();
     renderSearch();
     renderPlusPanel();
     persistState();
@@ -3197,7 +3239,7 @@ function importAppleHealthXml(text) {
   };
   renderHealth();
   renderHealthConnection();
-  renderStats();
+  scheduleStats();
   renderSearch();
   renderPlusPanel();
   persistState();
@@ -3306,6 +3348,19 @@ function renderHabits() {
   elements.habitInputs.forEach((input) => {
     input.checked = Boolean(habits[input.dataset.habit]);
   });
+}
+
+// Sidebar counts and recent pages are not needed within the same frame as a page change.
+let statsHandle = null;
+function scheduleStats() {
+  if (statsHandle) return;
+  const run = () => {
+    statsHandle = null;
+    renderStats();
+  };
+  statsHandle = typeof requestIdleCallback === "function"
+    ? requestIdleCallback(run, { timeout: 400 })
+    : setTimeout(run, 60);
 }
 
 function renderStats() {
@@ -3548,7 +3603,7 @@ function applyModeTemplate(mode, template) {
   notify(`${where}已在后面续两页「${label}」`, {
     label: "撤销",
     run: () => {
-      if (pageTurnInProgress) return;
+      settlePageTurn();
       const position = entry.pageGroups.findIndex((group) => group.id === addedId);
       if (position < 0) return;
       entry.pageGroups.splice(position, 1);
@@ -4096,7 +4151,15 @@ function reviewExcerpt(group, key, query) {
   return `${start ? "…" : ""}${escapeHtml(source.slice(start, index))}<mark>${escapeHtml(source.slice(index, index + term.length))}</mark>${escapeHtml(source.slice(index + term.length, end))}${end < source.length ? "…" : ""}`;
 }
 
-function renderSearch() {
+// The index is rebuilt only while 回看 is on screen; otherwise it is marked stale and rebuilt on open.
+let searchStale = true;
+function renderSearch({ force = false } = {}) {
+  const reviewShowing = elements.rightDock?.classList.contains("is-open") && elements.rightDock.dataset.mobilePanel === "review";
+  if (!force && !reviewShowing) {
+    searchStale = true;
+    return;
+  }
+  searchStale = false;
   const pages = journalPageIndex();
   const tag = elements.reviewTagFilter.value;
   const tags = [...new Set(pages.flatMap(({ group }) => group.tags || []).concat(tag || []))].sort((a, b) => a.localeCompare(b, "zh-CN"));
@@ -4230,7 +4293,7 @@ function renderWeek() {
       textarea.style.height = "auto";
       textarea.style.height = `${textarea.scrollHeight}px`;
       persistState();
-      renderStats();
+      scheduleStats();
       renderSearch();
     });
     requestAnimationFrame(() => {
@@ -4413,7 +4476,8 @@ function deleteCurrentPage() {
 // Puts a just-deleted page back exactly where it was; anything else goes through 最近删除.
 function undoDelete(trashId, index) {
   const item = state.trash.find((candidate) => candidate.id === trashId);
-  if (!item || pageTurnInProgress) return;
+  settlePageTurn();
+  if (!item) return;
   const entry = state.entries[item.date];
   if (item.kind !== "group" || !entry) {
     restoreTrashItem(trashId);
@@ -4476,7 +4540,8 @@ function renderTrash() {
 
 function restoreTrashItem(id) {
   const item = state.trash.find((candidate) => candidate.id === id);
-  if (!item || pageTurnInProgress) return;
+  settlePageTurn();
+  if (!item) return;
   syncEntryFromForm();
   const key = item.date;
   const groups = trashedGroups(item).map((group) => clonePageValue(group));
@@ -4961,7 +5026,7 @@ function openMobilePanel(panel) {
   const panelTitle = $("#dockPanelTitle");
   if (panelTitle) panelTitle.textContent = panelName;
   elements.rightDock.setAttribute("aria-label", panelName);
-  if (panel === "review") renderSearch();
+  if (panel === "review") renderSearch({ force: true });
   elements.dockSections.forEach((section) => {
     const active = section.dataset.panel === panel;
     section.classList.toggle("is-panel-active", active);
@@ -5692,7 +5757,7 @@ function bindEvents() {
   elements.habitInputs.forEach((input) => {
     input.addEventListener("change", () => {
       currentEntry().habits[input.dataset.habit] = input.checked;
-      renderStats();
+      scheduleStats();
       persistState();
     });
   });
