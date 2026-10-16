@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenPages 小红书轮播图</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap");
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        background: #d4d9d0;
+        color: #2f342f;
+        font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+      }
+
+      body {
+        display: grid;
+        gap: 32px;
+        padding: 32px;
+      }
+
+      .slide {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 9%, rgba(255, 255, 255, 0.58), transparent 28%),
+          radial-gradient(circle at 84% 82%, rgba(82, 108, 115, 0.16), transparent 30%),
+          linear-gradient(135deg, #e4e6de 0%, #cfd7ce 54%, #bfc7be 100%);
+      }
+
+      .slide::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          repeating-linear-gradient(90deg, rgba(67, 80, 70, 0.035) 0 1px, transparent 1px 13px),
+          repeating-linear-gradient(0deg, rgba(67, 80, 70, 0.026) 0 1px, transparent 1px 11px);
+        mix-blend-mode: multiply;
+      }
+
+      .slide::after {
+        content: "";
+        position: absolute;
+        inset: 22px;
+        border: 1px solid rgba(255, 255, 255, 0.45);
+        pointer-events: none;
+      }
+
+      .kicker {
+        position: absolute;
+        left: 74px;
+        top: 76px;
+        z-index: 3;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        border: 1px solid rgba(100, 114, 93, 0.28);
+        border-radius: 999px;
+        background: rgba(248, 246, 238, 0.62);
+        color: #5d6e59;
+        font-size: 25px;
+        font-weight: 700;
+      }
+
+      .kicker span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #a24f48;
+      }
+
+      h1 {
+        position: absolute;
+        left: 74px;
+        top: 154px;
+        z-index: 3;
+        width: 900px;
+        margin: 0;
+        color: #273029;
+        font-family: "Shippori Mincho", "Songti SC", serif;
+        font-size: 82px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .lead {
+        position: absolute;
+        left: 80px;
+        top: 356px;
+        z-index: 3;
+        width: 760px;
+        margin: 0;
+        color: rgba(47, 52, 47, 0.76);
+        font-size: 34px;
+        line-height: 1.54;
+        font-weight: 500;
+      }
+
+      .small-note {
+        position: absolute;
+        left: 78px;
+        bottom: 72px;
+        z-index: 3;
+        color: rgba(47, 52, 47, 0.62);
+        font-size: 24px;
+        font-weight: 700;
+      }
+
+      .number {
+        position: absolute;
+        right: 74px;
+        top: 76px;
+        z-index: 3;
+        color: rgba(47, 52, 47, 0.28);
+        font-family: Georgia, serif;
+        font-size: 34px;
+        font-weight: 700;
+      }
+
+      .shot {
+        position: absolute;
+        z-index: 2;
+        overflow: hidden;
+        border: 1px solid rgba(82, 73, 60, 0.24);
+        background: #f5f0e5;
+        box-shadow:
+          0 28px 64px rgba(42, 47, 42, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.72);
+      }
+
+      .shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .cover-phone {
+        left: 124px;
+        top: 520px;
+        width: 832px;
+        height: 670px;
+        border-radius: 40px;
+      }
+
+      .cover-phone img {
+        object-position: 50% 0%;
+      }
+
+      .desktop-wide {
+        left: 60px;
+        top: 560px;
+        width: 960px;
+        height: 600px;
+        border-radius: 34px;
+      }
+
+      .desktop-wide img {
+        object-position: 54% 34%;
+      }
+
+      .mobile-card {
+        right: 96px;
+        top: 516px;
+        width: 340px;
+        height: 680px;
+        border-radius: 36px;
+        transform: rotate(2deg);
+      }
+
+      .mobile-card img {
+        object-position: 50% 0%;
+      }
+
+      .desktop-card {
+        left: 76px;
+        top: 590px;
+        width: 640px;
+        height: 470px;
+        border-radius: 30px;
+      }
+
+      .desktop-card img {
+        object-position: 52% 34%;
+      }
+
+      .feature-grid {
+        position: absolute;
+        left: 76px;
+        top: 535px;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 22px;
+        width: 928px;
+      }
+
+      .feature {
+        min-height: 198px;
+        padding: 28px;
+        border: 1px solid rgba(91, 103, 86, 0.2);
+        border-radius: 30px;
+        background:
+          linear-gradient(135deg, rgba(255, 252, 244, 0.82), rgba(232, 235, 226, 0.72));
+        box-shadow:
+          0 16px 36px rgba(43, 49, 42, 0.12),
+          inset 0 1px 0 rgba(255, 255, 255, 0.68);
+      }
+
+      .feature strong {
+        display: block;
+        margin-bottom: 12px;
+        color: #2f342f;
+        font-size: 34px;
+        line-height: 1.2;
+      }
+
+      .feature p {
+        margin: 0;
+        color: rgba(47, 52, 47, 0.66);
+        font-size: 24px;
+        line-height: 1.42;
+        font-weight: 600;
+      }
+
+      .badge-row {
+        position: absolute;
+        left: 76px;
+        bottom: 170px;
+        z-index: 3;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 14px;
+        width: 900px;
+      }
+
+      .badge {
+        padding: 14px 20px;
+        border: 1px solid rgba(91, 103, 86, 0.24);
+        border-radius: 999px;
+        background: rgba(248, 246, 238, 0.72);
+        color: #485446;
+        font-size: 26px;
+        font-weight: 700;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+      }
+
+      #slide-1 .badge-row {
+        bottom: 270px;
+      }
+
+      .timeline {
+        position: absolute;
+        left: 112px;
+        top: 545px;
+        z-index: 3;
+        display: grid;
+        gap: 24px;
+        width: 856px;
+      }
+
+      .step {
+        display: grid;
+        grid-template-columns: 88px 1fr;
+        gap: 22px;
+        align-items: center;
+        padding: 26px 30px;
+        border-radius: 30px;
+        background: rgba(248, 246, 238, 0.76);
+        box-shadow:
+          0 16px 34px rgba(43, 49, 42, 0.1),
+          inset 0 0 0 1px rgba(91, 103, 86, 0.16);
+      }
+
+      .step em {
+        display: grid;
+        place-items: center;
+        width: 88px;
+        height: 88px;
+        border-radius: 50%;
+        color: #a24f48;
+        border: 4px solid rgba(162, 79, 72, 0.38);
+        font: normal 700 34px/1 Georgia, serif;
+      }
+
+      .step strong {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 34px;
+      }
+
+      .step span {
+        color: rgba(47, 52, 47, 0.64);
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .cta {
+        position: absolute;
+        left: 76px;
+        bottom: 58px;
+        z-index: 3;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 28px;
+        width: 928px;
+        padding: 28px 32px;
+        border-radius: 30px;
+        background:
+          linear-gradient(135deg, rgba(255, 252, 244, 0.88), rgba(232, 235, 226, 0.78));
+        box-shadow:
+          0 18px 46px rgba(43, 49, 42, 0.14),
+          inset 0 0 0 1px rgba(103, 114, 95, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      }
+
+      .cta strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #2f342f;
+        font-size: 34px;
+      }
+
+      .cta small {
+        color: rgba(47, 52, 47, 0.62);
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .seal {
+        display: grid;
+        place-items: center;
+        width: 118px;
+        height: 118px;
+        border: 5px solid rgba(162, 79, 72, 0.58);
+        border-radius: 50%;
+        color: #a24f48;
+        font-family: "Klee One", cursive;
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 1.08;
+        text-align: center;
+        transform: rotate(-9deg);
+      }
+
+      .leaf {
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        border-radius: 50% 0 50% 0;
+        border: 1px solid rgba(87, 106, 83, 0.16);
+        opacity: 0.55;
+        transform: rotate(-22deg);
+      }
+
+      .leaf.one {
+        left: -34px;
+        top: 130px;
+      }
+
+      .leaf.two {
+        right: -82px;
+        bottom: 190px;
+        transform: rotate(34deg);
+      }
+
+      .tape {
+        position: absolute;
+        z-index: 4;
+        width: 170px;
+        height: 44px;
+        border-radius: 6px;
+        background:
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 7px, transparent 7px 16px),
+          rgba(213, 194, 151, 0.74);
+        box-shadow: 0 8px 20px rgba(89, 74, 48, 0.12);
+      }
+
+      .tape.one {
+        left: 98px;
+        top: 540px;
+        transform: rotate(-5deg);
+      }
+
+      .tape.two {
+        right: 110px;
+        top: 500px;
+        transform: rotate(6deg);
+      }
+
+      .paper-sample {
+        position: absolute;
+        left: 112px;
+        top: 550px;
+        z-index: 2;
+        width: 856px;
+        height: 570px;
+        border: 1px solid rgba(116, 104, 88, 0.2);
+        border-radius: 34px;
+        background:
+          linear-gradient(90deg, rgba(126, 103, 70, 0.11), transparent 36px),
+          radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.52), transparent 26%),
+          url("./assets/washi-paper-fine.png"),
+          #f4f0e7;
+        box-shadow:
+          0 26px 62px rgba(42, 47, 42, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.72);
+      }
+
+      .paper-sample::before {
+        content: "";
+        position: absolute;
+        inset: 80px 72px;
+        background:
+          radial-gradient(ellipse at 44% 20%, rgba(100, 114, 93, 0.13) 0 7%, transparent 8%),
+          linear-gradient(90deg, transparent 48%, rgba(100, 114, 93, 0.16) 49% 51%, transparent 52%),
+          linear-gradient(28deg, transparent 47%, rgba(100, 114, 93, 0.12) 48% 50%, transparent 51%),
+          linear-gradient(-28deg, transparent 47%, rgba(100, 114, 93, 0.1) 48% 50%, transparent 51%);
+        opacity: 0.52;
+      }
+
+      .stamp-big {
+        position: absolute;
+        right: 150px;
+        bottom: 245px;
+        z-index: 3;
+        display: grid;
+        place-items: center;
+        width: 154px;
+        height: 154px;
+        border: 7px solid rgba(162, 79, 72, 0.52);
+        border-radius: 50%;
+        color: #a24f48;
+        font-family: "Klee One", cursive;
+        font-size: 46px;
+        font-weight: 600;
+        transform: rotate(-8deg);
+      }
+
+      .revenue {
+        position: absolute;
+        left: 76px;
+        top: 540px;
+        z-index: 3;
+        display: grid;
+        gap: 18px;
+        width: 928px;
+      }
+
+      .revenue .row {
+        display: grid;
+        grid-template-columns: 240px 1fr;
+        gap: 24px;
+        align-items: center;
+        padding: 24px 28px;
+        border-radius: 28px;
+        background: rgba(248, 246, 238, 0.76);
+        box-shadow:
+          0 14px 32px rgba(43, 49, 42, 0.1),
+          inset 0 0 0 1px rgba(91, 103, 86, 0.16);
+      }
+
+      .revenue strong {
+        color: #2f342f;
+        font-size: 32px;
+      }
+
+      .revenue span {
+        color: rgba(47, 52, 47, 0.65);
+        font-size: 24px;
+        line-height: 1.35;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="slide" id="slide-1">
+      <span class="leaf one"></span>
+      <span class="number">01</span>
+      <div class="kicker"><span></span>开源电子手帐计划</div>
+      <h1>我在做一款<br />有纸感的手帐 App</h1>
+      <p class="lead">像 TN 一样先打开封面，再慢慢写一页。电脑打字排版，移动端手写记录，本地优先。</p>
+      <div class="shot desktop-card"><img src="./verify-taste3b-open-desktop.png" alt="" /></div>
+      <div class="shot mobile-card"><img src="./verify-taste1-open-mobile.png" alt="" /></div>
+      <span class="tape one"></span>
+      <div class="badge-row">
+        <span class="badge">开源可共创</span>
+        <span class="badge">离线可用</span>
+        <span class="badge">本地优先</span>
+        <span class="badge">模板包可扩展</span>
+      </div>
+      <section class="cta">
+        <div>
+          <strong>想蹲内测或模板包，评论「开页」</strong>
+          <small>也欢迎手帐博主 / 设计师 / 开发者一起共创</small>
+        </div>
+        <div class="seal">开页<br />内测</div>
+      </section>
+    </section>
+
+    <section class="slide" id="slide-2">
+      <span class="leaf two"></span>
+      <span class="number">02</span>
+      <div class="kicker"><span></span>为什么想做它</div>
+      <h1>不想再做<br />打卡焦虑 App</h1>
+      <p class="lead">手帐应该允许空白、乱涂、贴纸和碎碎念。记录生活，不是每天逼自己完成 KPI。</p>
+      <div class="feature-grid">
+        <div class="feature"><strong>留白优先</strong><p>页面把大面积空间还给用户，不把待办和指标塞满。</p></div>
+        <div class="feature"><strong>慢交互</strong><p>先打开封面，再进入内页，保留一点写手帐的仪式感。</p></div>
+        <div class="feature"><strong>本地优先</strong><p>内容默认存在本机，导入导出自己掌控。</p></div>
+        <div class="feature"><strong>开源共创</strong><p>模板、贴纸、主题都可以由社区扩展。</p></div>
+      </div>
+      <p class="small-note">如果你也讨厌“连续打卡 999 天”的压力，这个项目可能适合你。</p>
+    </section>
+
+    <section class="slide" id="slide-3">
+      <span class="number">03</span>
+      <div class="kicker"><span></span>真实纸感方向</div>
+      <h1>不是换个米黄背景<br />就叫手帐</h1>
+      <p class="lead">我想模拟的是纸张、皮封面、黄铜夹、印章、翻开动作和真实文具的层次。</p>
+      <div class="paper-sample"></div>
+      <div class="stamp-big">穏</div>
+      <div class="badge-row">
+        <span class="badge">和纸纹理</span>
+        <span class="badge">皮面封套</span>
+        <span class="badge">黄铜夹</span>
+        <span class="badge">今日印章</span>
+      </div>
+      <p class="small-note">质感会继续打磨，目标是“打开就想写”。</p>
+    </section>
+
+    <section class="slide" id="slide-4">
+      <span class="number">04</span>
+      <div class="kicker"><span></span>电脑端 + 移动端</div>
+      <h1>电脑排版<br />移动端手写</h1>
+      <p class="lead">不是只做一张好看的壳。目标是电脑端能认真编辑，移动端能随手写、贴、回看。</p>
+      <div class="shot desktop-card"><img src="./verify-taste3b-open-desktop.png" alt="" /></div>
+      <div class="shot mobile-card"><img src="./verify-taste1-open-mobile.png" alt="" /></div>
+      <div class="timeline" style="top: 1110px; gap: 14px;">
+        <div class="step"><em>1</em><div><strong>电脑端</strong><span>打字、排版、整理长文本和模板</span></div></div>
+        <div class="step"><em>2</em><div><strong>移动端</strong><span>手写、速记、贴纸、当天回看</span></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-5">
+      <span class="number">05</span>
+      <div class="kicker"><span></span>模板和功能</div>
+      <h1>不堆功能<br />做可直接用的模式</h1>
+      <p class="lead">日页、子弹笔记、周计划、记忆拼贴、情绪记录，都应该打开就能写，而不是只有一个标签名。</p>
+      <div class="timeline">
+        <div class="step"><em>日</em><div><strong>一日一页</strong><span>自由文字、手写页、贴纸和今日印章</span></div></div>
+        <div class="step"><em>•</em><div><strong>子弹笔记</strong><span>任务、事件、笔记、迁移，支持快速记录</span></div></div>
+        <div class="step"><em>周</em><div><strong>周计划</strong><span>七日节奏、轻量复盘，不做连续打卡焦虑</span></div></div>
+        <div class="step"><em>贴</em><div><strong>素材包</strong><span>贴纸、胶带、印章、模板可继续扩展</span></div></div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-6">
+      <span class="number">06</span>
+      <div class="kicker"><span></span>盈利但不割韭菜</div>
+      <h1>开源项目<br />也要能活下去</h1>
+      <p class="lead">我希望基础功能开放，让项目可持续盈利，但不把日记和隐私绑成强订阅。</p>
+      <div class="revenue">
+        <div class="row"><strong>免费开源版</strong><span>基础记录、本地存储、导入导出、社区模板。</span></div>
+        <div class="row"><strong>付费模板包</strong><span>日系手帐、读书笔记、旅行、情绪追踪等主题包。</span></div>
+        <div class="row"><strong>创作者市场</strong><span>手帐博主、插画师、设计师可以卖自己的素材。</span></div>
+        <div class="row"><strong>上架版本</strong><span>未来做桌面端和移动端安装包，面向 Steam / 应用商店。</span></div>
+      </div>
+      <section class="cta">
+        <div>
+          <strong>想参与第一批内测，评论「开页」</strong>
+          <small>也欢迎告诉我：你最想要哪种模板？</small>
+        </div>
+        <div class="seal">一起<br />共创</div>
+      </section>
+    </section>
+  </body>
+</html>

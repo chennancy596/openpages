@@ -1,0 +1,11 @@
+# Dependencies and build output
+node_modules/
+dist/
+dist-react/
+src-tauri/target/
+
+# OS files
+.DS_Store
+
+# Archived promo bundles (zips and their unpacked copy)
+promo/archives/

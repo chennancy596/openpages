@@ -1,0 +1,24 @@
+:root {
+  --techo-paper: #ede6d6;
+  --techo-paper-highlight: #f7f3e8;
+  --techo-ink: #3d3a34;
+  --techo-leather: #8b6f47;
+  --techo-stamp: #b85c50;
+  --techo-moss: #7c8b6f;
+  --techo-line: #cfc2ad;
+  --techo-shadow: 0 24px 70px rgba(61, 58, 52, 0.18);
+  --font-display: "Shippori Mincho", Georgia, serif;
+  --font-body: "Zen Kaku Gothic New", system-ui, sans-serif;
+  --font-hand: "Klee One", "Hiragino Maru Gothic ProN", cursive;
+  --motion-page: 520ms cubic-bezier(.2, .8, .2, 1);
+}
+
+[data-theme="night"] {
+  --techo-paper: #e4d8c2;
+  --techo-paper-highlight: #f1e7d4;
+  --techo-ink: #322c24;
+  --techo-leather: #4f4638;
+  --techo-stamp: #9f4f45;
+  --techo-moss: #647255;
+  --techo-line: #b9a98f;
+}

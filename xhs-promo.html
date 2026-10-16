@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenPages 小红书宣传图</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Shippori+Mincho:wght@600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap");
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1440px;
+        margin: 0;
+        overflow: hidden;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+        background: #d8ddd4;
+        color: #2f342f;
+        font-family: "Zen Kaku Gothic New", system-ui, sans-serif;
+      }
+
+      .poster {
+        position: relative;
+        width: 1080px;
+        height: 1440px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 18% 8%, rgba(255, 255, 255, 0.55), transparent 28%),
+          radial-gradient(circle at 86% 82%, rgba(82, 108, 115, 0.16), transparent 30%),
+          linear-gradient(135deg, #e4e6de 0%, #cfd7ce 54%, #bfc7be 100%);
+      }
+
+      .poster::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background:
+          repeating-linear-gradient(90deg, rgba(67, 80, 70, 0.035) 0 1px, transparent 1px 13px),
+          repeating-linear-gradient(0deg, rgba(67, 80, 70, 0.026) 0 1px, transparent 1px 11px);
+        mix-blend-mode: multiply;
+      }
+
+      .poster::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 22px solid rgba(255, 255, 255, 0.34);
+        pointer-events: none;
+      }
+
+      .leaf {
+        position: absolute;
+        width: 210px;
+        height: 210px;
+        border-radius: 50% 0 50% 0;
+        border: 1px solid rgba(87, 106, 83, 0.16);
+        opacity: 0.55;
+        transform: rotate(-22deg);
+      }
+
+      .leaf.one {
+        left: -34px;
+        top: 130px;
+      }
+
+      .leaf.two {
+        right: -82px;
+        bottom: 190px;
+        transform: rotate(34deg);
+      }
+
+      .kicker {
+        position: absolute;
+        left: 78px;
+        top: 78px;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 11px 18px;
+        border: 1px solid rgba(100, 114, 93, 0.28);
+        border-radius: 999px;
+        background: rgba(248, 246, 238, 0.62);
+        color: #5d6e59;
+        font-size: 25px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .kicker span {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #a24f48;
+      }
+
+      h1 {
+        position: absolute;
+        left: 74px;
+        top: 156px;
+        width: 900px;
+        margin: 0;
+        color: #273029;
+        font-family: "Shippori Mincho", "Songti SC", serif;
+        font-size: 82px;
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .sub {
+        position: absolute;
+        left: 80px;
+        top: 358px;
+        width: 720px;
+        margin: 0;
+        color: rgba(47, 52, 47, 0.78);
+        font-size: 34px;
+        line-height: 1.54;
+        font-weight: 500;
+      }
+
+      .mockups {
+        position: absolute;
+        left: 70px;
+        top: 536px;
+        width: 940px;
+        height: 570px;
+      }
+
+      .shot {
+        position: absolute;
+        overflow: hidden;
+        border: 1px solid rgba(82, 73, 60, 0.24);
+        background: #f5f0e5;
+        box-shadow:
+          0 28px 64px rgba(42, 47, 42, 0.24),
+          inset 0 1px 0 rgba(255, 255, 255, 0.72);
+      }
+
+      .shot.desktop {
+        left: 0;
+        top: 66px;
+        width: 720px;
+        height: 460px;
+        border-radius: 28px;
+      }
+
+      .shot.mobile {
+        right: 0;
+        top: 0;
+        width: 285px;
+        height: 570px;
+        border-radius: 34px;
+        transform: rotate(2.2deg);
+      }
+
+      .shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .desktop img {
+        object-position: 54% 34%;
+      }
+
+      .mobile img {
+        object-position: 50% 0%;
+      }
+
+      .tape {
+        position: absolute;
+        left: 44px;
+        top: 31px;
+        width: 170px;
+        height: 44px;
+        border-radius: 6px;
+        background:
+          repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.28) 0 7px, transparent 7px 16px),
+          rgba(213, 194, 151, 0.74);
+        transform: rotate(-4deg);
+        box-shadow: 0 8px 20px rgba(89, 74, 48, 0.12);
+      }
+
+      .badges {
+        position: absolute;
+        left: 76px;
+        top: 1102px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        width: 900px;
+      }
+
+      .badge {
+        padding: 14px 20px;
+        border: 1px solid rgba(91, 103, 86, 0.24);
+        border-radius: 999px;
+        background: rgba(248, 246, 238, 0.7);
+        color: #485446;
+        font-size: 26px;
+        font-weight: 700;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.64);
+      }
+
+      .cta {
+        position: absolute;
+        left: 76px;
+        bottom: 58px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 28px;
+        width: 928px;
+        padding: 28px 32px;
+        border-radius: 30px;
+        background:
+          linear-gradient(135deg, rgba(255, 252, 244, 0.86), rgba(232, 235, 226, 0.76));
+        box-shadow:
+          0 18px 46px rgba(43, 49, 42, 0.14),
+          inset 0 0 0 1px rgba(103, 114, 95, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      }
+
+      .cta strong {
+        display: block;
+        margin-bottom: 6px;
+        color: #2f342f;
+        font-size: 34px;
+      }
+
+      .cta small {
+        color: rgba(47, 52, 47, 0.62);
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .seal {
+        display: grid;
+        place-items: center;
+        width: 118px;
+        height: 118px;
+        border: 5px solid rgba(162, 79, 72, 0.58);
+        border-radius: 50%;
+        color: #a24f48;
+        font-family: "Klee One", cursive;
+        font-size: 34px;
+        font-weight: 600;
+        line-height: 1.08;
+        text-align: center;
+        transform: rotate(-9deg);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="poster">
+      <span class="leaf one"></span>
+      <span class="leaf two"></span>
+
+      <div class="kicker"><span></span>开源电子手帐计划</div>
+      <h1>我在做一款<br />有纸感的手帐 App</h1>
+      <p class="sub">像 TN 一样先打开封面，再慢慢写一页。电脑打字排版，移动端手写记录，本地优先。</p>
+
+      <section class="mockups">
+        <div class="shot desktop">
+          <img src="./verify-taste3b-open-desktop.png" alt="" />
+        </div>
+        <div class="shot mobile">
+          <img src="./verify-taste1-open-mobile.png" alt="" />
+        </div>
+        <span class="tape"></span>
+      </section>
+
+      <div class="badges">
+        <span class="badge">开源可共创</span>
+        <span class="badge">离线可用</span>
+        <span class="badge">本地优先</span>
+        <span class="badge">模板包可扩展</span>
+      </div>
+
+      <section class="cta">
+        <div>
+          <strong>想蹲内测或模板包，评论「开页」</strong>
+          <small>也欢迎手帐博主 / 设计师 / 开发者一起共创</small>
+        </div>
+        <div class="seal">开页<br />内测</div>
+      </section>
+    </main>
+  </body>
+</html>

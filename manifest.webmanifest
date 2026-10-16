@@ -1,0 +1,27 @@
+{
+  "name": "开页 OpenPages",
+  "short_name": "OpenPages",
+  "description": "开源、本地优先、跨桌面与移动端的电子手帐。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3ebdc",
+  "theme_color": "#f7f1e6",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "./assets/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "lifestyle"],
+  "lang": "zh-CN"
+}

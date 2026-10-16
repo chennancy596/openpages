@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="开页 OpenPages 是一个开源、本地优先、电脑端和移动端都可用的电子手帐原型。"
+    />
+    <meta name="theme-color" content="#ecebe4" />
+    <title>开页 OpenPages | 开源电子手帐</title>
+    <link rel="icon" href="./assets/openpages-mark.svg" type="image/svg+xml" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="stylesheet" href="./styles.css?v=20260906-clarity" />
+    <link rel="stylesheet" href="./refinement.css?v=20260906-clarity" />
+    <link rel="stylesheet" href="./handwriting.css?v=20260906-clarity" />
+    <link rel="stylesheet" href="./product-polish.css?v=20260906-clarity" />
+    <link rel="stylesheet" href="./workspace.css?v=20260906-clarity" />
+  </head>
+  <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
+    <svg class="icon-sprite" aria-hidden="true">
+      <symbol id="icon-book" viewBox="0 0 24 24">
+        <path d="M4.5 4.8c0-1 0.8-1.8 1.8-1.8H20v17H6.3c-1 0-1.8-0.8-1.8-1.8V4.8Z" />
+        <path d="M4.5 18.2c0-1 0.8-1.8 1.8-1.8H20" />
+        <path d="M8 7h8M8 10.5h6" />
+      </symbol>
+      <!-- Lucide icons, ISC license: assets/lucide-LICENSE.txt -->
+      <symbol id="icon-panel-left" viewBox="0 0 24 24">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M9 3v18" />
+      </symbol>
+      <symbol id="icon-bookmark" viewBox="0 0 24 24">
+        <path d="M17 3a2 2 0 0 1 2 2v15a1 1 0 0 1-1.496.868l-4.512-2.578a2 2 0 0 0-1.984 0l-4.512 2.578A1 1 0 0 1 5 20V5a2 2 0 0 1 2-2z" />
+      </symbol>
+      <symbol id="icon-calendar" viewBox="0 0 24 24">
+        <path d="M5 5.5h14c1 0 1.8.8 1.8 1.8v12c0 1-.8 1.8-1.8 1.8H5c-1 0-1.8-.8-1.8-1.8v-12c0-1 .8-1.8 1.8-1.8Z" />
+        <path d="M7.5 3v5M16.5 3v5M3.5 9.5h17" />
+        <path d="M7 13h.1M12 13h.1M17 13h.1M7 17h.1M12 17h.1" />
+      </symbol>
+      <symbol id="icon-pen" viewBox="0 0 24 24">
+        <path d="m4 20 4.8-1.2L19.4 8.2c.8-.8.8-2 0-2.8l-.8-.8c-.8-.8-2-.8-2.8 0L5.2 15.2 4 20Z" />
+        <path d="m14.5 5.9 3.6 3.6M5.2 15.2l3.6 3.6" />
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m4.5 12.5 4.8 4.8L19.5 7.2" />
+      </symbol>
+      <symbol id="icon-sticker" viewBox="0 0 24 24">
+        <path d="M6 3.8h12c1.2 0 2.2 1 2.2 2.2v7.6L13.6 20.2H6c-1.2 0-2.2-1-2.2-2.2V6c0-1.2 1-2.2 2.2-2.2Z" />
+        <path d="M13.6 20.2v-4.4c0-1.2 1-2.2 2.2-2.2h4.4" />
+      </symbol>
+      <symbol id="icon-download" viewBox="0 0 24 24">
+        <path d="M12 3.5v11M7.8 10.8 12 15l4.2-4.2" />
+        <path d="M4.5 17.5v1.7c0 .9.7 1.6 1.6 1.6h11.8c.9 0 1.6-.7 1.6-1.6v-1.7" />
+      </symbol>
+      <symbol id="icon-upload" viewBox="0 0 24 24">
+        <path d="M12 15.5v-11M7.8 8.7 12 4.5l4.2 4.2" />
+        <path d="M4.5 17.5v1.7c0 .9.7 1.6 1.6 1.6h11.8c.9 0 1.6-.7 1.6-1.6v-1.7" />
+      </symbol>
+      <symbol id="icon-trash" viewBox="0 0 24 24">
+        <path d="M4.5 7h15M9 7V4.8c0-.8.6-1.4 1.4-1.4h3.2c.8 0 1.4.6 1.4 1.4V7" />
+        <path d="M7 7l.8 12c.1 1 1 1.8 2 1.8h4.4c1 0 1.9-.8 2-1.8L17 7" />
+        <path d="M10 11v5M14 11v5" />
+      </symbol>
+      <symbol id="icon-eraser" viewBox="0 0 24 24">
+        <path d="m4.5 14.5 8.9-8.9c.7-.7 1.8-.7 2.5 0l2.5 2.5c.7.7.7 1.8 0 2.5l-7.1 7.1H6.8l-2.3-2.3c-.3-.3-.3-.7 0-.9Z" />
+        <path d="m9.3 9.7 5 5M13.2 17.7H20" />
+      </symbol>
+      <symbol id="icon-grid" viewBox="0 0 24 24">
+        <path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" />
+      </symbol>
+      <symbol id="icon-sun" viewBox="0 0 24 24">
+        <path d="M12 7.2a4.8 4.8 0 1 0 0 9.6 4.8 4.8 0 0 0 0-9.6Z" />
+        <path d="M12 2.8v2M12 19.2v2M4.4 4.4l1.4 1.4M18.2 18.2l1.4 1.4M2.8 12h2M19.2 12h2M4.4 19.6l1.4-1.4M18.2 5.8l1.4-1.4" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <path d="M10.8 18.1a7.3 7.3 0 1 0 0-14.6 7.3 7.3 0 0 0 0 14.6Z" />
+        <path d="m16 16 4.4 4.4" />
+      </symbol>
+      <symbol id="icon-lock" viewBox="0 0 24 24">
+        <path d="M6.5 10h11c.9 0 1.5.7 1.5 1.5v7c0 .9-.6 1.5-1.5 1.5h-11c-.9 0-1.5-.6-1.5-1.5v-7c0-.8.6-1.5 1.5-1.5Z" />
+        <path d="M8.5 10V7.5a3.5 3.5 0 0 1 7 0V10" />
+        <path d="M12 14.2v2.2" />
+      </symbol>
+      <symbol id="icon-spark" viewBox="0 0 24 24">
+        <path d="M12 2.8 14 9l6.2 2-6.2 2-2 6.2-2-6.2-6.2-2 6.2-2 2-6.2Z" />
+        <path d="m18.5 4.5.8 2.2 2.2.8-2.2.8-.8 2.2-.8-2.2-2.2-.8 2.2-.8.8-2.2Z" />
+      </symbol>
+      <symbol id="icon-undo" viewBox="0 0 24 24">
+        <path d="M8.5 7.5 4 12l4.5 4.5" />
+        <path d="M5 12h8.2a6 6 0 0 1 6 6" />
+      </symbol>
+      <symbol id="icon-redo" viewBox="0 0 24 24">
+        <path d="m15.5 7.5 4.5 4.5-4.5 4.5" />
+        <path d="M19 12h-8.2a6 6 0 0 0-6 6" />
+      </symbol>
+      <symbol id="icon-focus" viewBox="0 0 24 24">
+        <path d="M8 4H4v4M16 4h4v4M20 16v4h-4M8 20H4v-4" />
+      </symbol>
+      <symbol id="icon-sliders" viewBox="0 0 24 24">
+        <path d="M4 5h7M15 5h5M4 12h3M11 12h9M4 19h9M17 19h3" />
+        <path d="M11 3v4M7 10v4M13 17v4" />
+      </symbol>
+      <symbol id="icon-print" viewBox="0 0 24 24">
+        <path d="M7 8V3.8h10V8M7 17H5.5A2.5 2.5 0 0 1 3 14.5v-4A2.5 2.5 0 0 1 5.5 8h13a2.5 2.5 0 0 1 2.5 2.5v4a2.5 2.5 0 0 1-2.5 2.5H17" />
+        <path d="M7 14h10v7H7zM17.5 11h.1" />
+      </symbol>
+    </svg>
+
+    <div class="app-shell">
+      <aside id="notebookSidebar" class="sidebar" aria-label="日期与最近页面">
+        <a class="brand" href="#" aria-label="开页首页">
+          <span class="brand-mark"><img src="./assets/openpages-mark.svg" width="36" height="36" alt="" /></span>
+          <span>
+            <strong>开页</strong>
+            <small>OpenPages</small>
+          </span>
+        </a>
+
+        <nav class="library-nav" aria-label="手帐导航">
+          <button type="button" class="is-current" id="returnToNotebook"><svg><use href="#icon-book"></use></svg><span>我的手帐</span></button>
+          <button type="button" data-open-mobile-panel="review"><svg><use href="#icon-search"></use></svg><span>全部记录</span></button>
+        </nav>
+        <details class="date-browser">
+          <summary><svg aria-hidden="true"><use href="#icon-calendar"></use></svg><span>按日期查找</span></summary>
+        <section class="mini-month" aria-label="日期选择">
+          <div class="mini-month__top">
+            <strong id="miniMonthTitle">2026.07</strong>
+            <input id="datePicker" type="date" aria-label="选择日期" />
+          </div>
+          <div class="mini-weekdays" aria-hidden="true">
+            <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="mini-days" id="miniDays"></div>
+        </section>
+        </details>
+
+        <section class="recent-pages" aria-label="最近条目">
+          <div class="section-title">
+            <h3>最近页</h3>
+            <span>本地</span>
+          </div>
+          <div class="recent-list" id="recentPages"></div>
+        </section>
+
+        <div class="sidebar-footer">
+          <button type="button" data-open-mobile-panel="open"><svg><use href="#icon-sliders"></use></svg><span>设置与备份</span></button>
+          <span class="local-indicator"><i aria-hidden="true"></i>本地手帐</span>
+        </div>
+        <section class="stats-card" aria-label="记录统计" hidden>
+          <div class="stat-main">
+            <span id="streakDays">0</span>
+            <small>写过的日子</small>
+          </div>
+          <div class="stat-grid">
+            <span><strong id="entryCount">0</strong> 页</span>
+            <span><strong id="fragmentCount">0</strong> 条灵感</span>
+          </div>
+        </section>
+
+        <section class="open-card" hidden>
+          <span class="card-kicker">LOCAL FIRST</span>
+          <h2>数据先归你</h2>
+          <p>默认保存在浏览器本地，可导出 JSON。这个原型使用 MIT License，适合继续做成社区项目。</p>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <div class="document-chrome">
+        <header class="topbar">
+          <button type="button" id="sidebarToggle" class="shell-icon" aria-label="切换手帐侧栏" aria-controls="notebookSidebar" aria-expanded="true" title="手帐侧栏"><svg><use href="#icon-panel-left"></use></svg></button>
+          <div>
+            <p class="eyebrow">OpenPages</p>
+            <h1 id="pageHeading">今日手帐</h1>
+          </div>
+          <div class="date-nav" aria-label="日期记录导航">
+            <button type="button" id="prevDayButton" title="前一天">‹</button>
+            <div class="date-control">
+              <div class="calendar-scale-nav" aria-label="日期层级">
+                <button type="button" data-calendar-scale="day" class="is-active" aria-pressed="true">日记</button>
+                <button type="button" data-calendar-scale="week" aria-pressed="false">周计划</button>
+                <button type="button" data-calendar-scale="month" aria-pressed="false">月计划</button>
+              </div>
+              <input id="topDatePicker" type="date" aria-label="记录日期" />
+            </div>
+            <button type="button" id="nextDayButton" title="后一天">›</button>
+          </div>
+          <div class="topbar-actions">
+            <button class="icon-button action-button" id="focusModeButton" type="button" title="专注书写" aria-label="进入专注书写">
+              <svg><use href="#icon-focus"></use></svg>
+              <span>专注</span>
+            </button>
+            <button class="icon-button action-button" id="privacyButton" type="button" title="隐私帘：临时遮住当前页面" aria-label="隐私帘：临时遮住当前页面">
+              <svg><use href="#icon-lock"></use></svg>
+              <span>隐私帘</span>
+            </button>
+          </div>
+        </header>
+        <div class="document-tools" aria-label="页面工具">
+        <section class="mobile-page-switcher" aria-label="选择编辑页面">
+          <button type="button" class="is-active" data-mobile-page-target="write">文字</button>
+          <button type="button" data-mobile-page-target="ink">手写</button>
+        </section>
+
+
+          <div class="context-tools">
+                <div class="editor-toolbar" aria-label="正文排版工具">
+                  <button type="button" data-editor-command="undo" title="撤销" aria-label="撤销正文编辑"><svg><use href="#icon-undo"></use></svg><span>撤销</span></button>
+                  <button type="button" data-editor-command="redo" title="重做" aria-label="重做正文编辑"><svg><use href="#icon-redo"></use></svg><span>重做</span></button>
+                  <button type="button" data-editor-command="bold" title="加粗"><strong>B</strong><span>加粗</span></button>
+                  <button type="button" data-editor-command="italic" title="斜体"><em>I</em><span>斜体</span></button>
+                  <button type="button" data-editor-command="insertUnorderedList" title="项目符号"><strong>•</strong><span>清单</span></button>
+                  <details class="editor-more">
+                    <summary title="更多排版" aria-label="更多排版"><strong>•••</strong><span>更多</span></summary>
+                    <div class="editor-more__menu">
+                      <button type="button" data-editor-command="insertOrderedList" title="编号列表"><strong>1.</strong><span>编号</span></button>
+                      <button type="button" data-editor-command="formatBlock" data-editor-value="blockquote" title="引用"><strong>“</strong><span>引用</span></button>
+                      <button type="button" data-editor-command="backColor" data-editor-value="#e6d2a4" title="标注"><strong>HL</strong><span>标注</span></button>
+                      <button type="button" data-editor-insert="divider" title="分隔线"><strong>-</strong><span>分隔</span></button>
+                      <button type="button" data-editor-insert="twocol" title="双栏"><strong>▥</strong><span>双栏</span></button>
+                    </div>
+                  </details>
+                </div>
+
+            <div class="handwriting-tools">
+                <div class="canvas-toolbar">
+                  <span>自由手写页</span>
+                  <div>
+                    <button class="tool-button icon-only" id="undoInkButton" type="button" title="撤销上一笔" aria-label="撤销上一笔">
+                      <svg><use href="#icon-undo"></use></svg>
+                    </button>
+                    <button class="tool-button icon-only" id="redoInkButton" type="button" title="重做笔迹" aria-label="重做笔迹">
+                      <svg><use href="#icon-redo"></use></svg>
+                    </button>
+                    <button class="tool-button is-active" id="penButton" type="button" title="画笔">
+                      <svg><use href="#icon-pen"></use></svg>
+                      <span>画笔</span>
+                    </button>
+                    <button class="tool-button" id="eraserButton" type="button" title="橡皮">
+                      <svg><use href="#icon-eraser"></use></svg>
+                      <span>橡皮</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="ink-quickbar">
+                  <div class="color-swatches" id="inkColorPalette" aria-label="笔刷颜色"></div>
+                  <button class="ink-options-toggle" id="inkOptionsToggle" type="button" aria-controls="penOptions" aria-expanded="false" title="展开笔刷设置">
+                    <svg><use href="#icon-sliders"></use></svg>
+                    <span>调笔</span>
+                  </button>
+                </div>
+                <div class="pen-options" id="penOptions" hidden aria-label="手写笔设置">
+                  <div class="brush-picker" id="inkBrushPicker" role="group" aria-label="笔刷类型"></div>
+                  <label class="palette-picker">
+                    <span>套色</span>
+                    <select id="inkPaletteSelect" aria-label="选择笔刷套色">
+                      <option value="stationery">文具基础</option>
+                      <option value="morandi">莫兰迪</option>
+                      <option value="botanical">植物标本</option>
+                      <option value="showa">昭和复古</option>
+                      <option value="night">夜读墨色</option>
+                    </select>
+                  </label>
+                  <label class="custom-color" title="选择一个自定义颜色，再加入当前调色板">
+                    <span>自选色</span>
+                    <input id="customInkColor" type="color" value="#8e9a92" aria-label="选择自定义笔刷颜色" />
+                    <button id="addInkColorButton" type="button" title="把当前自选色加入笔刷色板">加入色板</button>
+                  </label>
+                  <label class="pen-size">
+                    <span>笔宽</span>
+                    <input id="inkSizeRange" type="range" min="1" max="12" step="1" value="4" />
+                  </label>
+                  <label class="pen-smoothing">
+                    <span>稳笔</span>
+                    <input id="inkSmoothingRange" type="range" min="0" max="80" step="10" value="30" aria-label="笔迹稳定程度" />
+                  </label>
+                  <label class="stylus-toggle">
+                    <input id="stylusOnlyToggle" type="checkbox" />
+                    只用手写笔
+                  </label>
+                  <div class="ink-settings-actions">
+                    <button class="tool-button" id="clearInkButton" type="button" title="清空整张手写页">
+                      <svg><use href="#icon-trash"></use></svg>
+                      <span>清空</span>
+                    </button>
+                    <button class="tool-button" id="inkFocusButton" type="button" title="展开手写画布" aria-label="展开手写画布" aria-pressed="false">
+                      <svg><use href="#icon-focus"></use></svg>
+                      <span>全屏</span>
+                    </button>
+                  </div>
+                </div>
+
+            </div>
+          </div>
+          <div class="insert-tools">
+            <button type="button" data-open-mobile-panel="stickers" title="贴纸与素材"><svg><use href="#icon-sticker"></use></svg><span>素材</span></button>
+            <button type="button" data-open-mobile-panel="templates" title="选择当前页面的内页样式"><svg><use href="#icon-grid"></use></svg><span>内页样式</span></button>
+          </div>
+        </div>
+        </div>
+
+        <section class="view-stage">
+          <article class="journal-spread" id="journalSpread" data-section="today" data-mobile-page="write">
+            <button class="closed-cover" id="openCoverButton" type="button" aria-label="打开手帐封面">
+              <span class="closed-cover__paper-edge" aria-hidden="true"></span>
+              <span class="closed-cover__elastic closed-cover__elastic--vertical" aria-hidden="true"></span>
+              <span class="closed-cover__elastic closed-cover__elastic--horizontal" aria-hidden="true"></span>
+              <span class="closed-cover__clip" aria-hidden="true"></span>
+              <span class="closed-cover__stamp" aria-hidden="true">OP</span>
+              <span class="closed-cover__label">
+                <strong>OpenPages</strong>
+                <small>打开封面</small>
+              </span>
+            </button>
+            <span class="notebook-cover" aria-hidden="true"></span>
+            <span class="notebook-spine" aria-hidden="true"></span>
+            <span class="page-ribbon" aria-hidden="true"></span>
+            <span class="brass-clip" aria-hidden="true"></span>
+            <span class="page-turn-shadow" aria-hidden="true"></span>
+            <div class="page-turn-sheet" aria-hidden="true"></div>
+            <div class="page-flip-engine" id="pageFlipEngine" aria-hidden="true" hidden></div>
+            <button class="daily-stamp" id="dailyStampButton" type="button" aria-label="今日印章">
+              <span id="dailyStampIcon">未</span>
+              <small>今日印章</small>
+            </button>
+            <section class="paper-page paper-page--left">
+              <span class="page-number" id="leftPageNumber">001</span>
+              <span class="page-print page-print--botanical" aria-hidden="true"></span>
+              <div class="paper-header paper-header--entry">
+                <div>
+                  <p class="eyebrow" id="entryModeLabel">Daily Log</p>
+                  <input id="entryTitle" class="title-input" maxlength="48" aria-label="手帐标题" />
+                </div>
+              </div>
+
+              <div class="page-meta">
+              <details class="linked-plans" id="linkedPlans" hidden>
+                <summary><svg aria-hidden="true"><use href="#icon-calendar"></use></svg><span>这一天的安排</span><small id="linkedPlansMeta"></small></summary>
+                <div id="linkedPlansList"></div>
+              </details>
+
+              <details class="entry-context" id="entryContext">
+                <summary>
+                  <span>心情与标签</span>
+                  <small id="entryContextMeta">提示与页签</small>
+                </summary>
+                <div class="entry-context__content">
+                  <label class="mood-select">
+                    <span>心情</span>
+                    <select id="moodSelect">
+                      <option value="sunny">晴朗</option>
+                      <option value="calm">平静</option>
+                      <option value="busy">忙碌</option>
+                      <option value="tired">疲惫</option>
+                      <option value="spark">灵感</option>
+                    </select>
+                  </label>
+                  <div class="prompt-row">
+                    <button type="button" data-prompt="今天最想记住的一刻是：">记一刻</button>
+                    <button type="button" data-prompt="此刻我正在感谢：">感谢</button>
+                    <button type="button" data-prompt="明天想留给自己的提示：">给明天</button>
+                  </div>
+                  <section class="tag-panel" aria-label="页签">
+                    <div class="tag-input-row">
+                      <svg><use href="#icon-spark"></use></svg>
+                      <input id="tagInput" placeholder="添加页签，例如：旅行、学习、情绪" />
+                    </div>
+                    <div class="tag-list" id="tagList"></div>
+                  </section>
+                </div>
+              </details>
+
+              </div>
+
+              <label class="mode-focus" id="modeFocus" hidden>
+                <span id="modeFocusLabel">本页主题</span>
+                <input id="modeFocusInput" maxlength="64" placeholder="为这一页定一句主线" />
+              </label>
+
+              <aside class="bullet-key legend-hint" id="bulletKey" aria-label="子弹笔记符号图例" contenteditable="false">
+                <span><strong>•</strong>任务</span>
+                <span><strong>○</strong>事件</span>
+                <span><strong>-</strong>笔记</span>
+                <span><strong>&gt;</strong>迁移</span>
+                <small>固定图例</small>
+              </aside>
+
+              <section class="bullet-index-note" id="bulletIndexNote" hidden>
+                <div>
+                  <strong>右页速记会保存到这一页</strong>
+                  <span>需要成文时，可以整理进左侧正文。</span>
+                </div>
+                <button type="button" data-sync-bullets>整理到左页</button>
+              </section>
+
+              <section class="field grow" aria-labelledby="editorLabel">
+                <span id="editorLabel">文字手帐</span>
+                <div
+                  id="journalEditor"
+                  class="journal-editor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-label="文字手帐"
+                  data-placeholder="写下今天的片段、清单、灵感或碎碎念。"
+                ></div>
+                <textarea id="journalText" hidden></textarea>
+              </section>
+
+            </section>
+
+            <section class="paper-page paper-page--right">
+              <span class="page-number" id="rightPageNumber">002</span>
+              <span class="page-print page-print--kissa" aria-hidden="true"></span>
+              <div class="paper-header">
+                <div>
+                  <p class="eyebrow" id="rightPageModeLabel">Plan & Ritual</p>
+                  <h2 id="dateLabel">今天</h2>
+                  <h2 class="ink-page-title">自由手写</h2>
+                </div>
+              </div>
+
+              <section class="canvas-card">
+                <canvas id="inkCanvas" width="900" height="1260" aria-label="手写草稿画布"></canvas>
+              </section>
+
+              <details class="page-extras" id="pageExtras">
+                <summary>
+                  <span>今日附页</span>
+                  <small>重点、便签、待办、习惯与健康</small>
+                </summary>
+                <div class="page-extras__content">
+              <section class="capture-panel">
+                <div class="section-title">
+                  <h3>灵感便签</h3>
+                  <span>先收下，不打断</span>
+                </div>
+                <div class="capture-input-row">
+                  <input id="fragmentInput" placeholder="临时想法、待整理片段、突然冒出的句子" />
+                  <button id="addFragmentButton" type="button">贴上</button>
+                </div>
+                <ul class="fragment-list" id="fragmentList"></ul>
+              </section>
+
+              <section class="bullet-panel mode-panel" aria-label="子弹笔记流">
+                <div class="section-title">
+                  <h3>Bullet Log</h3>
+                  <span>任务 / 事件 / 笔记 / 迁移</span>
+                  <button class="inline-action" type="button" data-sync-bullets>整理到左页</button>
+                </div>
+                <div class="bullet-input-row">
+                  <select id="bulletType" aria-label="子弹类型">
+                    <option value="task">• 任务</option>
+                    <option value="event">○ 事件</option>
+                    <option value="note">- 笔记</option>
+                    <option value="migrate">&gt; 迁移</option>
+                  </select>
+                  <input id="bulletInput" placeholder="快速记录一条子弹" />
+                  <button id="addBulletButton" type="button">记录</button>
+                </div>
+                <ul class="bullet-list" id="bulletList"></ul>
+              </section>
+
+              <section class="memory-panel mode-panel" aria-label="记忆拼贴素材">
+                <div class="section-title">
+                  <h3>照片与票根</h3>
+                  <span>本地保存到这一页</span>
+                </div>
+                <label class="photo-drop">
+                  <svg><use href="#icon-upload"></use></svg>
+                  <span>上传照片、票根或收据</span>
+                  <input id="photoInput" type="file" accept="image/*" multiple />
+                </label>
+                <div class="photo-grid" id="photoGrid"></div>
+              </section>
+
+              <section class="mood-panel mode-panel" aria-label="情绪和能量记录">
+                <div class="section-title">
+                  <h3>身心指标</h3>
+                  <span>给复盘一点依据</span>
+                </div>
+                <label class="range-row">
+                  <span>能量 <strong id="energyValue">3</strong>/5</span>
+                  <input id="energyRange" type="range" min="1" max="5" step="1" />
+                </label>
+                <label class="range-row">
+                  <span>压力 <strong id="stressValue">2</strong>/5</span>
+                  <input id="stressRange" type="range" min="1" max="5" step="1" />
+                </label>
+                <label class="range-row">
+                  <span>睡眠 <strong id="sleepValue">7</strong>h</span>
+                  <input id="sleepRange" type="range" min="0" max="12" step="0.5" />
+                </label>
+              </section>
+
+              <section class="task-panel focus-panel">
+                <div class="section-title">
+                  <h3>今日计划</h3>
+                  <span id="taskCount">0/0</span>
+                </div>
+                <label class="field compact-focus">
+                  <span>唯一重点</span>
+                  <input id="focusInput" maxlength="64" placeholder="今天最值得完成的一件事" />
+                </label>
+                <div class="task-input-row">
+                  <input id="taskInput" placeholder="添加一个小任务" />
+                  <button id="addTaskButton" type="button">添加</button>
+                </div>
+                <ul class="task-list" id="taskList"></ul>
+              </section>
+
+              <section class="habit-panel health-panel wellbeing-panel" aria-label="状态与健康">
+                <div class="section-title">
+                  <h3>状态与健康</h3>
+                  <span id="healthSourceLabel">未导入</span>
+                </div>
+                <div class="habit-grid">
+                  <label><input type="checkbox" data-habit="water" /> 饮水</label>
+                  <label><input type="checkbox" data-habit="sleep" /> 早睡</label>
+                  <label><input type="checkbox" data-habit="move" /> 运动</label>
+                  <label><input type="checkbox" data-habit="read" /> 阅读</label>
+                </div>
+                <div class="health-grid" id="healthGrid"></div>
+              </section>
+                </div>
+              </details>
+
+              <section class="weekly-view" id="weeklyView" aria-label="周计划">
+                <div class="section-title">
+                  <h3>一周安排</h3>
+                  <span id="weekRangeLabel">七天一页，留白优先</span>
+                </div>
+                <div class="week-grid" id="weekGrid"></div>
+              </section>
+
+              <section class="collection-view" id="collectionView" aria-label="专用内页" hidden></section>
+            </section>
+
+            <div class="sticker-layer" id="stickerLayer" aria-label="贴纸层"></div>
+          </article>
+
+        </section>
+        <footer class="document-footer">
+          <div class="spread-nav" aria-label="当天内页导航">
+            <button type="button" id="prevSpreadButton" title="上一组内页" aria-label="上一组内页">‹</button>
+            <span class="spread-position">
+              <small id="spreadScopeLabel">当天内页</small>
+              <strong id="spreadPosition">1 / 1</strong>
+            </span>
+            <button type="button" id="nextSpreadButton" title="下一组内页" aria-label="下一组内页">›</button>
+            <button class="add-spread-button" type="button" id="addSpreadButton" title="续一页">
+              <span aria-hidden="true">＋</span>
+              <strong>续一页</strong>
+            </button>
+            <button type="button" id="bookmarkPageButton" class="bookmark-page-button" title="为当前内页添加书签" aria-label="为当前内页添加书签" aria-pressed="false">
+              <svg aria-hidden="true"><use href="#icon-bookmark"></use></svg>
+            </button>
+          </div>
+          <div class="save-controls" aria-label="保存与备份">
+            <details class="save-details" id="saveDetails">
+              <summary aria-label="查看保存详情">
+                <span class="save-state" id="saveState" data-state="ready" role="status" aria-live="polite">等待记录</span>
+              </summary>
+              <div class="save-details__panel">
+                <strong>本机保存</strong>
+                <dl>
+                  <div><dt>上次成功写入</dt><dd id="lastSavedTime">暂无</dd></div>
+                  <div><dt>存储位置</dt><dd>当前浏览器 · 本机</dd></div>
+                  <div><dt>跨设备同步</dt><dd>未启用</dd></div>
+                </dl>
+                <p id="saveDetailsNote">清除浏览器数据会移除本机记录。备份文件可另行保留。</p>
+                <button type="button" id="saveBackupButton"><svg aria-hidden="true"><use href="#icon-download"></use></svg>导出全部记录备份</button>
+              </div>
+            </details>
+            <button type="button" id="saveNowButton" title="立即保存全部改动到本机">保存</button>
+          </div>
+        </footer>
+      </main>
+
+      <div class="dock-overlay" id="dockOverlay" hidden></div>
+
+      <aside class="right-dock" id="rightDock" aria-label="素材与设置" aria-modal="true" role="dialog">
+        <div class="right-dock__header">
+          <h2 id="dockPanelTitle">素材</h2>
+          <button class="dock-close" id="dockCloseButton" type="button" aria-label="关闭面板" title="关闭面板">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <section class="dock-section" data-panel="stickers">
+          <div class="section-title">
+            <h3>贴纸</h3>
+            <span>按素材类型挑选，点击即可落到页面</span>
+          </div>
+          <div class="sticker-category-tabs" id="stickerCategoryTabs" aria-label="贴纸分类">
+            <button type="button" data-sticker-filter="all" class="is-active" aria-pressed="true">全部</button>
+            <button type="button" data-sticker-filter="washi" aria-pressed="false">胶带</button>
+            <button type="button" data-sticker-filter="paper" aria-pressed="false">纸品</button>
+            <button type="button" data-sticker-filter="art" aria-pressed="false">插画</button>
+          </div>
+          <div class="sticker-palette" id="stickerPalette">
+            <button class="sticker-sample tape coral" draggable="true" data-sticker="tape-coral" type="button">Memo</button>
+            <button class="sticker-sample tape leaf" draggable="true" data-sticker="tape-leaf" type="button">Today</button>
+            <button class="sticker-sample tape indigo tape-pattern" draggable="true" data-sticker="tape-indigo" type="button">青藍</button>
+            <button class="sticker-sample tape gridtape" draggable="true" data-sticker="tape-grid" type="button">Grid</button>
+            <button class="sticker-sample tape kraft" draggable="true" data-sticker="tape-kraft" type="button">NOTE</button>
+            <button class="sticker-sample tape moss" draggable="true" data-sticker="tape-moss" type="button">FOREST</button>
+            <button class="sticker-sample tape plum" draggable="true" data-sticker="tape-plum" type="button">余韻</button>
+            <button class="sticker-sample tape stripe" draggable="true" data-sticker="tape-stripe" type="button">LINE</button>
+            <button class="sticker-sample note butter" draggable="true" data-sticker="note-butter" type="button">想法</button>
+            <button class="sticker-sample note sky" draggable="true" data-sticker="note-sky" type="button">灵感</button>
+            <button class="sticker-sample note matcha" draggable="true" data-sticker="note-matcha" type="button">観察</button>
+            <button class="sticker-sample note mauve" draggable="true" data-sticker="note-mauve" type="button">余白</button>
+            <button class="sticker-sample note linen" draggable="true" data-sticker="note-linen" type="button">日付</button>
+            <button class="sticker-sample note bluegray" draggable="true" data-sticker="note-bluegray" type="button">読書</button>
+            <button class="sticker-sample stamp rose" draggable="true" data-sticker="stamp-rose" type="button">DONE</button>
+            <button class="sticker-sample stamp ink" draggable="true" data-sticker="stamp-ink" type="button">OPEN</button>
+            <button class="sticker-sample stamp vermilion" draggable="true" data-sticker="stamp-vermilion" type="button">済</button>
+            <button class="sticker-sample stamp brass-stamp" draggable="true" data-sticker="stamp-brass" type="button">旅</button>
+            <button class="sticker-sample stamp tea-stamp" draggable="true" data-sticker="stamp-tea" type="button">喫茶</button>
+            <button class="sticker-sample stamp read-stamp" draggable="true" data-sticker="stamp-read" type="button">読</button>
+            <button class="sticker-sample index-tab sage-tab" draggable="true" data-sticker="index-sage" type="button">INDEX</button>
+            <button class="sticker-sample index-tab rust-tab" draggable="true" data-sticker="index-rust" type="button">TODAY</button>
+            <button class="sticker-sample ticket ticket-cream" draggable="true" data-sticker="ticket-cream" type="button">TICKET</button>
+            <button class="sticker-sample ticket ticket-blue" draggable="true" data-sticker="ticket-blue" type="button">DATE</button>
+            <button class="sticker-sample ticket ticket-green" draggable="true" data-sticker="ticket-green" type="button">MUSEUM</button>
+            <button class="sticker-sample photo-frame" draggable="true" data-sticker="photo-frame" type="button">PHOTO</button>
+            <button class="sticker-sample seal seal-gold" draggable="true" data-sticker="seal-gold" type="button">月</button>
+            <button class="sticker-sample seal seal-copper" draggable="true" data-sticker="seal-copper" type="button">栞</button>
+            <button class="sticker-sample botanical botanical-leaf" draggable="true" data-sticker="botanical-leaf" type="button">葉</button>
+            <button class="sticker-sample botanical botanical-flower" draggable="true" data-sticker="botanical-flower" type="button">花</button>
+            <button class="sticker-sample art-sticker art-fern" draggable="true" data-sticker="art-fern" type="button" aria-label="蕨类植物标本">蕨</button>
+            <button class="sticker-sample art-sticker art-sakura" draggable="true" data-sticker="art-sakura" type="button" aria-label="樱花枝插画">桜</button>
+            <button class="sticker-sample art-sticker art-ginkgo" draggable="true" data-sticker="art-ginkgo" type="button" aria-label="银杏叶插画">銀杏</button>
+            <button class="sticker-sample art-sticker art-kissa" draggable="true" data-sticker="art-kissa" type="button" aria-label="喫茶店咖啡杯">珈琲</button>
+            <button class="sticker-sample art-sticker art-mountain" draggable="true" data-sticker="art-mountain" type="button" aria-label="远山与日出">山</button>
+            <button class="sticker-sample art-sticker art-window" draggable="true" data-sticker="art-window" type="button" aria-label="雨日窗景">雨</button>
+            <button class="sticker-sample art-sticker art-bird" draggable="true" data-sticker="art-bird" type="button" aria-label="飞鸟旅行插画">旅</button>
+            <button class="sticker-sample art-sticker art-lamp" draggable="true" data-sticker="art-lamp" type="button" aria-label="夜读台灯插画">灯</button>
+          </div>
+          <button class="wide-button" id="deleteStickerButton" type="button">
+            <svg><use href="#icon-trash"></use></svg>
+            删除选中贴纸
+          </button>
+          <button class="wide-button" id="exportDayButton" type="button">
+            <svg><use href="#icon-download"></use></svg>
+            导出当前日页
+          </button>
+        </section>
+
+        <section class="dock-section" data-panel="templates">
+          <div class="section-title">
+            <h3>加一页</h3>
+            <span id="recordPageCategory">追加到选中日期</span>
+          </div>
+          <div class="day-page-shelf">
+            <div class="day-page-shelf__heading">
+              <strong>当天页面</strong>
+              <span id="dayPageShelfMeta">0 张内页</span>
+            </div>
+            <div class="day-page-shelf__list" id="dayPageShelfList"></div>
+          </div>
+          <div class="mode-library layout-library" id="modeLibrary">
+            <div class="template-series-heading">
+              <p class="layout-library__category">书写与整理</p>
+              <span>4 种</span>
+            </div>
+            <button class="layout-option layout-option--wide" type="button" data-mode-template="daily" data-day-template>
+              <span class="layout-preview layout-preview--daily" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>自由双页</strong><small>文字、手写与留白</small><em>DAILY</em></span>
+            </button>
+            <button class="layout-option" type="button" data-mode-template="bullet" data-day-template>
+              <span class="layout-preview layout-preview--bullet" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>速记索引</strong><small>任务、事件与迁移</small><em>INDEX</em></span>
+            </button>
+            <button class="layout-option" type="button" data-mode-template="reading" data-day-template>
+              <span class="layout-preview layout-preview--reading" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>阅读札记</strong><small>摘句、联想与书目</small><em>READING</em></span>
+            </button>
+            <button class="layout-option" type="button" data-mode-template="mood" data-day-template>
+              <span class="layout-preview layout-preview--mood" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>身心温度</strong><small>情绪、体感与安定</small><em>WELLBEING</em></span>
+            </button>
+            <div class="template-series-heading template-series-heading--second">
+              <p class="layout-library__category">收藏与回看</p>
+              <span>3 种</span>
+            </div>
+            <button class="layout-option layout-option--wide" type="button" data-mode-template="travel" data-day-template>
+              <span class="layout-preview layout-preview--travel" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>旅途采集</strong><small>路线、票根与计划之外</small><em>TRAVEL</em></span>
+            </button>
+            <button class="layout-option" type="button" data-mode-template="memory" data-day-template>
+              <span class="layout-preview layout-preview--memory" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>图文拼贴</strong><small>照片、物件与旁白</small><em>MEMORY</em></span>
+            </button>
+            <button class="layout-option" type="button" data-mode-template="fiveyear" data-day-template>
+              <span class="layout-preview layout-preview--fiveyear" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="layout-option__copy"><strong>同日五年</strong><small>让普通日子彼此照面</small><em>5 YEARS</em></span>
+            </button>
+          </div>
+          <details class="page-paper-settings">
+            <summary>
+              <span><strong>本页纸张</strong><small id="pagePaperMeta">点阵 · 植物标本</small></span>
+              <span class="summary-action" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="paper-surface-control">
+              <div class="subsection-heading">
+                <strong>底纹</strong>
+                <span>只改变当前页</span>
+              </div>
+              <div class="segmented" id="pageStyleTabs">
+                <button type="button" data-page-style="dot" class="is-active">点阵</button>
+                <button type="button" data-page-style="line">横线</button>
+                <button type="button" data-page-style="grid">方格</button>
+                <button type="button" data-page-style="plain">空白</button>
+              </div>
+              <div class="page-palette-control">
+                <span>墨色</span>
+                <div id="pagePalettePicker" aria-label="选择本页配色">
+                  <button type="button" data-page-palette="shiro" class="is-active" aria-label="素纸" title="素纸"></button>
+                  <button type="button" data-page-palette="moss" aria-label="苔庭" title="苔庭"></button>
+                  <button type="button" data-page-palette="indigo" aria-label="群青" title="群青"></button>
+                  <button type="button" data-page-palette="ume" aria-label="梅染" title="梅染"></button>
+                  <button type="button" data-page-palette="tea" aria-label="焙茶" title="焙茶"></button>
+                  <label class="custom-page-color" title="自定义本页强调色">
+                    <input id="customPageAccent" type="color" value="#667b72" aria-label="自定义本页强调色" />
+                  </label>
+                </div>
+              </div>
+              <div class="subsection-heading illustration-heading">
+                <strong>页角插画</strong>
+                <span>随本页保存</span>
+              </div>
+              <div class="page-illustration-picker" id="pageIllustrationPicker" aria-label="选择本页插画">
+                <button type="button" data-page-illustration="none" aria-label="无印花"><i class="illustration-preview illustration-preview--none"></i><span>无印花</span></button>
+                <button type="button" data-page-illustration="botanical" class="is-active" aria-label="植物标本"><i class="illustration-preview illustration-preview--botanical"></i><span>植物标本</span></button>
+                <button type="button" data-page-illustration="kissa" aria-label="喫茶日常"><i class="illustration-preview illustration-preview--kissa"></i><span>喫茶日常</span></button>
+                <button type="button" data-page-illustration="travel" aria-label="旅行速写"><i class="illustration-preview illustration-preview--travel"></i><span>旅行速写</span></button>
+                <button type="button" data-page-illustration="seasonal" aria-label="四季花信"><i class="illustration-preview illustration-preview--seasonal"></i><span>四季花信</span></button>
+                <button type="button" data-page-illustration="night" aria-label="夜读书房"><i class="illustration-preview illustration-preview--night"></i><span>夜读书房</span></button>
+                <button type="button" data-page-illustration="atelier" aria-label="文具工房"><i class="illustration-preview illustration-preview--atelier"></i><span>文具工房</span></button>
+              </div>
+            </div>
+          </details>
+          <details class="advanced-page-tools">
+            <summary>
+              <span><strong>更多</strong><small>用途起稿与模板共享</small></span>
+              <span class="summary-action" aria-hidden="true">⌄</span>
+            </summary>
+            <button class="wide-button" id="saveTemplateButton" type="button">
+              <svg><use href="#icon-download"></use></svg>
+              保存当前页为模板
+            </button>
+            <div class="settings-actions compact-actions">
+              <button class="wide-button" id="exportTemplatePackButton" type="button" title="导出内置模板和自定义模板">
+                <svg><use href="#icon-download"></use></svg>
+                导出模板包
+              </button>
+              <label class="wide-button file-button" title="导入 OpenPages 模板包">
+                <svg><use href="#icon-upload"></use></svg>
+                导入模板包
+                <input id="templatePackInput" type="file" accept="application/json" />
+              </label>
+            </div>
+            <div class="custom-template-list" id="customTemplateList"></div>
+          </details>
+        </section>
+
+        <section class="dock-section" data-panel="review">
+          <div class="section-title">
+            <h3>回看</h3>
+            <span>内页索引</span>
+          </div>
+          <div class="review-tabs" role="group" aria-label="回看范围">
+            <button type="button" data-review-scope="all" aria-pressed="true">全部内页</button>
+            <button type="button" data-review-scope="bookmarks" aria-pressed="false"><svg aria-hidden="true"><use href="#icon-bookmark"></use></svg>书签</button>
+          </div>
+          <label class="search-field">
+            <svg aria-hidden="true"><use href="#icon-search"></use></svg>
+            <input id="searchInput" type="search" aria-label="搜索内页" placeholder="搜索正文、计划、页签…" />
+          </label>
+          <div class="review-filters">
+            <label><span>内页类型</span><select id="reviewTypeFilter"><option value="all">全部类型</option></select></label>
+            <label><span>页签</span><select id="reviewTagFilter"><option value="">全部页签</option></select></label>
+          </div>
+          <details class="review-date-range">
+            <summary>日期范围 <small id="reviewDateLabel">不限</small></summary>
+            <div class="review-filters">
+              <label><span>开始日期</span><input id="reviewStartDate" type="date" /></label>
+              <label><span>结束日期</span><input id="reviewEndDate" type="date" /></label>
+            </div>
+          </details>
+          <div class="review-result-heading">
+            <p id="reviewSummary" role="status" aria-live="polite"></p>
+            <button type="button" id="reviewResetButton" hidden>清除筛选</button>
+          </div>
+          <div class="search-results" id="searchResults"></div>
+          <button type="button" id="reviewMoreButton" class="review-more" hidden>加载更多</button>
+        </section>
+
+        <section class="dock-section" data-panel="open">
+          <div class="section-title">
+            <h3>设置</h3>
+            <span>一次只调整一类选项</span>
+          </div>
+          <details class="settings-group" open>
+            <summary><span>外观</span><small>封皮、纸张与桌面</small></summary>
+            <div class="settings-group__content">
+              <fieldset class="theme-presets" id="themePresetPicker">
+                <legend>整本主题</legend>
+                <button class="theme-preset" type="button" data-theme-preset="morning" aria-pressed="false">
+                  <span class="theme-preset__sample" aria-hidden="true"><i></i></span>
+                  <span><strong>清晨和纸</strong><small>橄榄封皮 · 素白内页</small></span>
+                  <svg aria-hidden="true"><use href="#icon-check"></use></svg>
+                </button>
+                <button class="theme-preset" type="button" data-theme-preset="garden" aria-pressed="false">
+                  <span class="theme-preset__sample" aria-hidden="true"><i></i></span>
+                  <span><strong>苔庭蓝墨</strong><small>蓝黑封皮 · 淡蓝内页</small></span>
+                  <svg aria-hidden="true"><use href="#icon-check"></use></svg>
+                </button>
+                <button class="theme-preset" type="button" data-theme-preset="plum" aria-pressed="false">
+                  <span class="theme-preset__sample" aria-hidden="true"><i></i></span>
+                  <span><strong>梅雨书房</strong><small>酒红封皮 · 樱粉内页</small></span>
+                  <svg aria-hidden="true"><use href="#icon-check"></use></svg>
+                </button>
+                <button class="theme-preset" type="button" data-theme-preset="night" aria-pressed="false">
+                  <span class="theme-preset__sample" aria-hidden="true"><i></i></span>
+                  <span><strong>夜读皮革</strong><small>驼棕封皮 · 生成内页</small></span>
+                  <svg aria-hidden="true"><use href="#icon-check"></use></svg>
+                </button>
+              </fieldset>
+              <p class="appearance-fine-tune">细节微调</p>
+              <label class="field settings-field">
+                <span>桌面光线</span>
+                <select id="themeSelect">
+                  <option value="daylight">晨光</option>
+                  <option value="sage">苔庭</option>
+                  <option value="plum">梅雨</option>
+                  <option value="ink">夜读</option>
+                </select>
+              </label>
+              <div class="appearance-settings" aria-label="本册外观">
+            <div class="theme-preview" aria-live="polite">
+              <span class="theme-preview__book" aria-hidden="true"><i></i></span>
+              <span>
+                <strong id="themePreviewTitle">橄榄旧绿 · 白和纸</strong>
+                <small id="themePreviewMeta">晨光桌面 · 素纸页色</small>
+              </span>
+              <span class="theme-apply-state" id="themeApplyState">已应用</span>
+            </div>
+            <label class="field settings-field">
+              <span>本册封皮</span>
+              <select id="coverThemeSelect">
+                <option value="olive">橄榄旧绿</option>
+                <option value="camel">驼棕原皮</option>
+                <option value="blueblack">蓝黑</option>
+                <option value="burgundy">酒红</option>
+                <option value="natural">原色植鞣</option>
+                <option value="custom">自定义</option>
+              </select>
+            </label>
+            <label class="field settings-field custom-cover-field">
+              <span>自定义封皮色</span>
+              <input id="customCoverColor" type="color" value="#4f5b50" aria-label="自定义封皮颜色" />
+            </label>
+            <label class="field settings-field">
+              <span>内页纸色</span>
+              <select id="paperToneSelect">
+                <option value="washi">白和纸</option>
+                <option value="ivory">生成纸</option>
+                <option value="gray">冷灰纸</option>
+                <option value="blue">淡蓝纸</option>
+                <option value="sakura">樱粉纸</option>
+              </select>
+            </label>
+            <label class="print-toggle">
+              <input id="decorativePrintToggle" type="checkbox" checked />
+              保留内页插画印花
+            </label>
+              </div>
+            </div>
+          </details>
+
+          <details class="settings-group plus-settings-group">
+            <summary><span>OpenPages Plus</span><small>回顾与版本</small></summary>
+            <div class="settings-group__content">
+              <section class="plus-card">
+                <div class="plus-card__heading">
+                  <div><strong>Plus 内测</strong><span>Beta 期间开放体验</span></div>
+                  <span class="plus-badge">PLUS</span>
+                </div>
+                <p>适合收费的部分放在持续服务和高级工作流中；本地书写、基础笔刷、健康授权和数据导出始终保留。</p>
+                <div class="plus-feature-list">
+                  <div><span><strong>专业笔刷库</strong><small>六种笔迹，支持压感与纸感</small></span><em>已启用</em></div>
+                  <div><span><strong>七日健康回顾</strong><small>将授权范围内的趋势整理到手帐</small></span><button id="healthWeeklyReportButton" type="button">生成</button></div>
+                  <div><span><strong>页面版本快照</strong><small id="versionCount">尚无快照</small></span><button id="saveVersionButton" type="button">保存</button></div>
+                </div>
+                <button class="wide-button" id="restoreLastVersionButton" type="button" disabled>恢复最近快照</button>
+                <small class="plus-card__footnote">正式商业版可在此接入 App Store / Google Play 订阅；开源自托管与导出能力不受影响。</small>
+              </section>
+            </div>
+          </details>
+
+          <details class="settings-group">
+            <summary><span>数据与分享</span><small>安装、备份与导出</small></summary>
+            <div class="settings-group__content settings-actions">
+            <button class="wide-button" id="installAppButton" type="button" title="通过浏览器安装为 PWA">
+              <svg><use href="#icon-download"></use></svg>
+              安装到当前设备
+            </button>
+            <button class="wide-button" id="copyShareLinkButton" type="button" title="复制当前体验链接">
+              <svg><use href="#icon-check"></use></svg>
+              复制体验链接
+            </button>
+              <a class="wide-button release-link" href="../release/openpages-0.3.0-beta-pwa.zip" download title="下载可上传服务器的离线 PWA 包">
+              <svg><use href="#icon-download"></use></svg>
+              下载 PWA 分享包
+            </a>
+              <a class="wide-button release-link" href="../release/openpages-0.3.0-beta-source.zip" download title="下载开源源码包">
+              <svg><use href="#icon-download"></use></svg>
+              下载源码包
+            </a>
+            <button class="wide-button" id="exportButton" type="button" title="导出全部本地数据 JSON" aria-label="导出全部本地数据 JSON">
+              <svg><use href="#icon-download"></use></svg>
+              导出全部本地数据
+            </button>
+            <button class="wide-button" id="exportMarkdownButton" type="button" title="导出当前日页为 Markdown">
+              <svg><use href="#icon-download"></use></svg>
+              导出当前页 Markdown
+            </button>
+            <button class="wide-button" id="printDayButton" type="button" title="打印当前日页或另存为 PDF">
+              <svg><use href="#icon-print"></use></svg>
+              打印 / 保存为 PDF
+            </button>
+            <label class="wide-button file-button" title="导入 OpenPages JSON，合并到本地" aria-label="导入 OpenPages JSON，合并到本地">
+              <svg><use href="#icon-upload"></use></svg>
+              导入 OpenPages JSON
+              <input id="importInput" type="file" accept="application/json" />
+            </label>
+            </div>
+          </details>
+
+          <details class="settings-group">
+            <summary><span>健康与维护</span><small>授权、迁移与删除</small></summary>
+            <div class="settings-group__content">
+              <section class="health-connection" aria-labelledby="healthConnectionTitle">
+                <div class="health-connection__heading">
+                  <div>
+                    <strong id="healthConnectionTitle">手机健康</strong>
+                    <span id="healthConnectionState">等待连接</span>
+                  </div>
+                  <span class="health-connection__privacy">只读日摘要</span>
+                </div>
+                <p id="healthConnectionCopy">在 iPhone/iPad 连接 Apple 健康，在 Android 连接 Health Connect。系统会让你逐项选择允许读取的数据。</p>
+                <div class="health-connection__actions">
+                  <button class="wide-button primary-health-button" id="connectHealthButton" type="button">
+                    <svg><use href="#icon-spark"></use></svg>
+                    <span>连接手机健康</span>
+                  </button>
+                  <button class="wide-button" id="syncHealthButton" type="button" hidden>
+                    <svg><use href="#icon-redo"></use></svg>
+                    立即同步
+                  </button>
+                  <button class="wide-button" id="manageHealthButton" type="button" hidden>管理授权</button>
+                </div>
+                <div class="health-import-status" id="healthImportStatus">健康数据仅在授权后读取，并保存在当前设备。</div>
+              </section>
+              <details class="legacy-health-import">
+                <summary>从 Apple 健康 XML 恢复旧数据</summary>
+                <label class="health-import">
+                  <svg><use href="#icon-upload"></use></svg>
+                  <span>选择 export.xml</span>
+                  <input id="healthInput" type="file" accept=".xml,text/xml,application/xml" />
+                </label>
+              </details>
+              <div class="settings-actions">
+                <button class="wide-button" id="migrateTasksButton" type="button">
+                  <svg><use href="#icon-check"></use></svg>
+                  未完成任务迁移到明天
+                </button>
+                <button class="wide-button danger-button" id="deleteCurrentPageButton" type="button">
+                  <svg><use href="#icon-trash"></use></svg>
+                  删除当前页
+                </button>
+              </div>
+              <p class="workflow-note" id="workflowNote">内容默认只保存在当前设备；更换设备前请导出 JSON 备份。</p>
+            </div>
+          </details>
+        </section>
+      </aside>
+    </div>
+
+    <section class="mobile-dock" aria-label="文具抽屉">
+      <button type="button" data-open-mobile-panel="stickers">
+        <svg><use href="#icon-sticker"></use></svg>
+        <span>素材</span>
+      </button>
+      <button type="button" data-open-mobile-panel="templates">
+        <svg><use href="#icon-grid"></use></svg>
+        <span>加页</span>
+      </button>
+      <button type="button" data-open-mobile-panel="review">
+        <svg><use href="#icon-search"></use></svg>
+        <span>回看</span>
+      </button>
+      <button type="button" data-open-mobile-panel="open">
+        <svg><use href="#icon-sun"></use></svg>
+        <span>设置</span>
+      </button>
+    </section>
+
+    <button type="button" id="sidebarScrim" class="sidebar-scrim" aria-label="关闭手帐侧栏" hidden></button>
+
+    <div class="action-toast" id="actionToast" role="status" aria-live="polite"></div>
+
+    <nav class="bottom-nav" aria-label="移动端导航">
+      <button class="is-active" data-view-target="today">
+        <svg><use href="#icon-pen"></use></svg>
+        <span>今日</span>
+      </button>
+      <button data-view-target="planner">
+        <svg><use href="#icon-calendar"></use></svg>
+        <span>周计划</span>
+      </button>
+      <button data-view-target="library">
+        <svg><use href="#icon-sticker"></use></svg>
+        <span>素材</span>
+      </button>
+      <button data-view-target="open">
+        <svg><use href="#icon-sun"></use></svg>
+        <span>设置</span>
+      </button>
+    </nav>
+
+    <script src="./vendor/page-flip.browser.js?v=2.0.7" defer></script>
+    <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
+    <script src="./app.js?v=20261016-safe-load" defer></script>
+  </body>
+</html>

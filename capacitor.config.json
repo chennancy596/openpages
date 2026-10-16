@@ -1,0 +1,9 @@
+{
+  "appId": "org.openpages.app",
+  "appName": "OpenPages",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}

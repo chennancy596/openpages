@@ -1,0 +1,202 @@
+/* OpenPages handwriting workspace. Loaded after the general notebook skin. */
+.ink-quickbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(92, 80, 66, 0.12);
+  border-top: 0;
+  background: rgba(255, 253, 247, 0.5);
+}
+
+.ink-quickbar .color-swatches {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.ink-quickbar .color-swatches::-webkit-scrollbar {
+  display: none;
+}
+
+.ink-options-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(72, 82, 75, 0.16);
+  border-radius: 6px;
+  background: rgba(255, 255, 252, 0.72);
+  color: #485149;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.ink-options-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pen-smoothing {
+  grid-column: 1 / -1;
+  display: grid !important;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+}
+
+@media (min-width: 761px) {
+  .ink-options-toggle {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-book="open"] .journal-spread[data-mobile-page="ink"] {
+    padding: 6px 4px 12px !important;
+  }
+
+  body[data-book="open"] .journal-spread[data-mobile-page="ink"] .paper-page--right {
+    min-height: calc(100dvh - 122px) !important;
+    padding: 8px 4px 84px !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .paper-page--right > .paper-header {
+    display: none !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .canvas-card {
+    min-height: calc(100dvh - 206px) !important;
+    overflow: hidden !important;
+    border-radius: 7px !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .canvas-toolbar {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 8 !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 7px !important;
+    border-radius: 7px 7px 0 0 !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .canvas-toolbar > span {
+    font-size: 0.76rem !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .canvas-toolbar > div {
+    width: auto !important;
+    max-width: none !important;
+    flex-wrap: nowrap !important;
+    overflow: visible !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .canvas-toolbar .tool-button {
+    flex-basis: 32px !important;
+    width: 32px !important;
+    min-width: 32px !important;
+    height: 32px !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .ink-quickbar {
+    padding: 6px 7px;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .color-swatches button {
+    flex: 0 0 30px;
+    width: 30px !important;
+    height: 30px !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .pen-options {
+    display: none !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"].is-ink-options-open .pen-options {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 8px !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] .palette-picker,
+  .journal-spread[data-mobile-page="ink"] .custom-color,
+  .journal-spread[data-mobile-page="ink"] .pen-size,
+  .journal-spread[data-mobile-page="ink"] .pen-smoothing,
+  .journal-spread[data-mobile-page="ink"] .stylus-toggle {
+    grid-column: 1 / -1 !important;
+  }
+
+  .journal-spread[data-mobile-page="ink"] #inkCanvas {
+    width: 100% !important;
+    min-height: max(520px, 72dvh) !important;
+    border: 0 !important;
+    border-radius: 0 0 7px 7px !important;
+  }
+}
+
+body.is-ink-focus .sidebar,
+body.is-ink-focus .topbar,
+body.is-ink-focus .mobile-page-switcher,
+body.is-ink-focus .mobile-dock,
+body.is-ink-focus .daily-stamp,
+body.is-ink-focus .brass-clip,
+body.is-ink-focus .page-extras,
+body.is-ink-focus .paper-page--right > .paper-header,
+body.is-ink-focus .paper-page--left {
+  display: none !important;
+}
+
+body.is-ink-focus .app-shell,
+body.is-ink-focus .workspace,
+body.is-ink-focus .view-stage {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.is-ink-focus[data-book="open"] .journal-spread[data-mobile-page="ink"],
+body.is-ink-focus[data-book="open"] .journal-spread[data-mobile-page="ink"] .paper-page--right {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+body.is-ink-focus[data-book="open"] .journal-spread[data-mobile-page="ink"] .canvas-card {
+  min-height: 100dvh !important;
+  margin: 0 !important;
+  overflow: hidden !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+
+body.is-ink-focus .canvas-toolbar {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 30 !important;
+  border-radius: 0 !important;
+  backdrop-filter: blur(14px);
+}
+
+body.is-ink-focus[data-book="open"] .journal-spread[data-mobile-page="ink"] #inkCanvas {
+  min-height: calc(100dvh - 121px) !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}

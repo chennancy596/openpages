@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>OpenPages · Designer Edition</title>
+    <style>
+      :root {
+        --paper: #f4f5f0;
+        --paper-cool: #e8eeeb;
+        --ink: #1f2823;
+        --forest: #1f382d;
+        --forest-2: #2d4b3e;
+        --sage: #7e9286;
+        --brick: #a95f56;
+        --muted: #69756e;
+        --line: rgba(31, 40, 35, .17);
+        --white: #f8f8f3;
+        --serif: "Hiragino Mincho ProN", "YuMincho", "Songti SC", "STSong", serif;
+        --sans: "Hiragino Sans GB", "PingFang SC", "Noto Sans CJK SC", sans-serif;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; scrollbar-width: none; }
+      html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; }
+      body {
+        background: #c9ceca;
+        color: var(--ink);
+        font-family: var(--sans);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+      }
+      body.compact { width: 900px; height: 1200px; overflow: hidden; }
+      body.compact .slide { transform: scale(.8333333333); transform-origin: 0 0; }
+      body.hires { width: 2160px; height: 2880px; overflow: hidden; }
+      body.hires .slide { transform: scale(2); transform-origin: 0 0; }
+
+      .slide {
+        position: relative;
+        display: none;
+        width: 1080px;
+        height: 1440px;
+        overflow: hidden;
+        isolation: isolate;
+        background: var(--paper);
+      }
+      .slide.is-active { display: block; }
+      .paper::before,
+      .cool::before,
+      .dark::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        pointer-events: none;
+      }
+      .paper::before {
+        opacity: .18;
+        background: url("assets/paper-fiber.png") center / 540px auto repeat;
+        mix-blend-mode: multiply;
+      }
+      .cool { background: var(--paper-cool); }
+      .cool::before {
+        opacity: .14;
+        background: url("assets/washi-paper-fine.png") center / 520px auto repeat;
+        mix-blend-mode: multiply;
+      }
+      .dark { background: var(--forest); color: var(--white); }
+      .dark::before {
+        opacity: .24;
+        background: url("assets/cover-grain-fine.png") center / 620px auto repeat;
+        mix-blend-mode: soft-light;
+      }
+      .slide::after {
+        content: "";
+        position: absolute;
+        inset: 28px;
+        z-index: 50;
+        border: 1px solid rgba(31, 40, 35, .12);
+        pointer-events: none;
+      }
+      .dark::after { border-color: rgba(255, 255, 255, .12); }
+
+      h1, h2, h3, p { margin: 0; }
+      h1, h2 { font-family: var(--serif); font-weight: 600; letter-spacing: 0; }
+      img { display: block; image-rendering: auto; }
+      .brandline {
+        position: absolute;
+        left: 62px;
+        top: 54px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        color: var(--forest);
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .brandline::before {
+        content: "OP";
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border: 1px solid currentColor;
+        font-family: Georgia, serif;
+        font-size: 12px;
+        font-weight: 400;
+      }
+      .dark .brandline { color: rgba(255, 255, 255, .86); }
+      .page-no {
+        position: absolute;
+        right: 62px;
+        top: 62px;
+        z-index: 20;
+        color: rgba(31, 40, 35, .44);
+        font-family: Georgia, serif;
+        font-size: 17px;
+      }
+      .dark .page-no { color: rgba(255, 255, 255, .48); }
+      .micro {
+        color: var(--brick);
+        font-family: Georgia, serif;
+        font-size: 14px;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+      .fine-rule { height: 1px; background: var(--line); }
+      .dark .fine-rule { background: rgba(255,255,255,.16); }
+
+      .shot {
+        position: absolute;
+        overflow: hidden;
+        border: 1px solid rgba(31, 40, 35, .22);
+        background: #eef0ed;
+        box-shadow: 0 24px 60px rgba(24, 36, 29, .18);
+      }
+      .shot img { width: 100%; height: 100%; object-fit: cover; }
+      .shot::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: 1px solid rgba(255, 255, 255, .56);
+        pointer-events: none;
+      }
+
+      /* 01 — cover */
+      .s1 .issue {
+        position: absolute;
+        left: 65px;
+        top: 146px;
+        color: rgba(255,255,255,.52);
+        font-family: Georgia, serif;
+        font-size: 15px;
+        letter-spacing: .12em;
+      }
+      .s1 h1 {
+        position: absolute;
+        left: 61px;
+        top: 188px;
+        z-index: 8;
+        width: 900px;
+        font-size: 84px;
+        line-height: 1.08;
+      }
+      .s1 h1 small {
+        display: block;
+        margin-bottom: 11px;
+        color: rgba(255,255,255,.74);
+        font-family: var(--sans);
+        font-size: 22px;
+        font-weight: 500;
+        letter-spacing: .06em;
+      }
+      .s1 .subhead {
+        position: absolute;
+        left: 66px;
+        top: 414px;
+        z-index: 8;
+        width: 790px;
+        color: rgba(255,255,255,.7);
+        font-size: 23px;
+        line-height: 1.55;
+      }
+      .cover-stage {
+        position: absolute;
+        left: 54px;
+        top: 535px;
+        z-index: 3;
+        width: 972px;
+        height: 680px;
+        overflow: hidden;
+        background: #dce1dc;
+        box-shadow: 0 36px 88px rgba(8, 18, 12, .34);
+      }
+      .cover-stage img { width: 100%; height: 100%; object-fit: cover; object-position: center 53%; transform: scale(1.14); }
+      .cover-stage::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 62%, rgba(10, 24, 16, .2));
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.24);
+      }
+      .cover-specs {
+        position: absolute;
+        left: 62px;
+        right: 62px;
+        bottom: 80px;
+        z-index: 9;
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        border-top: 1px solid rgba(255,255,255,.2);
+      }
+      .cover-specs div { padding: 20px 0; border-right: 1px solid rgba(255,255,255,.16); }
+      .cover-specs div + div { padding-left: 25px; }
+      .cover-specs div:last-child { border-right: 0; }
+      .cover-specs b { display: block; font-size: 19px; }
+      .cover-specs span { display: block; margin-top: 6px; color: rgba(255,255,255,.55); font-size: 14px; }
+
+      /* 02 — system */
+      .s2 h1 { position: absolute; left: 62px; top: 150px; width: 560px; font-size: 68px; line-height: 1.14; }
+      .s2 .intro { position: absolute; right: 64px; top: 184px; width: 300px; color: var(--muted); font-size: 19px; line-height: 1.58; }
+      .system-index { position: absolute; left: 62px; top: 376px; width: 410px; border-top: 1px solid var(--line); }
+      .system-row { display: grid; grid-template-columns: 58px 1fr; gap: 14px; min-height: 175px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+      .system-row b { color: var(--brick); font-family: Georgia, serif; font-size: 18px; font-weight: 400; }
+      .system-row h3 { font-family: var(--serif); font-size: 33px; font-weight: 600; }
+      .system-row p { margin-top: 11px; color: #5f6a64; font-size: 17px; line-height: 1.55; }
+      .system-shot { right: 60px; top: 370px; width: 500px; height: 895px; }
+      .system-shot img { object-position: 63% center; }
+      .s2 .proof { position: absolute; left: 63px; bottom: 92px; width: 410px; color: #56635c; font-size: 17px; line-height: 1.55; }
+      .s2 .proof strong { display: block; margin-bottom: 8px; color: var(--ink); font-size: 20px; }
+
+      /* 03 — device */
+      .s3 h1 { position: absolute; left: 62px; top: 150px; z-index: 9; width: 830px; font-size: 70px; line-height: 1.12; }
+      .s3 .intro { position: absolute; left: 66px; top: 332px; z-index: 9; width: 640px; color: rgba(255,255,255,.64); font-size: 20px; line-height: 1.55; }
+      .desktop-frame { left: 61px; top: 452px; width: 958px; height: 515px; border-color: rgba(255,255,255,.2); }
+      .desktop-frame img { object-position: center 47%; }
+      .device-notes { position: absolute; left: 64px; top: 1020px; width: 400px; z-index: 10; border-top: 1px solid rgba(255,255,255,.2); }
+      .device-notes div { display: grid; grid-template-columns: 96px 1fr; padding: 17px 0; border-bottom: 1px solid rgba(255,255,255,.18); }
+      .device-notes b { color: #e1a49c; font-size: 15px; }
+      .device-notes span { color: rgba(255,255,255,.66); font-size: 15px; line-height: 1.45; }
+      .phone {
+        position: absolute;
+        z-index: 11;
+        top: 915px;
+        width: 235px;
+        height: 510px;
+        overflow: hidden;
+        border: 8px solid #15241d;
+        border-radius: 22px 22px 0 0;
+        background: #15241d;
+        box-shadow: 0 28px 60px rgba(6,12,9,.38);
+      }
+      .phone img { width: 100%; height: 100%; object-fit: cover; object-position: center top; }
+      .phone.one { left: 535px; }
+      .phone.two { right: 64px; }
+
+      /* 04 — templates */
+      .s4 h1 { position: absolute; left: 62px; top: 145px; width: 460px; font-size: 68px; line-height: 1.14; }
+      .s4 .intro { position: absolute; left: 66px; top: 340px; width: 405px; color: var(--muted); font-size: 19px; line-height: 1.6; }
+      .template-shot { right: 58px; top: 126px; width: 520px; height: 1120px; }
+      .template-shot img { object-position: 78% center; transform: scale(1.03); }
+      .template-index { position: absolute; left: 64px; top: 510px; width: 405px; border-top: 1px solid var(--line); }
+      .template-index div { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; height: 91px; border-bottom: 1px solid var(--line); }
+      .template-index b { color: var(--brick); font-family: Georgia,serif; font-size: 14px; font-weight: 400; }
+      .template-index strong { font-size: 20px; }
+      .template-index span { color: #77827b; font-size: 13px; }
+      .s4 .footnote { position: absolute; left: 64px; bottom: 78px; width: 420px; padding-top: 18px; border-top: 3px solid var(--forest); color: #56625b; font-size: 17px; line-height: 1.55; }
+
+      /* 05 — brushes */
+      .s5 h1 { position: absolute; left: 62px; top: 145px; width: 860px; font-size: 68px; line-height: 1.13; }
+      .s5 .intro { position: absolute; left: 66px; top: 327px; width: 760px; color: var(--muted); font-size: 19px; line-height: 1.55; }
+      .brush-shot { left: 62px; top: 428px; width: 956px; height: 515px; }
+      .brush-shot img { object-position: 66% center; }
+      .specimen-grid { position: absolute; left: 62px; right: 62px; top: 992px; display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); border-left: 1px solid var(--line); }
+      .specimen { height: 150px; padding: 18px 18px 14px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+      .specimen svg { width: 100%; height: 54px; overflow: visible; }
+      .specimen strong { display: block; margin-top: 8px; font-size: 18px; }
+      .specimen span { display: block; margin-top: 3px; color: #748078; font-size: 13px; }
+      .s5 .note { position: absolute; left: 64px; bottom: 57px; color: #647069; font-size: 15px; }
+
+      /* 06 — timeline */
+      .s6 h1 { position: absolute; left: 62px; top: 146px; z-index: 8; width: 840px; font-size: 69px; line-height: 1.12; }
+      .s6 .intro { position: absolute; left: 66px; top: 330px; width: 730px; color: #5f6c65; font-size: 19px; line-height: 1.55; }
+      .month-shot { left: 62px; top: 434px; width: 956px; height: 650px; }
+      .month-shot img { object-position: center 49%; }
+      .time-path { position: absolute; left: 66px; right: 66px; top: 1145px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 26px; }
+      .time-step { position: relative; padding-top: 18px; border-top: 3px solid var(--forest); }
+      .time-step + .time-step::before { content: ""; position: absolute; left: -26px; top: -3px; width: 26px; height: 3px; background: var(--brick); }
+      .time-step b { color: var(--brick); font-family: Georgia, serif; font-size: 14px; letter-spacing: .08em; }
+      .time-step strong { display: block; margin-top: 7px; font-family: var(--serif); font-size: 28px; }
+      .time-step span { display: block; margin-top: 6px; color: #627068; font-size: 14px; line-height: 1.45; }
+
+      /* 07 — illustrations */
+      .s7 h1 { position: absolute; left: 62px; top: 146px; width: 760px; font-size: 68px; line-height: 1.13; }
+      .s7 .intro { position: absolute; right: 64px; top: 210px; width: 250px; color: rgba(255,255,255,.62); font-size: 17px; line-height: 1.55; }
+      .art-layout { position: absolute; left: 64px; right: 64px; top: 390px; height: 840px; display: grid; grid-template-columns: 1.35fr .85fr .85fr; grid-template-rows: 1fr 1fr; gap: 14px; }
+      .art-piece { position: relative; overflow: hidden; background: #f3f1e8; border: 1px solid rgba(255,255,255,.17); }
+      .art-piece.large { grid-row: 1 / span 2; }
+      .art-piece img { width: 100%; height: 100%; object-fit: cover; }
+      .art-piece::after { content: attr(data-label); position: absolute; left: 16px; bottom: 14px; padding: 7px 10px; background: rgba(247,247,241,.9); color: var(--forest); font-size: 13px; font-weight: 700; }
+      .material-strip { position: absolute; left: 64px; right: 64px; bottom: 64px; height: 110px; display: grid; grid-template-columns: 180px 1fr; border-top: 1px solid rgba(255,255,255,.2); }
+      .material-strip p { padding-top: 22px; color: rgba(255,255,255,.66); font-size: 15px; line-height: 1.5; }
+      .material-strip img { width: 100%; height: 110px; object-fit: cover; object-position: 77% 36%; filter: saturate(.82); }
+
+      /* 08 — privacy */
+      .s8 { background: linear-gradient(90deg, var(--forest) 0 57%, var(--paper) 57% 100%); }
+      .s8 h1 { position: absolute; left: 62px; top: 154px; z-index: 8; width: 530px; color: var(--white); font-size: 68px; line-height: 1.14; }
+      .s8 .intro { position: absolute; left: 67px; top: 392px; width: 470px; color: rgba(255,255,255,.63); font-size: 19px; line-height: 1.6; }
+      .privacy-index { position: absolute; left: 66px; top: 560px; width: 480px; border-top: 1px solid rgba(255,255,255,.2); }
+      .privacy-index > div { display: grid; grid-template-columns: 55px 1fr; min-height: 118px; padding: 20px 0; border-bottom: 1px solid rgba(255,255,255,.18); }
+      .privacy-index b { color: #dfa39b; font-family: Georgia,serif; font-size: 15px; font-weight: 400; }
+      .privacy-index strong { display: block; color: var(--white); font-size: 19px; }
+      .privacy-index span { display: block; margin-top: 5px; color: rgba(255,255,255,.52); font-size: 14px; line-height: 1.45; }
+      .privacy-shot { right: 55px; top: 160px; width: 355px; height: 770px; border: 9px solid #1c2722; }
+      .privacy-shot img { object-position: center top; }
+      .beta-note { position: absolute; right: 61px; top: 1000px; width: 350px; color: #425047; }
+      .beta-note h2 { margin-top: 10px; font-size: 34px; line-height: 1.3; }
+      .beta-note p { margin-top: 13px; color: #6c776f; font-size: 16px; line-height: 1.55; }
+      .cta { position: absolute; left: 66px; bottom: 91px; z-index: 8; color: white; }
+      .cta strong { display: block; font-family: var(--serif); font-size: 29px; }
+      .cta span { display: block; margin-top: 8px; color: rgba(255,255,255,.55); font-size: 15px; }
+      .seal { position: absolute; right: 87px; bottom: 86px; display: grid; place-items: center; width: 104px; height: 104px; border: 2px solid var(--brick); border-radius: 50%; color: var(--brick); font-family: var(--serif); font-size: 27px; transform: rotate(-5deg); }
+    </style>
+  </head>
+  <body>
+    <section class="slide dark s1" data-slide="1">
+      <div class="brandline">OPENPAGES</div><div class="page-no">01 / 08</div>
+      <div class="issue">PUBLIC BETA · PRODUCT NOTES 001</div>
+      <h1><small>开源电子手帐</small>开页 OpenPages</h1>
+      <p class="subhead">像翻开一本真正的本子那样开始。电脑排版，移动端手写；不催打卡，也不要求填满。</p>
+      <div class="cover-stage"><img src="promo/studio23/ui-cover.png" alt="OpenPages 封面" /></div>
+      <div class="cover-specs"><div><b>本地优先</b><span>离线可用，不强制登录</span></div><div><b>跨端书写</b><span>电脑 · 平板 · 手机</span></div><div><b>自由续页</b><span>同一天不止两页</span></div></div>
+    </section>
+
+    <section class="slide paper s2" data-slide="2">
+      <div class="brandline">产品结构</div><div class="page-no">02 / 08</div>
+      <h1>一本手帐，<br />三件事</h1>
+      <p class="intro">入口被收进真实使用路径，打开后先写，再整理，最后决定如何保存。</p>
+      <div class="system-index">
+        <div class="system-row"><b>01</b><div><h3>写</h3><p>文字与手写独立成页；笔刷、色板、贴纸随手可用。</p></div></div>
+        <div class="system-row"><b>02</b><div><h3>整理</h3><p>月、周、日联动；同一天可以换模板继续加页。</p></div></div>
+        <div class="system-row"><b>03</b><div><h3>带走</h3><p>本地保存，支持 JSON 完整备份与 Markdown 导出。</p></div></div>
+      </div>
+      <div class="shot system-shot"><img src="promo/studio23/ui-desktop-reading.png" alt="桌面端真实界面" /></div>
+      <p class="proof"><strong>功能不是陈列，而是形成闭环。</strong>打开、记录、续页、回看和备份，都在当前版本中有明确入口。</p>
+    </section>
+
+    <section class="slide dark s3" data-slide="3">
+      <div class="brandline">跨设备书写</div><div class="page-no">03 / 08</div>
+      <h1>同一本，<br />三种尺寸</h1>
+      <p class="intro">桌面保留完整双页；平板和手机重新编排，不把电脑界面硬缩进小屏。</p>
+      <div class="shot desktop-frame"><img src="promo/studio23/ui-desktop-reading.png" alt="桌面双页界面" /></div>
+      <div class="device-notes"><div><b>DESKTOP</b><span>长文排版与素材管理</span></div><div><b>TABLET</b><span>触控笔手写与拼贴</span></div><div><b>MOBILE</b><span>文字页、手写页独立切换</span></div></div>
+      <div class="phone one"><img src="promo/studio23/ui-mobile-writing.png" alt="手机文字页" /></div>
+      <div class="phone two"><img src="promo/studio23/ui-mobile-handwriting.png" alt="手机手写页" /></div>
+    </section>
+
+    <section class="slide paper s4" data-slide="4">
+      <div class="brandline">内页系统</div><div class="page-no">04 / 08</div>
+      <h1>今天想用<br />哪一张纸？</h1>
+      <p class="intro">模板只提供结构，不替你决定内容。写满后可以继续新增下一组。</p>
+      <div class="template-index">
+        <div><b>01</b><strong>自由双页</strong><span>文字 / 手写</span></div><div><b>02</b><strong>速记索引</strong><span>任务 / 迁移</span></div><div><b>03</b><strong>阅读札记</strong><span>摘句 / 书目</span></div><div><b>04</b><strong>身心温度</strong><span>情绪 / 体感</span></div><div><b>05</b><strong>旅途采集</strong><span>路线 / 票根</span></div><div><b>06</b><strong>图文拼贴</strong><span>照片 / 旁白</span></div><div><b>07</b><strong>同日五年</strong><span>纵向回看</span></div>
+      </div>
+      <div class="shot template-shot"><img src="promo/studio23/ui-template-drawer.png" alt="模板选择抽屉" /></div>
+      <p class="footnote">模板不是功能切换。它是一张可以写、可以保存，也可以继续翻到下一页的真实内页。</p>
+    </section>
+
+    <section class="slide paper s5" data-slide="5">
+      <div class="brandline">手写笔刷</div><div class="page-no">05 / 08</div>
+      <h1>六支笔，<br />不是六个名字</h1>
+      <p class="intro">倾角、速度、颗粒、透明度和稳定度参与笔迹计算，每种笔都有不同的落笔与收锋。</p>
+      <div class="shot brush-shot"><img src="promo/studio23/ui-brushes.png" alt="笔刷参数界面" /></div>
+      <div class="specimen-grid">
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 38 C55 31 88 20 142 25 S220 32 250 12" fill="none" stroke="#263a31" stroke-width="4" stroke-linecap="round"/><path d="M248 12 L258 8 L251 19" fill="#263a31"/></svg><strong>钢笔</strong><span>倾角收锋</span></div>
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 35 C50 34 84 24 125 29 S205 31 252 19" fill="none" stroke="#44564d" stroke-width="2.2" stroke-linecap="round"/><circle cx="87" cy="26" r="1.8" fill="#44564d"/><circle cx="173" cy="31" r="1.5" fill="#44564d"/></svg><strong>圆珠笔</strong><span>细线墨珠</span></div>
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 31 L252 31" fill="none" stroke="#2b3e35" stroke-width="2.4" stroke-linecap="square"/></svg><strong>针管笔</strong><span>稳定等宽</span></div>
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 38 C54 34 93 21 141 29 S213 28 252 17" fill="none" stroke="#66736c" stroke-width="2" stroke-dasharray="1 4" stroke-linecap="round"/><path d="M9 40 C56 35 94 24 140 31 S211 30 251 19" fill="none" stroke="#66736c" stroke-width="1" opacity=".55"/></svg><strong>铅笔</strong><span>石墨颗粒</span></div>
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 36 C54 28 96 16 143 23 S218 30 252 14" fill="none" stroke="#879b90" stroke-width="13" stroke-linecap="butt" opacity=".5"/><path d="M9 37 C60 28 101 18 148 25" fill="none" stroke="#879b90" stroke-width="13" stroke-linecap="butt" opacity=".25"/></svg><strong>马克笔</strong><span>斜切叠色</span></div>
+        <div class="specimen"><svg viewBox="0 0 260 54"><path d="M8 40 C45 35 64 9 94 18 C127 29 142 42 176 32 C205 24 232 13 252 8" fill="none" stroke="#263a31" stroke-width="8" stroke-linecap="round"/><path d="M9 41 C51 36 70 14 93 20" fill="none" stroke="#f4f5f0" stroke-width="1.5" opacity=".65"/></svg><strong>毛笔</strong><span>速度与留白</span></div>
+      </div>
+      <p class="note">笔迹样本为矢量渲染，成图放大后仍保持清晰。</p>
+    </section>
+
+    <section class="slide cool s6" data-slide="6">
+      <div class="brandline">日期与计划</div><div class="page-no">06 / 08</div>
+      <h1>从月份，<br />走到今天</h1>
+      <p class="intro">月历看方向，周页分节奏，日页承接生活；已有记录会回到日期索引。</p>
+      <div class="shot month-shot"><img src="promo/studio23/ui-month.png" alt="月历与计划联动" /></div>
+      <div class="time-path"><div class="time-step"><b>MONTH</b><strong>月历</strong><span>主题、重点和内容标记</span></div><div class="time-step"><b>WEEK</b><strong>周计划</strong><span>安排节奏，不做连续打卡</span></div><div class="time-step"><b>DAY</b><strong>当天内页</strong><span>写满换模板继续下一组</span></div></div>
+    </section>
+
+    <section class="slide dark s7" data-slide="7">
+      <div class="brandline">纸张与素材</div><div class="page-no">07 / 08</div>
+      <h1>留一点图案，<br />也留足够的空白</h1>
+      <p class="intro">原创线稿随页面保存，不挡住正文。</p>
+      <div class="art-layout">
+        <div class="art-piece large" data-label="植物标本"><img src="assets/page-illustration-botanical.svg" alt="植物标本插画" /></div>
+        <div class="art-piece" data-label="喫茶日常"><img src="assets/page-illustration-kissa.svg" alt="喫茶插画" /></div>
+        <div class="art-piece" data-label="旅行速写"><img src="assets/page-illustration-travel.svg" alt="旅行插画" /></div>
+        <div class="art-piece" data-label="四季花信"><img src="assets/page-illustration-seasonal.svg" alt="花卉插画" /></div>
+        <div class="art-piece" data-label="文具工房"><img src="assets/page-illustration-atelier.svg" alt="文具插画" /></div>
+      </div>
+      <div class="material-strip"><p>贴纸、胶带、纸张底纹<br />可以独立组合。</p><img src="promo/studio23/ui-materials.png" alt="素材库" /></div>
+    </section>
+
+    <section class="slide s8" data-slide="8">
+      <div class="brandline" style="color:rgba(255,255,255,.86)">本地优先 · 开源 Beta</div><div class="page-no">08 / 08</div>
+      <h1>你的内容，<br />留在你的设备</h1>
+      <p class="intro">无需强制账号。隐私数据只在你主动授权时读取。</p>
+      <div class="privacy-index"><div><b>01</b><div><strong>本地优先</strong><span>离线也能继续记录</span></div></div><div><b>02</b><div><strong>数据可带走</strong><span>JSON 备份与 Markdown 导出</span></div></div><div><b>03</b><div><strong>授权有边界</strong><span>健康数据仅在原生版许可后读取</span></div></div><div><b>04</b><div><strong>基础能力开源</strong><span>MIT 代码，欢迎素材与模板贡献</span></div></div></div>
+      <div class="shot privacy-shot"><img src="promo/studio23/ui-mobile-health.png" alt="健康授权与隐私设置" /></div>
+      <div class="beta-note"><span class="micro">OPEN BETA</span><h2>想参加内测，<br />评论区留「开页」</h2><p>网页体验核心记录；桌面与移动安装包按测试节奏开放。</p></div>
+      <div class="cta"><strong>OpenPages · 开页</strong><span>不是催你完成生活，而是替你留下生活。</span></div><div class="seal">开页</div>
+    </section>
+
+    <script>
+      const params = new URLSearchParams(location.search);
+      const requested = Math.min(8, Math.max(1, Number(params.get("slide")) || 1));
+      if (params.get("compact") === "1") document.body.classList.add("compact");
+      if (params.get("scale") === "2") document.body.classList.add("hires");
+      document.querySelector(`[data-slide="${requested}"]`).classList.add("is-active");
+      document.documentElement.dataset.ready = "true";
+    </script>
+  </body>
+</html>

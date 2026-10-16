@@ -1,0 +1,19 @@
+[package]
+name = "openpages"
+version = "0.3.0-beta"
+description = "Open source, local-first digital journal."
+authors = ["OpenPages contributors"]
+license = "MIT"
+repository = "https://github.com/openpages/openpages"
+edition = "2021"
+
+[lib]
+name = "openpages_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"

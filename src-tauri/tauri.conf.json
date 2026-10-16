@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "OpenPages",
+  "version": "0.3.0-beta",
+  "identifier": "org.openpages.app",
+  "build": {
+    "beforeDevCommand": "npm run web:dev",
+    "beforeBuildCommand": "npm run web:build",
+    "devUrl": "http://localhost:5173",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "开页 OpenPages",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 920,
+        "minHeight": 640,
+        "resizable": true,
+        "fullscreen": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Productivity",
+    "shortDescription": "Open source digital journal",
+    "longDescription": "OpenPages is a local-first open source digital journal for daily planning, habits, stickers, and handwritten notes.",
+    "icon": ["../assets/icon.png"]
+  }
+}
