@@ -1100,7 +1100,8 @@ function flushState() {
 
 function setSaveState(stateName) {
   const config = {
-    ready: { text: Object.keys(state.entries).length ? "已载入本机记录" : "等待记录" },
+    // A blank page is created for today on launch; only pages with writing count as records.
+    ready: { text: Object.entries(state.entries).some(([key, entry]) => hasMeaningfulContent(entry, key)) ? "已载入本机记录" : "新手帐 · 保存在本机" },
     saving: { text: "正在保存…" },
     saved: { text: "已保存到本机" },
     error: { text: "保存失败 · 未写入" },

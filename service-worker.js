@@ -1,4 +1,4 @@
-const CACHE_NAME = "openpages-v65-release";
+const CACHE_NAME = "openpages-v66-release";
 const ASSETS = [
   "./",
   "./index.html",
