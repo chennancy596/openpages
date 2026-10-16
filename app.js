@@ -531,6 +531,8 @@ const elements = {
   exportTemplatePackButton: $("#exportTemplatePackButton"),
   templatePackInput: $("#templatePackInput"),
   customTemplateList: $("#customTemplateList"),
+  myTemplates: $("#myTemplates"),
+  myTemplatesMeta: $("#myTemplatesMeta"),
   exportButton: $("#exportButton"),
   exportMarkdownButton: $("#exportMarkdownButton"),
   printDayButton: $("#printDayButton"),
@@ -1715,7 +1717,8 @@ function renderOnThisDay() {
   pages.forEach(({ key, index, years, title, excerpt }) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.innerHTML = `<small>${years} 年前 · ${escapeHtml(key)}</small><span>${escapeHtml(excerpt || title || "打开那一天")}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
+    const then = parseDate(key);
+    button.innerHTML = `<small>${years} 年前 · ${then.getFullYear()}年 ${WEEKDAY_NAMES[then.getDay()]}</small><span>${escapeHtml(excerpt || title || "打开那一天")}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
     button.title = `打开 ${key} 的日页`;
     button.addEventListener("click", () => {
       elements.onThisDay.open = false;
@@ -2038,7 +2041,9 @@ function clonePageForFlip(source) {
   const sourceFields = source.querySelectorAll("input, textarea, select");
   clone.querySelectorAll("input, textarea, select").forEach((field, index) => {
     const sourceField = sourceFields[index];
-    if (!sourceField) return;
+    field.disabled = true;
+    // A file input's value can only be cleared; copying it throws once a file was picked.
+    if (!sourceField || field.type === "file") return;
     field.value = sourceField.value;
     if ("checked" in field) field.checked = sourceField.checked;
     field.disabled = true;
@@ -2068,11 +2073,16 @@ function capturePageFlipSnapshot() {
   const leftPage = spread?.querySelector(".paper-page--left");
   const rightPage = spread?.querySelector(".paper-page--right");
   if (!leftPage || !rightPage) return null;
-  return {
-    left: clonePageForFlip(leftPage),
-    right: clonePageForFlip(rightPage),
-    mobilePage: spread.dataset.mobilePage || "journal",
-  };
+  // The snapshot only feeds the turning animation; if it cannot be made, the plain transition is used.
+  try {
+    return {
+      left: clonePageForFlip(leftPage),
+      right: clonePageForFlip(rightPage),
+      mobilePage: spread.dataset.mobilePage || "journal",
+    };
+  } catch {
+    return null;
+  }
 }
 
 function startPageFlipEngine(direction, duration, previousSpread) {
@@ -3350,6 +3360,9 @@ function renderRecentPages(entries) {
   });
 }
 
+// Built-in templates give a page its structure (layout, fields, paper and prompts), never content:
+// no pre-written text, focus line, tags, tasks or notes, so an unused page stays an empty page.
+// The guidance they used to write into the page lives in each mode's placeholder and prompts.
 function modePresets() {
   return {
     daily: {
@@ -3365,9 +3378,9 @@ function modePresets() {
     },
     bullet: {
       title: "子弹笔记",
-      focus: "快速记录，然后再整理",
+      focus: "",
       text: "",
-      tags: ["Bullet"],
+      tags: [],
       tasks: [],
       fragments: [],
       bullets: [],
@@ -3387,28 +3400,25 @@ function modePresets() {
     },
     memory: {
       title: "记忆拼贴",
-      focus: "把今天变成可以回看的小场景",
-      text: "地点：\n声音：\n味道：\n想贴上的票根/照片：\n这一刻的旁白：",
-      tags: ["拼贴", "记忆"],
-      tasks: ["选一张照片", "写下三件小物", "整理成一页拼贴"],
-      fragments: ["适合旅行、展览、约会、读书页，页面不必写满。"],
+      focus: "",
+      text: "",
+      tags: [],
+      tasks: [],
+      fragments: [],
       bullets: [],
       photos: [],
-      metrics: { energy: 4, stress: 2, sleep: 7 },
+      metrics: { energy: 3, stress: 2, sleep: 7 },
     },
     mood: {
       title: "情绪追踪",
-      focus: "先看见自己，再安排事情",
-      text: "今天的情绪天气：\n身体感受：\n触发点：\n让我稳定下来的事：\n想对自己说：",
-      tags: ["情绪", "自我照顾"],
-      tasks: ["记录情绪天气", "做一个安定动作", "减少一个不必要任务"],
-      fragments: ["低能量日也算记录，贴一枚小贴纸就很好。"],
-      bullets: [
-        { type: "note", text: "触发点是什么" },
-        { type: "note", text: "什么让我稳定下来" },
-      ],
+      focus: "",
+      text: "",
+      tags: [],
+      tasks: [],
+      fragments: [],
+      bullets: [],
       photos: [],
-      metrics: { energy: 2, stress: 3, sleep: 7 },
+      metrics: { energy: 3, stress: 2, sleep: 7 },
     },
     monthly: {
       title: "月计划",
@@ -3423,30 +3433,30 @@ function modePresets() {
     },
     reading: {
       title: "阅读手帐",
-      focus: "读慢一点，留下真正有回声的部分",
-      text: "摘句：\n\n联想：\n\n读完后想带走：",
-      tags: ["阅读"],
+      focus: "",
+      text: "",
+      tags: [],
       tasks: [],
-      fragments: ["不做读书数量排行榜，只留下与自己有关的句子。"],
+      fragments: [],
       bullets: [],
       photos: [],
       metrics: { energy: 3, stress: 2, sleep: 7 },
     },
     travel: {
       title: "旅行手帐",
-      focus: "收下路线之外发生的事",
-      text: "今日路线：\n\n计划之外：\n\n想带回生活：",
-      tags: ["旅行"],
+      focus: "",
+      text: "",
+      tags: [],
       tasks: [],
-      fragments: ["照片、票根和手写可以混在同一页，不必排得整齐。"],
+      fragments: [],
       bullets: [],
       photos: [],
-      metrics: { energy: 4, stress: 1, sleep: 7 },
+      metrics: { energy: 3, stress: 2, sleep: 7 },
     },
     fiveyear: {
       title: "同日五年",
-      focus: "写给以后会回到这一页的自己",
-      text: "天气与体感：\n\n今天最具体的一件事：\n\n留给明年今天：",
+      focus: "",
+      text: "",
       tags: [],
       tasks: [],
       fragments: [],
@@ -3465,7 +3475,8 @@ function applyModeTemplate(mode, template) {
     openCalendarScale(mode === "monthly" ? "month" : "week");
     return;
   }
-  if (usesBuiltIn && mode === "daily") {
+  if (usesBuiltIn && pageScopeForMode(mode) === "day") {
+    // A day page is titled by its date; the layout name is shown wherever the page is listed.
     template = { ...template, title: defaultDayTitle(calendarStorageKey("day", calendarFocusKey())) };
   }
   syncEntryFromForm();
@@ -3504,7 +3515,9 @@ function applyModeTemplate(mode, template) {
   fresh.pageIllustration = suggestedAppearance.pageIllustration || sourceAppearance.pageIllustration || state.pageIllustration || "botanical";
   fillEntryFromTemplate(fresh, template);
 
-  if (index < 0) {
+  const appended = index < 0;
+  const previousActiveIndex = activeIndex;
+  if (appended) {
     entry.pageGroups.push(capturePageGroup(fresh));
     index = entry.pageGroups.length - 1;
   } else {
@@ -3523,7 +3536,29 @@ function applyModeTemplate(mode, template) {
     selectDate(targetKey);
   }
   closeMobilePanel();
-  notify(`已加入${usesBuiltIn ? LAYOUT_LABELS[mode] || modePresets()[mode].title : template.name || template.title}，保存在 ${targetKey}`);
+  // Say what happened: a written page is never replaced, so the layout arrives as new pages after it.
+  const label = usesBuiltIn ? LAYOUT_LABELS[mode] || modePresets()[mode].title : template.name || template.title;
+  const day = parseDate(targetKey);
+  const where = targetKey === todayKey() ? "" : `${day.getMonth() + 1}月${day.getDate()}日 · `;
+  if (!appended) {
+    notify(`${where}这一页已换成「${label}」`);
+    return;
+  }
+  const addedId = entry.pageGroups[index].id;
+  notify(`${where}已在后面续两页「${label}」`, {
+    label: "撤销",
+    run: () => {
+      if (pageTurnInProgress) return;
+      const position = entry.pageGroups.findIndex((group) => group.id === addedId);
+      if (position < 0) return;
+      entry.pageGroups.splice(position, 1);
+      entry.activePageGroup = Math.min(previousActiveIndex, entry.pageGroups.length - 1);
+      applyPageGroup(entry, entry.pageGroups[entry.activePageGroup], targetKey);
+      if (targetKey === state.selectedDate) loadEntryIntoForm();
+      persistState();
+      notify("已撤销");
+    },
+  });
 }
 
 function starterPresets() {
@@ -3600,11 +3635,21 @@ function fillEntryFromTemplate(entry, template) {
   entry.metrics = { ...(template.metrics || { energy: 3, stress: 2, sleep: 7 }) };
 }
 
+// What built-in templates wrote into pages before they became structure-only; such content is still
+// recognised as generated, not as the writer's own.
+const LEGACY_TEMPLATE_CONTENT = {
+  focus: ["快速记录，然后再整理", "把今天变成可以回看的小场景", "先看见自己，再安排事情", "读慢一点，留下真正有回声的部分", "收下路线之外发生的事", "写给以后会回到这一页的自己"],
+  text: ["地点：\n声音：\n味道：\n想贴上的票根/照片：\n这一刻的旁白：", "今天的情绪天气：\n身体感受：\n触发点：\n让我稳定下来的事：\n想对自己说：", "摘句：\n\n联想：\n\n读完后想带走：", "今日路线：\n\n计划之外：\n\n想带回生活：", "天气与体感：\n\n今天最具体的一件事：\n\n留给明年今天："],
+  tags: ["Bullet", "拼贴", "记忆", "情绪", "自我照顾", "阅读", "旅行"],
+  tasks: ["选一张照片", "写下三件小物", "整理成一页拼贴", "记录情绪天气", "做一个安定动作", "减少一个不必要任务"],
+  fragments: ["适合旅行、展览、约会、读书页，页面不必写满。", "低能量日也算记录，贴一枚小贴纸就很好。", "不做读书数量排行榜，只留下与自己有关的句子。", "照片、票根和手写可以混在同一页，不必排得整齐。"],
+};
+
 function applyTemplateNonDestructively(entry, template) {
-  const presets = Object.values(modePresets());
-  const generatedTitles = new Set(presets.map((preset) => preset.title));
-  const generatedFocus = new Set(presets.map((preset) => preset.focus));
-  const generatedText = new Set(presets.map((preset) => preset.text));
+  const presets = [...Object.values(modePresets()), LEGACY_TEMPLATE_CONTENT];
+  const generatedTitles = new Set(presets.map((preset) => preset.title).filter(Boolean));
+  const generatedFocus = new Set(presets.flatMap((preset) => preset.focus));
+  const generatedText = new Set(presets.flatMap((preset) => preset.text));
   const generatedTags = new Set(presets.flatMap((preset) => preset.tags));
   const generatedTasks = new Set([...DEFAULT_TASK_TEXTS, ...presets.flatMap((preset) => preset.tasks)]);
   const generatedFragments = new Set(presets.flatMap((preset) => preset.fragments));
@@ -3906,19 +3951,41 @@ function saveCustomTemplate() {
   persistState();
 }
 
+// Saved templates sit beside the built-in ones (not inside 更多), all of them, each removable.
 function renderCustomTemplates() {
   state.customTemplates = state.customTemplates || [];
-  elements.customTemplateList.innerHTML = "";
-  if (!state.customTemplates.length) {
-    elements.customTemplateList.innerHTML = "<span>还没有自定义模板</span>";
-    return;
-  }
-  state.customTemplates.slice(0, 6).forEach((template) => {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.innerHTML = `<strong>${escapeHtml(template.name)}</strong><span>${escapeHtml(template.tags.map((tag) => `#${tag}`).join(" ") || "自定义")}</span>`;
-    button.addEventListener("click", () => applyModeTemplate(template.mode || "daily", template));
-    elements.customTemplateList.append(button);
+  elements.customTemplateList.replaceChildren();
+  if (elements.myTemplates) elements.myTemplates.hidden = !state.customTemplates.length;
+  if (elements.myTemplatesMeta) elements.myTemplatesMeta.textContent = state.customTemplates.length ? `${state.customTemplates.length} 个` : "";
+  state.customTemplates.forEach((template, position) => {
+    const row = document.createElement("div");
+    row.className = "custom-template";
+    const apply = document.createElement("button");
+    apply.type = "button";
+    apply.className = "custom-template__apply";
+    const tags = (template.tags || []).map((tag) => `#${tag}`).join(" ");
+    apply.innerHTML = `<strong>${escapeHtml(template.name || template.title || "未命名模板")}</strong><span>${escapeHtml([LAYOUT_LABELS[template.mode] || "自由双页", tags].filter(Boolean).join(" · "))}</span>`;
+    apply.addEventListener("click", () => applyModeTemplate(template.mode || "daily", template));
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "custom-template__remove";
+    remove.textContent = "×";
+    remove.setAttribute("aria-label", `删除模板「${template.name || template.title || "未命名模板"}」`);
+    remove.addEventListener("click", () => {
+      state.customTemplates = state.customTemplates.filter((candidate) => candidate !== template);
+      renderCustomTemplates();
+      persistState();
+      notify(`已删除模板「${template.name || template.title || "未命名模板"}」`, {
+        label: "撤销",
+        run: () => {
+          state.customTemplates.splice(Math.min(position, state.customTemplates.length), 0, template);
+          renderCustomTemplates();
+          persistState();
+        },
+      });
+    });
+    row.append(apply, remove);
+    elements.customTemplateList.append(row);
   });
 }
 
@@ -4254,7 +4321,11 @@ function startStickerMove(event) {
   const sticker = currentEntry().stickers.find((candidate) => candidate.id === id);
   if (!sticker) return;
   selectedStickerId = id;
-  event.currentTarget.setPointerCapture(event.pointerId);
+  try {
+    event.currentTarget.setPointerCapture(event.pointerId);
+  } catch {
+    // The pointer may already be gone (a very quick tap); dragging still follows window events.
+  }
   dragSticker = {
     pointerId: event.pointerId,
     id,
@@ -4626,7 +4697,7 @@ function importTemplatePack(file) {
       persistState();
       notify(`已导入 ${normalized.length} 个模板`);
     } catch {
-      alert("这个 JSON 不是有效的 OpenPages 模板包。");
+      notify("这个文件不是 OpenPages 模板包，没有导入任何内容");
     } finally {
       elements.templatePackInput.value = "";
     }
@@ -4652,7 +4723,17 @@ async function copyProjectLink() {
 
 async function installApp() {
   if (!deferredInstallPrompt) {
-    notify("请用本地服务器或 HTTPS 打开，再从浏览器安装 PWA");
+    // Only Chromium browsers offer an install prompt; elsewhere, say where the browser's own option is.
+    const ua = navigator.userAgent;
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|Edg|CriOS|FxiOS/.test(ua);
+    const message = standalone ? "开页已经安装在这台设备上"
+      : isIOS ? "在 Safari 点「分享」，再选「添加到主屏幕」"
+      : isSafari ? "在 Safari 菜单「文件」中选「添加到程序坞」"
+      : window.isSecureContext ? "可点地址栏右侧的安装图标；如果没有，说明这个浏览器暂不支持安装"
+      : "需要通过 HTTPS 或本机地址打开，浏览器才能安装";
+    notify(message);
     return;
   }
   deferredInstallPrompt.prompt();
@@ -4680,7 +4761,7 @@ function importData(file) {
       notify("已导入 OpenPages 数据");
       persistState();
     } catch {
-      alert("这个 JSON 不是有效的 OpenPages 数据。");
+      notify("这个文件不是 OpenPages 备份，本机记录没有改动");
     }
   });
   reader.readAsText(file);
@@ -5068,7 +5149,11 @@ function setupCanvas() {
     if (elements.stylusOnlyToggle.checked && event.pointerType !== "pen") return;
     if (elements.body.dataset.inputMode !== "ink") setMobilePage("ink");
     drawActive = true;
-    canvas.setPointerCapture(event.pointerId);
+    try {
+      canvas.setPointerCapture(event.pointerId);
+    } catch {
+      // Pointer already released; the stroke is still drawn from the events received.
+    }
     const point = canvasPoint(event);
     const startingPressure = event.pressure || 0.5;
     currentStroke = {
@@ -5455,18 +5540,28 @@ function redoInk() {
 }
 
 function clearInk() {
-  if (currentEntry().strokes.length || currentEntry().ink) {
-    const confirmed = confirm("清空整张手写页？这个操作会删除当前日期的手写笔迹。");
-    if (!confirmed) return;
-  }
+  const entry = currentEntry();
+  if (!entry.strokes.length && !entry.ink) return;
+  // No confirmation: clearing is undoable from the toast, like deleting a page.
+  const previous = { ink: entry.ink, strokes: entry.strokes, key: pageHistoryKey() };
   const canvas = elements.inkCanvas;
   canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
-  currentEntry().ink = "";
-  currentEntry().strokes = [];
+  entry.ink = "";
+  entry.strokes = [];
   inkRedoByDate.set(pageHistoryKey(), []);
   updateInkHistoryButtons();
-  notify("手写页已清空");
   persistState();
+  notify("手写页已清空", {
+    label: "撤销",
+    run: () => {
+      if (pageHistoryKey() !== previous.key) return;
+      const current = currentEntry();
+      current.ink = previous.ink;
+      current.strokes = previous.strokes;
+      restoreInk();
+      persistState();
+    },
+  });
 }
 
 function bindEvents() {
@@ -5573,7 +5668,12 @@ function bindEvents() {
   elements.syncBulletsButtons.forEach((button) => {
     button.addEventListener("click", syncBulletsToEditor);
   });
-  elements.photoInput.addEventListener("change", () => addPhotos(elements.photoInput.files));
+  // File inputs are cleared after reading: the same file can be chosen again, and no file lingers in the page.
+  elements.photoInput.addEventListener("change", () => {
+    const files = [...elements.photoInput.files];
+    elements.photoInput.value = "";
+    addPhotos(files);
+  });
   elements.energyRange.addEventListener("input", () => updateMetric("energy", elements.energyRange.value));
   elements.stressRange.addEventListener("input", () => updateMetric("stress", elements.stressRange.value));
   elements.sleepRange.addEventListener("input", () => updateMetric("sleep", elements.sleepRange.value));
@@ -5696,10 +5796,18 @@ function bindEvents() {
   elements.exportMarkdownButton.addEventListener("click", exportCurrentDayMarkdown);
   elements.printDayButton.addEventListener("click", printCurrentDay);
   elements.exportDayButton.addEventListener("click", exportCurrentDay);
-  elements.importInput.addEventListener("change", () => importData(elements.importInput.files[0]));
+  elements.importInput.addEventListener("change", () => {
+    const file = elements.importInput.files[0];
+    elements.importInput.value = "";
+    importData(file);
+  });
   elements.installAppButton.addEventListener("click", installApp);
   elements.copyShareLinkButton.addEventListener("click", copyProjectLink);
-  elements.healthInput.addEventListener("change", () => handleHealthImport(elements.healthInput.files[0]));
+  elements.healthInput.addEventListener("change", () => {
+    const file = elements.healthInput.files[0];
+    elements.healthInput.value = "";
+    handleHealthImport(file);
+  });
   elements.connectHealthButton?.addEventListener("click", requestNativeHealthAccess);
   elements.syncHealthButton?.addEventListener("click", () => syncNativeHealth());
   elements.manageHealthButton?.addEventListener("click", manageNativeHealthAccess);

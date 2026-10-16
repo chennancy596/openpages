@@ -120,3 +120,29 @@ test("deleting a page needs no confirmation and 撤销 puts it back in its place
   `);
   assert.equal(result, "0 | 第一页,第三页 | 第一页,第二页,第三页 | 1 | 0");
 });
+
+test("built-in templates give structure only, so an unused page stays empty", () => {
+  const run = app();
+  const filled = run(`
+    Object.entries(modePresets()).filter(([, preset]) =>
+      preset.text || preset.focus || preset.tags.length || preset.tasks.length || preset.fragments.length || (preset.bullets || []).length
+    ).map(([mode]) => mode).join(",");
+  `);
+  assert.equal(filled, "");
+  assert.equal(run(`
+    const page = createEntry("2026-10-25");
+    fillEntryFromTemplate(page, modePresets().reading);
+    page.mode = "reading";
+    hasUserContent(page, "2026-10-25");
+  `), false);
+});
+
+test("scaffold written by older templates is still recognised as generated, not as the writer's text", () => {
+  const run = app();
+  const result = run(`
+    const old = { ...createEntry("2026-10-25"), text: "摘句：\\n\\n联想：\\n\\n读完后想带走：", focus: "读慢一点，留下真正有回声的部分", tags: ["阅读", "我的页签"] };
+    applyTemplateNonDestructively(old, { ...modePresets().travel, title: "x" });
+    [old.text, old.focus, old.tags.join(",")].join(" | ");
+  `);
+  assert.equal(result, " |  | 我的页签");
+});
