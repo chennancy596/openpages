@@ -101,12 +101,15 @@ npm run react:build
 
 ## 内测安装与分享
 
-当前 0.3.0 beta 可先分享 PWA 版本：把 `dist/` 上传到 GitHub Pages、Cloudflare Pages、Netlify 或 Vercel，用户打开网页后即可安装到桌面或手机主屏幕。详细步骤见 `INSTALL_AND_SHARE.md`。
+网页版通过 GitHub Pages 发布，地址形如 `https://<用户名>.github.io/openpages/`。
 
-如果要发安装包，建议先在 GitHub Releases 上传：
+1. 在 GitHub 新建公开仓库 `openpages`，把本仓库推送到 `main` 分支。
+2. 仓库 Settings → Pages → Build and deployment → Source 选 **GitHub Actions**。
+3. 之后每次推送到 `main`，`.github/workflows/pages.yml` 会先用 Node 20 跑全部测试，通过后只发布网页需要的文件（`index.html`、`app.css`、`app.js`、清单、离线脚本、`assets/`、`generated/`、`vendor/`），iOS/Android 工程、宣传素材和文档不会出现在网站上。
 
-- `openpages-0.3.0-beta-pwa.zip`：PWA 静态分享包
-- `openpages-0.3.0-beta-source.zip`：开源源码包，包含 iOS/Android 原生工程
+试用者用手机打开网址后，iPhone 在 Safari 点「分享 → 添加到主屏幕」，安卓在 Chrome 菜单选「安装应用」。添加到主屏幕后可以离线使用，iPhone 上也不会因为 7 天未打开被系统清理数据。
+
+不建议分发 HTML 压缩包：手机直接打开本地 HTML 文件无法离线缓存、无法添加到主屏幕，存储行为也不可靠。
 
 桌面 `.dmg` / `.msi` / `.AppImage` 和移动 APK / TestFlight 版本可以继续用 Tauri / Capacitor 生成，但正式对外发布前需要签名、隐私政策和商店素材。
 
