@@ -13627,7 +13627,11 @@ body.editor-shell .journal-spread .journal-editor :is(ul, ol) { padding-left: va
 body.editor-shell .journal-spread .journal-editor li::marker { color: var(--ink-muted); }
 body.editor-shell .journal-spread .journal-editor blockquote {
   padding: 0 0 0 var(--grid) !important;
-  border-left: 2px solid var(--hairline-strong) !important;
+  border: 0 !important;
+  border-left: 2px solid color-mix(in srgb, var(--page-accent, #667b72) 55%, transparent) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
   color: var(--ink-soft) !important;
 }
 
@@ -13658,9 +13662,11 @@ body.editor-shell .journal-spread .paper-page :is(input, textarea)::placeholder 
   color: var(--ink-muted) !important;
   opacity: 0.75;
 }
-/* The hint also shows over a single empty paragraph, which is what the editor holds once touched. */
+/* The hint shows while the editor holds nothing (is-blank, set by refreshEditorHint in app.js), also
+   when that nothing is an empty paragraph left behind. */
 body.editor-shell .journal-spread .journal-editor { position: relative; }
-body.editor-shell .journal-spread .journal-editor:is(:empty, :has(> p:only-child:empty))::before {
+body.editor-shell .journal-spread .journal-editor:not(.is-blank)::before { content: none !important; }
+body.editor-shell .journal-spread .journal-editor.is-blank::before {
   content: attr(data-placeholder);
   position: absolute;
   inset: 0 0 auto;
@@ -13991,7 +13997,7 @@ body.editor-shell .journal-spread:is([data-mode=weekly], [data-mode=monthly], [d
 }
 /* Hints read as hints, but are legible: one quiet grey at full strength, not a pale grey made paler. */
 body.editor-shell .journal-spread .paper-page :is(input, textarea)::placeholder { color: var(--ink-hint) !important; opacity: 1 !important; }
-body.editor-shell .journal-spread .journal-editor:is(:empty, :has(> p:only-child:empty))::before { color: var(--ink-hint) !important; opacity: 1 !important; }
+body.editor-shell .journal-spread .journal-editor.is-blank::before { color: var(--ink-hint) !important; opacity: 1 !important; }
 /* One hairline under every head: the week's and month's no longer carry a coloured third of a line on
    top of it, which read as a misprint. */
 body.editor-shell .journal-spread :is(.collection-heading, .weekly-view .section-title)::after { content: none !important; }
@@ -14001,3 +14007,267 @@ body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day:first
 /* Today in the week: its date in the page's accent (the bar down the row's edge ran into the figures). */
 body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current { box-shadow: none !important; }
 body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current .week-day__date { color: color-mix(in srgb, var(--page-accent, #8a4a46) 82%, var(--ink)) !important; }
+/* Month cells take their column's width: at 49px against 42px columns on a phone, each overlapped the
+   next by 4px and a tap near an edge could open the neighbouring day. */
+body.editor-shell .journal-spread .collection-calendar > button:not(.is-current) {
+  width: 100% !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+}
+
+/* ---- Finish ---- */
+
+/* Lists on the page (rapid log, to-dos, loose notes): one line each over a hairline, the mark written
+   plainly as in a bullet journal, the delete control only where the pointer is. */
+body.editor-shell .journal-spread .paper-page :is(.bullet-list, .fragment-list, .task-list, #bulletList, #fragmentList, #taskList) > li:not(.empty-state) {
+  min-height: var(--line);
+  padding: 0 !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--hairline) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  align-items: center;
+  font: 400 15px/var(--line) var(--font-page);
+  color: var(--ink);
+}
+body.editor-shell .journal-spread .paper-page .bullet-marker {
+  width: 20px !important;
+  min-width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 400 16px/20px var(--font-latin-serif) !important;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .paper-page :is(.bullet-list, .fragment-list, .task-list) > li > button:last-child:not(.bullet-marker) {
+  opacity: 0;
+  background: transparent !important;
+  color: var(--ink-muted) !important;
+  transition: opacity 0.15s ease;
+}
+body.editor-shell .journal-spread .paper-page :is(.bullet-list, .fragment-list, .task-list) > li:is(:hover, :focus-within) > button:last-child:not(.bullet-marker) { opacity: 1; }
+@media (hover: none) {
+  body.editor-shell .journal-spread .paper-page :is(.bullet-list, .fragment-list, .task-list) > li > button:last-child:not(.bullet-marker) { opacity: 0.55; }
+}
+
+/* An empty handwriting page says, once and quietly, that it can be written on. */
+body.editor-shell .journal-spread .canvas-card { position: relative; }
+body.editor-shell .journal-spread .canvas-card.is-empty::after {
+  content: attr(data-hint);
+  position: absolute;
+  top: var(--line);
+  left: 0;
+  right: 0;
+  pointer-events: none;
+  font: 400 15px/var(--line) var(--font-page);
+  letter-spacing: 0.02em;
+  color: var(--ink-hint);
+}
+
+/* Selection and caret in the page's own ink. */
+body.editor-shell .journal-spread .paper-page ::selection { background: color-mix(in srgb, var(--page-accent, #667b72) 22%, transparent); }
+body.editor-shell .journal-spread .paper-page :is(.journal-editor, input, textarea, .title-input) { caret-color: var(--page-accent, var(--ink)); }
+
+/* Keyboard focus: one quiet ring on every control on the page. */
+body.editor-shell .journal-spread .paper-page :is(button, summary, [role=button], a):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--page-accent, #667b72) 55%, transparent) !important;
+  outline-offset: 2px;
+}
+
+/* Focus mode leaves the page: no sidebar, tool row or footer, and the top bar faint until wanted
+   (it holds the way out). Formatting stays on the keyboard (⌘B, ⌘I). */
+body.editor-shell.is-focus-mode :is(.document-tools, .document-footer) { display: none !important; }
+body.editor-shell.is-focus-mode .topbar { opacity: 0.3; transition: opacity 0.2s ease; }
+body.editor-shell.is-focus-mode .topbar:is(:hover, :focus-within) { opacity: 1; }
+/* With the tool row and footer gone, the page takes their rows too. */
+body.editor-shell.is-focus-mode .workspace { grid-template-rows: auto minmax(0, 1fr) !important; }
+
+/* ==== Feels like an app, not a page ====
+   What gave the web away: three white bands (tool bars and a footer) across the window, interface text
+   that could be selected, the grey flash on tap, the whole page bouncing, the hand cursor on every
+   control and the browser's scroll bars. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body.editor-shell { overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
+body.editor-shell :is(.sidebar, .document-chrome, .document-footer, .right-dock, .closed-cover, .book-overlay, .mobile-dock, .action-toast) {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+body.editor-shell :is(input, textarea, select, [contenteditable="true"]) {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+body.editor-shell :is(button, summary, label, [role=button], a.wide-button, .sticker-sample) { cursor: default; touch-action: manipulation; }
+body.editor-shell img { -webkit-user-drag: none; }
+body.editor-shell * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, #2b322d 22%, transparent) transparent; }
+
+/* The desk is lit from above, falling off towards the bottom edge of the window, so the notebook reads
+   as an object lying on it. */
+body.editor-shell[data-book=open] .view-stage {
+  background-image:
+    radial-gradient(120% 70% at 50% -12%, rgba(255, 255, 255, 0.5), transparent 62%),
+    radial-gradient(140% 90% at 50% 125%, rgba(20, 24, 21, 0.07), transparent 60%);
+  padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+}
+
+/* The footer is no longer a band: page controls float over the desk as one pill, and the save state is
+   a small pill of its own at the right, both in a frosted material the page shows through. */
+:root {
+  --glass: color-mix(in srgb, #fbfbf8 76%, transparent);
+  --glass-line: rgba(43, 50, 45, 0.1);
+  --glass-shadow: 0 8px 24px rgba(26, 30, 27, 0.12), 0 1px 3px rgba(26, 30, 27, 0.08);
+}
+body.editor-shell[data-book] .workspace {
+  position: relative;
+  grid-template-rows: auto minmax(0, 1fr) !important;
+}
+body.editor-shell[data-book] .document-footer {
+  position: absolute !important;
+  left: 0;
+  right: 0;
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 0 28px !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  pointer-events: none;
+}
+body.editor-shell .document-footer > * { pointer-events: auto; }
+body.editor-shell .document-footer :is(.spread-nav, .save-controls) {
+  height: 44px;
+  min-height: 44px !important;
+  width: auto !important;
+  padding: 0 6px !important;
+  border: 1px solid var(--glass-line) !important;
+  border-radius: 999px !important;
+  background: var(--glass) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  backdrop-filter: blur(20px) saturate(1.6);
+  box-shadow: var(--glass-shadow) !important;
+}
+body.editor-shell .document-footer .save-controls { position: absolute; right: 28px; padding: 0 14px !important; }
+body.editor-shell .save-details__panel { bottom: calc(100% + 12px) !important; }
+body.editor-shell .action-toast { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 58px) !important; }
+
+@media (max-width: 720px) {
+  body.editor-shell[data-book] .document-footer { justify-content: space-between !important; padding: 0 12px !important; }
+  body.editor-shell .document-footer .spread-nav { justify-content: flex-start !important; gap: 2px !important; }
+  /* On a phone the save state is its dot alone; the details are one tap away as before. */
+  body.editor-shell .document-footer .save-controls { position: static; min-width: 44px; padding: 0 !important; justify-content: center; gap: 0 !important; }
+  /* The date is in the top bar; the pill keeps the page count, which then never truncates. */
+  body.editor-shell .document-footer #spreadScopeLabel { display: none !important; }
+  /* "Today" sits in the save pill as plain text, not a second pill inside it. */
+  body.editor-shell .document-footer #footerTodayButton {
+    height: 36px !important;
+    min-height: 36px !important;
+    margin-right: 4px;
+    padding: 0 12px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font: 500 14px/36px var(--font-ui) !important;
+    color: var(--ink) !important;
+  }
+  body.editor-shell .document-footer #saveState { font-size: 0 !important; gap: 0 !important; }
+  body.editor-shell .document-footer #saveState::before { font-size: 9px !important; }
+  body.editor-shell .document-footer .save-details > summary::after { content: none !important; }
+  body.editor-shell .document-footer .save-details > summary { padding: 0 !important; justify-content: center; width: 44px; }
+  /* The formatting row shows while typing, the brushes while drawing; otherwise the page gets the room.
+     It floats over the top of the desk in the same frosted material, so showing it never pushes the
+     page down under the finger. */
+  body.editor-shell[data-input-mode=write]:not(.is-writing) .context-tools { display: none !important; }
+  body.editor-shell .document-tools { position: relative; }
+  body.editor-shell .document-tools > .context-tools {
+    position: absolute !important;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 25;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    border-bottom: 1px solid var(--glass-line);
+    background: var(--glass) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+  }
+}
+
+/* The sample page is set like the "how to use" leaf at the front of a planner refill: a lead in the
+   display face, numbered entries (book figures in the page's accent, a title and one line of
+   explanation each, hairlines between), a margin note, and a small signature. */
+body.editor-shell .journal-spread .journal-editor p.op-lead {
+  margin: 0 0 var(--grid) !important;
+  font: 400 17px/var(--line) var(--font-display) !important;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .journal-editor ol.op-guide {
+  counter-reset: op-guide;
+  margin: 0 0 var(--grid) !important;
+  padding: 0 !important;
+  list-style: none;
+  border-top: 1px solid var(--hairline);
+}
+body.editor-shell .journal-spread .journal-editor ol.op-guide > li {
+  counter-increment: op-guide;
+  display: grid;
+  grid-template-columns: calc(var(--grid) * 3) minmax(0, 1fr);
+  padding: 9px 0 10px;
+  border-bottom: 1px solid var(--hairline);
+}
+body.editor-shell .journal-spread .journal-editor ol.op-guide > li::marker { content: none; }
+body.editor-shell .journal-spread .journal-editor ol.op-guide > li::before {
+  content: counter(op-guide, decimal-leading-zero);
+  grid-row: span 2;
+  font: 400 14px/26px var(--font-latin-serif);
+  font-variant-numeric: lining-nums;
+  letter-spacing: 0.06em;
+  color: color-mix(in srgb, var(--page-accent, #667b72) 85%, var(--ink));
+}
+body.editor-shell .journal-spread .journal-editor ol.op-guide strong {
+  display: block;
+  font: 400 16px/26px var(--font-display) !important;
+  letter-spacing: 0.04em;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .journal-editor ol.op-guide span {
+  display: block;
+  font: 400 14px/23px var(--font-page) !important;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .journal-editor p.op-sign {
+  margin-top: var(--grid) !important;
+  text-align: right;
+  font: 400 14px/var(--line) var(--font-display) !important;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .journal-editor p.op-sign::before { content: "— "; letter-spacing: 0; }
+
+/* One material for all the chrome: the top bar and tool row take the sidebar's tone and read as a
+   single toolbar (one hairline under both, none between), framing the desk the way a Mac app's
+   sidebar and toolbar do. */
+body.editor-shell .document-chrome { background: #f7f9f8 !important; }
+body.editor-shell .topbar { border-bottom: 0 !important; }
+body.editor-shell .document-tools { border-bottom: 1px solid var(--shell-line, #e2e7e4) !important; }
+
+/* Back and forward sit either side of the date they move ("‹ 21 Oct ›"), with the day / week / month
+   switch after them, rather than the forward arrow on the far side of the switch. */
+body.editor-shell .date-nav > .date-control { display: contents !important; }
+body.editor-shell .date-nav > #prevDayButton { order: 1; }
+body.editor-shell .date-nav .top-date { order: 2; }
+body.editor-shell .date-nav > #nextDayButton { order: 3; }
+body.editor-shell .date-nav > #todayButton { order: 4; }
+body.editor-shell .date-nav .calendar-scale-nav { order: 5; margin-left: 10px; }

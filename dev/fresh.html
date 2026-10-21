@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开页 · 重置为新用户</title>
+<style>
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: #eef0ed;
+    color: #2b322d;
+    font: 15px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  }
+  main { max-width: 360px; padding: 24px; text-align: center; }
+  h1 { margin: 0 0 8px; font: 400 22px/1.4 "Songti SC", serif; }
+  p { margin: 0; color: #566059; }
+</style>
+</head>
+<body>
+<main>
+  <h1 id="title">正在重置…</h1>
+  <p id="note"></p>
+</main>
+<script>
+  // Test helper, never deployed (the Pages workflow copies only the app's own files).
+  // It clears this origin's journal so the app opens exactly as for a first-time user. Storage is per
+  // origin, so on the test port it cannot reach the journal on any other port; on any other port it
+  // refuses outright.
+  const TEST_PORT = "4180";
+  const title = document.getElementById("title");
+  const note = document.getElementById("note");
+  if (location.port !== TEST_PORT || !["127.0.0.1", "localhost"].includes(location.hostname)) {
+    title.textContent = "这里不能重置";
+    note.textContent = `只在测试地址 http://127.0.0.1:${TEST_PORT} 上可用，你的真实手帐没有被改动。`;
+  } else {
+    (async () => {
+      try { localStorage.clear(); } catch {}
+      try { sessionStorage.clear(); } catch {}
+      await new Promise((resolve) => {
+        const request = indexedDB.deleteDatabase("openpages-media");
+        request.onsuccess = request.onerror = request.onblocked = resolve;
+      });
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+      if (window.caches) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      }
+      title.textContent = "已重置为新用户";
+      note.textContent = "正在打开开页…";
+      setTimeout(() => location.replace("../index.html"), 600);
+    })();
+  }
+</script>
+</body>
+</html>

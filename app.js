@@ -8,24 +8,24 @@ const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 const STICKERS = {
   "tape-coral": { text: "Memo", className: "tape coral" },
   "tape-leaf": { text: "Today", className: "tape leaf" },
-  "tape-indigo": { text: "青藍", className: "tape indigo tape-pattern" },
+  "tape-indigo": { text: "青蓝", className: "tape indigo tape-pattern" },
   "tape-grid": { text: "Grid", className: "tape gridtape" },
   "tape-kraft": { text: "NOTE", className: "tape kraft" },
   "tape-moss": { text: "FOREST", className: "tape moss" },
-  "tape-plum": { text: "余韻", className: "tape plum" },
+  "tape-plum": { text: "余韵", className: "tape plum" },
   "tape-stripe": { text: "LINE", className: "tape stripe" },
   "note-butter": { text: "想法", className: "note butter" },
   "note-sky": { text: "灵感", className: "note sky" },
-  "note-matcha": { text: "観察", className: "note matcha" },
+  "note-matcha": { text: "观察", className: "note matcha" },
   "note-mauve": { text: "余白", className: "note mauve" },
-  "note-linen": { text: "日付", className: "note linen-note" },
-  "note-bluegray": { text: "読書", className: "note bluegray" },
+  "note-linen": { text: "日期", className: "note linen-note" },
+  "note-bluegray": { text: "读书", className: "note bluegray" },
   "stamp-rose": { text: "DONE", className: "stamp rose" },
   "stamp-ink": { text: "OPEN", className: "stamp ink" },
-  "stamp-vermilion": { text: "済", className: "stamp vermilion" },
+  "stamp-vermilion": { text: "毕", className: "stamp vermilion" },
   "stamp-brass": { text: "旅", className: "stamp brass-stamp" },
   "stamp-tea": { text: "喫茶", className: "stamp tea-stamp" },
-  "stamp-read": { text: "読", className: "stamp read-stamp" },
+  "stamp-read": { text: "读", className: "stamp read-stamp" },
   "index-sage": { text: "INDEX", className: "index-tab sage-tab" },
   "index-rust": { text: "TODAY", className: "index-tab rust-tab" },
   "ticket-cream": { text: "TICKET", className: "ticket ticket-cream" },
@@ -37,9 +37,9 @@ const STICKERS = {
   "botanical-leaf": { text: "葉", className: "botanical botanical-leaf" },
   "botanical-flower": { text: "花", className: "botanical botanical-flower" },
   "art-fern": { text: "蕨", label: "蕨类植物标本", className: "art-sticker art-fern" },
-  "art-sakura": { text: "桜", label: "樱花枝插画", className: "art-sticker art-sakura" },
-  "art-ginkgo": { text: "銀杏", label: "银杏叶插画", className: "art-sticker art-ginkgo" },
-  "art-kissa": { text: "珈琲", label: "喫茶店咖啡杯", className: "art-sticker art-kissa" },
+  "art-sakura": { text: "樱", label: "樱花枝插画", className: "art-sticker art-sakura" },
+  "art-ginkgo": { text: "银杏", label: "银杏叶插画", className: "art-sticker art-ginkgo" },
+  "art-kissa": { text: "咖啡", label: "喫茶店咖啡杯", className: "art-sticker art-kissa" },
   "art-mountain": { text: "山", label: "远山与日出", className: "art-sticker art-mountain" },
   "art-window": { text: "雨", label: "雨日窗景", className: "art-sticker art-window" },
   "art-bird": { text: "旅", label: "飞鸟旅行插画", className: "art-sticker art-bird" },
@@ -214,7 +214,7 @@ const THEME_PRESETS = {
 const MODE_COPY = {
   daily: {
     eyebrow: "Daily Log",
-    rightEyebrow: "Plan & Ritual",
+    rightEyebrow: "Freehand",
     editorLabel: "文字手帐",
     placeholder: "写下今天的片段、清单、灵感或碎碎念。",
     mobileLeft: "文字页",
@@ -496,7 +496,6 @@ const elements = {
   dailyStampIcon: $("#dailyStampIcon"),
   exportDayButton: $("#exportDayButton"),
   migrateTasksButton: $("#migrateTasksButton"),
-  backupReminderButton: $("#backupReminderButton"),
   deleteCurrentPageButton: $("#deleteCurrentPageButton"),
   workflowNote: $("#workflowNote"),
   taskList: $("#taskList"),
@@ -1106,7 +1105,7 @@ function flushState() {
 function setSaveState(stateName) {
   const config = {
     // A blank page is created for today on launch; only pages with writing count as records.
-    ready: { text: Object.entries(state.entries).some(([key, entry]) => hasMeaningfulContent(entry, key)) ? "已载入本机记录" : "新手帐 · 保存在本机" },
+    ready: { text: Object.entries(state.entries).some(([key, entry]) => !entry.sample && hasMeaningfulContent(entry, key)) ? "已载入本机记录" : "新手帐 · 保存在本机" },
     saving: { text: "正在保存…" },
     saved: { text: "已保存到本机" },
     error: { text: "保存失败 · 未写入" },
@@ -1492,6 +1491,7 @@ function openNotebook() {
   if (reduceMotion || !closedRect?.width || typeof cover.animate !== "function") {
     openNotebookWithoutCover();
     focusEditorAfterOpening();
+    introduceSamplePage();
     return;
   }
   const backdrop = getComputedStyle(elements.body).backgroundColor;
@@ -1545,6 +1545,7 @@ function finishOpeningOnce(book, beforeFocus) {
     elements.body.classList.add("is-cover-opened");
     elements.body.classList.remove("is-cover-leaving", "is-book-settling");
     focusEditorAfterOpening();
+    introduceSamplePage();
   };
   finish.done = false;
   return finish;
@@ -1861,6 +1862,12 @@ function isLegacyBulletScaffold(text) {
 
 const WEEKDAY_NAMES = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
 
+// "10月21日", for messages; dates are never shown in their stored form (2026-10-21).
+function shortDateLabel(key) {
+  const date = parseDate(key);
+  return `${date.getMonth() + 1}月${date.getDate()}日`;
+}
+
 function defaultDayTitle(key) {
   const date = parseDate(key);
   return `${date.getMonth() + 1}月${date.getDate()}日 ${WEEKDAY_NAMES[date.getDay()]}`;
@@ -1950,6 +1957,9 @@ function loadEntryIntoForm() {
   elements.entryTitle.value = entry.title;
   elements.moodSelect.value = entry.mood || "";
   elements.journalEditor.innerHTML = sanitizeEditorHtml(entry.html || "");
+  refreshEditorHint();
+  // A page with nothing written is truly empty, not an empty paragraph the caret cannot enter.
+  if (elements.journalEditor.classList.contains("is-blank")) elements.journalEditor.replaceChildren();
   elements.journalText.value = entry.text || "";
   elements.focusInput.value = entry.focus;
   elements.modeFocusInput.value = entry.focus;
@@ -2130,7 +2140,7 @@ function renderOnThisDay() {
     button.type = "button";
     const then = parseDate(key);
     button.innerHTML = `<small>${years} 年前 · ${then.getFullYear()}年 ${WEEKDAY_NAMES[then.getDay()]}</small><span>${escapeHtml(excerpt || title || "打开那一天")}</span><svg aria-hidden="true"><use href="#icon-redo"></use></svg>`;
-    button.title = `打开 ${key} 的日页`;
+    button.title = `打开${shortDateLabel(key)}的日页`;
     button.addEventListener("click", () => {
       elements.onThisDay.open = false;
       openPageGroupForDate(key, index);
@@ -2169,7 +2179,7 @@ function renderDayPageShelf() {
     button.classList.toggle("is-active", key === state.selectedDate && index === (entry.activePageGroup || 0));
     const label = LAYOUT_LABELS[group.mode] || MODE_COPY[group.mode]?.editorLabel || "自由内页";
     button.innerHTML = `<span>${pageRangeLabel(shelfIndex)}</span><strong>${escapeHtml(label)}</strong>`;
-    button.setAttribute("aria-label", `打开 ${key} 的${label}`);
+    button.setAttribute("aria-label", `打开${shortDateLabel(key)}的${label}`);
     button.addEventListener("click", () => openPageGroupForDate(key, index));
     elements.dayPageShelfList.append(button);
   });
@@ -2179,12 +2189,12 @@ function renderStamp() {
   const entry = currentEntry();
   const stampMap = {
     sunny: "晴",
-    calm: "穏",
+    calm: "静",
     busy: "忙",
     tired: "休",
-    spark: "閃",
+    spark: "灵",
     low: "雨",
-    tense: "張",
+    tense: "紧",
   };
   elements.dailyStampIcon.textContent = entry.stamp || stampMap[entry.mood] || "印";
   elements.dailyStampButton.classList.toggle("is-stamped", Boolean(entry.stamp));
@@ -2192,7 +2202,7 @@ function renderStamp() {
 
 function applyDailyStamp() {
   const entry = currentEntry();
-  const options = ["晴", "穏", "書", "歩", "休", "閃", "済"];
+  const options = ["晴", "静", "书", "行", "休", "灵", "毕"];
   const current = options.indexOf(entry.stamp);
   entry.stamp = options[(current + 1) % options.length];
   renderStamp();
@@ -2222,10 +2232,10 @@ function migrateOpenTasks() {
   });
   entry.fragments.unshift({
     id: crypto.randomUUID(),
-    text: `${openTasks.length} 个未完成任务已迁移到 ${nextKey}`,
+    text: `${openTasks.length} 个未完成任务已挪到${shortDateLabel(nextKey)}`,
     createdAt: new Date().toISOString(),
   });
-  elements.workflowNote.textContent = `已迁移 ${openTasks.length} 个任务到 ${nextKey}。`;
+  elements.workflowNote.textContent = `已把 ${openTasks.length} 个任务挪到${shortDateLabel(nextKey)}。`;
   renderFragments();
   renderCalendar();
   notify(`已迁移 ${openTasks.length} 个任务`);
@@ -2251,11 +2261,6 @@ function downloadJson(payload, filename) {
   link.download = filename;
   link.click();
   URL.revokeObjectURL(link.href);
-}
-
-function createBackupReminder() {
-  elements.workflowNote.textContent = "建议每周导出一次 JSON 备份；如果后续接 WebDAV/Git，可在这里配置自动提醒。";
-  notify("已生成备份提示");
 }
 
 function calendarScaleForMode(mode) {
@@ -2799,9 +2804,20 @@ function editorPlainText() {
   return elements.journalEditor.innerText.trim();
 }
 
+// The hint shows only while the page holds nothing at all. Judged from what is there rather than from
+// the markup's shape: typing can leave an empty paragraph beside the new text, and a CSS test for "one
+// empty paragraph" then kept the hint on top of the writing.
+function refreshEditorHint() {
+  const editor = elements.journalEditor;
+  if (!editor) return;
+  const blank = !editor.textContent.trim() && !editor.querySelector("img, hr, li, table, input, [contenteditable=false]");
+  editor.classList.toggle("is-blank", blank);
+}
+
 function insertEditorHtml(html) {
   elements.journalEditor.focus();
   document.execCommand("insertHTML", false, html);
+  refreshEditorHint();
   syncEntryFromForm();
 }
 
@@ -2857,7 +2873,22 @@ function renderDailyPrompt() {
 }
 
 function useDailyPrompt() {
-  insertEditorHtml(`<p>${escapeHtml(dailyPromptFor(state.selectedDate))}</p>`);
+  const editor = elements.journalEditor;
+  if (editor.classList.contains("is-blank")) {
+    // On a blank page the prompt becomes the first line, and writing carries on right after it.
+    editor.innerHTML = `<p>${escapeHtml(dailyPromptFor(state.selectedDate))}</p>`;
+    refreshEditorHint(); // before focusing, or the blank-page handler would clear the line again
+    editor.focus({ preventScroll: true });
+    const range = document.createRange();
+    range.selectNodeContents(editor.firstChild);
+    range.collapse(false);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    syncEntryFromForm();
+  } else {
+    insertEditorHtml(`<p>${escapeHtml(dailyPromptFor(state.selectedDate))}</p>`);
+  }
   renderDailyPrompt();
   renderSpreadScope();
 }
@@ -3028,14 +3059,14 @@ function addBullet() {
   renderBullets();
   scheduleStats();
   renderSearch();
-  notify("已记录一条子弹");
+  notify("已记下");
   persistState();
 }
 
 function syncBulletsToEditor() {
   const entry = currentEntry();
   if (!entry.bullets.length) {
-    notify("右页还没有可整理的子弹记录");
+    notify("右页还没有可整理的速记");
     return;
   }
   const stamp = new Intl.DateTimeFormat("zh-CN", { month: "numeric", day: "numeric" }).format(parseDate(state.selectedDate));
@@ -3044,6 +3075,7 @@ function syncBulletsToEditor() {
     .join("");
   const block = `<p><strong>${stamp} Bullet Log 整理</strong></p><ul class="synced-bullet-list">${items}</ul>`;
   elements.journalEditor.innerHTML = `${elements.journalEditor.innerHTML}${block}`;
+  refreshEditorHint();
   syncEntryFromForm();
   notify("已整理到左页正文");
 }
@@ -3366,7 +3398,7 @@ async function requestNativeHealthAccess() {
 
   const plugin = bridge.plugin;
   elements.connectHealthButton.disabled = true;
-  elements.healthImportStatus.textContent = "正在检查系统健康服务...";
+  elements.healthImportStatus.textContent = "正在检查系统健康服务…";
   try {
     const availability = await plugin.isAvailable();
     if (!availability.available) throw new Error(availability.reason || "当前设备不支持健康服务");
@@ -3415,7 +3447,7 @@ async function syncNativeHealth({ silent = false } = {}) {
   const range = { startDate: start.toISOString(), endDate: end.toISOString() };
 
   elements.syncHealthButton.disabled = true;
-  elements.healthImportStatus.textContent = "正在同步最近 30 天的健康摘要...";
+  elements.healthImportStatus.textContent = "正在同步最近 30 天的健康摘要…";
   try {
     const requests = await Promise.allSettled([
       plugin.queryAggregated({ dataType: "steps", bucket: "day", aggregation: "sum", ...range }),
@@ -3994,7 +4026,7 @@ function applyStarterTemplate(name) {
     selectDate(targetKey);
   }
   closeMobilePanel();
-  notify(`已加入${starter.label}起稿，保存在 ${targetKey}`);
+  notify(`已在${shortDateLabel(targetKey)}加入${starter.label}`);
 }
 
 function fillEntryFromTemplate(entry, template) {
@@ -4232,7 +4264,7 @@ function renderMonthlyCollection(root, data) {
     const candidate = state.entries[key];
     if (candidate) normalizeEntry(candidate, key);
     const saved = candidate && hasMeaningfulContent(candidate, key);
-    days.push(`<button type="button" data-collection-date="${key}" class="${date.getMonth() === month ? "" : "is-muted"} ${key === focusKey ? "is-current" : ""} ${saved ? "has-entry" : ""}" aria-label="打开 ${key} 的日页">${date.getDate()}</button>`);
+    days.push(`<button type="button" data-collection-date="${key}" class="${date.getMonth() === month ? "" : "is-muted"} ${key === focusKey ? "is-current" : ""} ${saved ? "has-entry" : ""}" aria-label="打开${shortDateLabel(key)}的日页">${date.getDate()}</button>`);
   }
   root.innerHTML = `
     <div class="collection-heading"><div><span>${headingEyebrow("monthly")}</span><h3>${year}.${String(month + 1).padStart(2, "0")}</h3></div></div>
@@ -4624,7 +4656,7 @@ function renderWeek() {
     const title = document.createElement("button");
     title.type = "button";
     title.className = "week-day__date";
-    title.setAttribute("aria-label", `打开 ${key} 的日页`);
+    title.setAttribute("aria-label", `打开${shortDateLabel(key)}的日页`);
     const dayLabel = document.createElement("span");
     dayLabel.textContent = weekday;
     const dateLabel = document.createElement("small");
@@ -4635,7 +4667,7 @@ function renderWeek() {
 
     const textarea = document.createElement("textarea");
     textarea.rows = 1;
-    textarea.setAttribute("aria-label", `${key} 的周安排`);
+    textarea.setAttribute("aria-label", `${shortDateLabel(key)}的安排`);
     textarea.placeholder = "安排、约定或留白";
     textarea.value = entry.week[key] || "";
     textarea.addEventListener("input", () => {
@@ -4919,7 +4951,7 @@ function restoreTrashItem(id) {
   else selectDate(key);
   flushState();
   renderTrash();
-  notify(`已恢复到 ${key}`);
+  notify(`已放回${shortDateLabel(key)}`);
 }
 
 function purgeTrashItem(id) {
@@ -5050,7 +5082,7 @@ function exportData() {
   downloadJson({ ...state, exportedFrom: `OpenPages ${APP_VERSION}` }, `openpages-${state.selectedDate}.json`);
   persistState();
   renderBackupStatus();
-  notify("已导出全部本地数据");
+  notify("已导出完整备份");
 }
 
 function downloadText(content, filename, type = "text/plain;charset=utf-8") {
@@ -5100,9 +5132,9 @@ function exportCurrentDayMarkdown() {
   if (entry.photos.length) {
     lines.push("## 图片旁白", "", ...entry.photos.map((photo) => `- ${photo.caption || photo.name || "未命名图片"}`), "");
   }
-  lines.push("---", "由 OpenPages 导出。图片与手写笔迹保留在 JSON 备份中。", "");
+  lines.push("---", "由开页导出。照片和手写在完整备份里。", "");
   downloadText(lines.join("\n"), `openpages-${state.selectedDate}.md`, "text/markdown;charset=utf-8");
-  notify("已导出当前页 Markdown");
+  notify("已导出当前页文字");
 }
 
 function printCurrentDay() {
@@ -5200,7 +5232,7 @@ function importTemplatePack(file) {
       persistState();
       notify(`已导入 ${normalized.length} 个模板`);
     } catch {
-      notify("这个文件不是 OpenPages 模板包，没有导入任何内容");
+      notify("这个文件不是开页的模板包，没有导入任何内容");
     } finally {
       elements.templatePackInput.value = "";
     }
@@ -5258,10 +5290,10 @@ function importData(file) {
       selectedStickerId = null;
       applyGlobalSettings();
       loadEntryIntoForm();
-      notify("已导入 OpenPages 数据");
+      notify("已从备份恢复");
       persistState();
     } catch {
-      notify("这个文件不是 OpenPages 备份，本机记录没有改动");
+      notify("这个文件不是开页的备份，本机记录没有改动");
     }
   });
   reader.readAsText(file);
@@ -5648,6 +5680,7 @@ function setupCanvas() {
   canvas.addEventListener("pointerdown", (event) => {
     if (elements.stylusOnlyToggle.checked && event.pointerType !== "pen") return;
     if (elements.body.dataset.inputMode !== "ink") setMobilePage("ink");
+    canvas.closest(".canvas-card")?.classList.remove("is-empty");
     drawActive = true;
     try {
       canvas.setPointerCapture(event.pointerId);
@@ -6014,6 +6047,8 @@ function updateInkHistoryButtons() {
   const redo = inkRedoByDate.get(pageHistoryKey()) || [];
   if (elements.undoInkButton) elements.undoInkButton.disabled = !entry.strokes.length;
   if (elements.redoInkButton) elements.redoInkButton.disabled = !redo.length;
+  // An empty handwriting page says, once, that it can be written on.
+  elements.inkCanvas?.closest?.(".canvas-card")?.classList.toggle("is-empty", !entry.strokes.length && !entry.ink);
 }
 
 function undoInk() {
@@ -6125,6 +6160,7 @@ function bindEvents() {
     input.addEventListener("change", syncEntryFromForm);
   });
   elements.journalEditor.addEventListener("input", () => {
+    refreshEditorHint();
     syncEntryFromForm();
     renderDailyPrompt();
     renderSpreadScope();
@@ -6136,8 +6172,32 @@ function bindEvents() {
   elements.useDailyPromptButton?.addEventListener("click", useDailyPrompt);
   elements.nextDailyPromptButton?.addEventListener("click", nextDailyPrompt);
   elements.journalEditor.addEventListener("blur", syncEntryFromForm);
+  // While typing, a phone shows the formatting row (as Notes does); otherwise the row stays folded away.
+  elements.journalEditor.addEventListener("focus", () => elements.body.classList.add("is-writing"));
+  elements.journalEditor.addEventListener("blur", () => {
+    window.setTimeout(() => {
+      if (document.activeElement !== elements.journalEditor) elements.body.classList.remove("is-writing");
+    }, 120);
+  });
+  // Back to the text tools as soon as the text is touched: after drawing, the editor may still hold
+  // focus, so its focus event would not fire again.
+  elements.journalEditor.addEventListener("pointerdown", () => {
+    if (elements.body.dataset.inputMode !== "write") setMobilePage("write");
+  });
   elements.journalEditor.addEventListener("focus", () => {
     if (elements.body.dataset.inputMode !== "write") setMobilePage("write");
+    // An empty paragraph has no line for the caret, so typing landed beside it, outside any paragraph.
+    // A blank page gets one real line to write on, with the caret in it.
+    const editor = elements.journalEditor;
+    if (editor.classList.contains("is-blank") && editor.innerHTML !== "<p><br></p>") {
+      editor.innerHTML = "<p><br></p>";
+      const range = document.createRange();
+      range.setStart(editor.firstChild, 0);
+      range.collapse(true);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
   });
   elements.editorToolbar.addEventListener("pointerdown", (event) => {
     // Keep the text selection when formatting from the document toolbar.
@@ -6326,7 +6386,6 @@ function bindEvents() {
   elements.deleteStickerButton.addEventListener("click", deleteSelectedSticker);
   elements.dailyStampButton.addEventListener("click", applyDailyStamp);
   elements.migrateTasksButton.addEventListener("click", migrateOpenTasks);
-  elements.backupReminderButton?.addEventListener("click", createBackupReminder);
   elements.deleteCurrentPageButton.addEventListener("click", deleteCurrentPage);
 
   const stickerSamples = $$(".sticker-sample");
@@ -6467,7 +6526,7 @@ function bindEvents() {
     const button = event.target.closest("[data-ink-color]");
     if (!button) return;
     setInkColor(button.dataset.inkColor);
-    notify(`画笔颜色：${button.dataset.inkColor.toUpperCase()}`);
+    notify("已换画笔颜色");
   });
   elements.inkBrushPicker?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-ink-brush]");
@@ -6535,13 +6594,14 @@ function bindInstallPrompt() {
   });
   window.addEventListener("appinstalled", () => {
     deferredInstallPrompt = null;
-    notify("OpenPages 已安装");
+    notify("开页已安装");
   });
 }
 
 function bindWorkspaceShell() {
   elements.saveNowButton.addEventListener("click", saveNow);
   $("#saveBackupButton").addEventListener("click", exportData);
+  $("#openSampleButton")?.addEventListener("click", openSamplePage);
   document.addEventListener("keydown", handleSaveShortcut);
   const toggle = $("#sidebarToggle");
   const scrim = $("#sidebarScrim");
@@ -6607,16 +6667,174 @@ function bindWorkspaceShell() {
   elements.rightDock.setAttribute("aria-hidden", String(elements.rightDock.inert));
 }
 
+// ---- The sample page ----
+// A first-time journal gets one written page, dated yesterday, that shows what a page can hold: text,
+// a to-do, a loose note, a tag, a mood, a stamp, a sticker and some handwriting. It is an ordinary page
+// (it can be edited or deleted) marked `sample`, and it is offered once, when the notebook first opens.
+const SAMPLE_PAGE_HTML = [
+  '<p class="op-lead">一本放在手机和电脑里的手帐。这一页是它的使用说明，读完可以留着，也可以删去。</p>',
+  '<ol class="op-guide">',
+  "<li><strong>翻开与合上</strong><span>每次打开先看到封面，轻点即可翻开；顶栏的书本图标将它合上。</span></li>",
+  "<li><strong>一日一页</strong><span>顶栏的箭头前后翻阅，「今天」回到当日；一页写不下，底部「续页」再添两页。</span></li>",
+  "<li><strong>书写与手绘</strong><span>左页打字，右页以笔、手指或鼠标直接书写；手机上切换到「手写页」。</span></li>",
+  "<li><strong>周计划与月计划</strong><span>在顶栏切换，与日记同在一本之中。</span></li>",
+  "<li><strong>更换内页</strong><span>「内页样式」中有阅读札记、旅途、拼贴与同日五年，纸面亦可选点阵、横线或方格。</span></li>",
+  "<li><strong>贴纸与素材</strong><span>在「素材」中轻点即贴上页面，按住可以移动。</span></li>",
+  "</ol>",
+  "<blockquote>你写下的一切只保存在这台设备上，不会上传。更换设备之前，请在「设置与备份」中导出一份完整备份。</blockquote>",
+  '<p class="op-sign">开页</p>',
+].join("");
+
+let sampleIntroPending = false;
+
+function sampleStroke(seed, points, brush = "fountain", size = 4) {
+  return {
+    mode: "pen",
+    brush,
+    color: "#35413a",
+    size,
+    seed,
+    points: points.map(([x, y, pressure = 0.55], index) => ({ x, y, pressure, index, tiltX: 0, tiltY: 0, twist: 0 })),
+  };
+}
+
+// The right page's handwriting: a sprig drawn in fine liner, a stem with leaves set alternately along it,
+// in keeping with the notebook's botanical prints.
+function sampleStrokes() {
+  const stem = (t) => {
+    const [x0, y0, x1, y1, x2, y2] = [560, 1120, 300, 820, 470, 360];
+    const u = 1 - t;
+    return [u * u * x0 + 2 * u * t * x1 + t * t * x2, u * u * y0 + 2 * u * t * y1 + t * t * y2];
+  };
+  const tangent = (t) => {
+    const [ax, ay] = stem(Math.max(0, t - 0.01));
+    const [bx, by] = stem(Math.min(1, t + 0.01));
+    const length = Math.hypot(bx - ax, by - ay) || 1;
+    return [(bx - ax) / length, (by - ay) / length];
+  };
+  const strokes = [];
+  const stemPoints = [];
+  for (let step = 0; step <= 48; step += 1) {
+    const t = step / 48;
+    const [x, y] = stem(t);
+    stemPoints.push([x, y, 0.62 - 0.32 * t]);
+  }
+  strokes.push(sampleStroke(24681357, stemPoints, "monoline", 3.2));
+  [0.18, 0.3, 0.42, 0.54, 0.66, 0.78, 0.9].forEach((t, index) => {
+    const [bx, by] = stem(t);
+    const [tx, ty] = tangent(t);
+    const side = index % 2 ? 1 : -1;
+    // The leaf leans 48° off the stem, towards its tip, and shortens towards the top.
+    const angle = (side * 48 * Math.PI) / 180;
+    const dx = tx * Math.cos(angle) - ty * Math.sin(angle);
+    const dy = tx * Math.sin(angle) + ty * Math.cos(angle);
+    const nx = -dy;
+    const ny = dx;
+    const length = 132 * (1 - 0.45 * t);
+    const width = length * 0.44;
+    const outline = [];
+    for (let step = 0; step <= 20; step += 1) {
+      const s = step / 20;
+      const bulge = (Math.sin(Math.PI * s) * width) / 2;
+      outline.push([bx + dx * length * s + nx * bulge, by + dy * length * s + ny * bulge, 0.5]);
+    }
+    for (let step = 19; step >= 0; step -= 1) {
+      const s = step / 20;
+      const bulge = (Math.sin(Math.PI * s) * width) / 2;
+      outline.push([bx + dx * length * s - nx * bulge, by + dy * length * s - ny * bulge, 0.5]);
+    }
+    strokes.push(sampleStroke(13572468 + index, outline, "monoline", 2.6));
+    // The midrib, two thirds of the way along.
+    strokes.push(sampleStroke(97531864 + index, [[bx, by, 0.4], [bx + dx * length * 0.66, by + dy * length * 0.66, 0.3]], "monoline", 1.8));
+  });
+  return strokes;
+}
+
+function buildSamplePage(key) {
+  const entry = createEntry(key);
+  Object.assign(entry, {
+    sample: true,
+    title: "欢迎使用开页",
+    html: SAMPLE_PAGE_HTML,
+    text: "",
+    mood: "calm",
+    stamp: "晴",
+    tags: ["示范"],
+    tasks: [
+      { id: crypto.randomUUID(), text: "读完使用说明", done: true },
+      { id: crypto.randomUUID(), text: "翻到今天，写下第一句", done: false },
+    ],
+    fragments: [{ id: crypto.randomUUID(), text: "一闪而过的念头，先贴在这里，不打断正文。", createdAt: new Date().toISOString() }],
+    stickers: [{ id: crypto.randomUUID(), type: "tape-kraft", text: STICKERS["tape-kraft"].text, className: STICKERS["tape-kraft"].className, x: 214, y: 12, rotate: -1.5 }],
+    strokes: sampleStrokes(),
+  });
+  normalizeEntry(entry, key);
+  syncPageGroup(entry, key);
+  return entry;
+}
+
+function sampleDateKey() {
+  const date = parseDate(todayKey());
+  date.setDate(date.getDate() - 1);
+  return toDateKey(date);
+}
+
+// Only for a journal that has never been saved: nothing is ever added to existing writing.
+function seedSamplePageIfFirstRun() {
+  let stored = null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return;
+  }
+  if (stored || state.sampleSeeded || Object.keys(state.entries).length) return;
+  const key = sampleDateKey();
+  state.entries[key] = buildSamplePage(key);
+  state.sampleSeeded = true;
+  sampleIntroPending = true;
+  persistState();
+}
+
+function findSamplePageKey() {
+  return Object.keys(state.entries).find((key) => state.entries[key]?.sample) || "";
+}
+
+function openSamplePage() {
+  let key = findSamplePageKey();
+  if (!key) {
+    key = sampleDateKey();
+    // Never over a page that already has writing on it.
+    if (state.entries[key] && hasMeaningfulContent(state.entries[key], key)) {
+      notify("昨天那页已经有内容，示范页没有放进去");
+      return;
+    }
+    state.entries[key] = buildSamplePage(key);
+    persistState();
+  }
+  closeMobilePanel();
+  navigateToCalendarPage(key, "day");
+}
+
+// Offered once, after the cover of a brand-new journal first opens.
+function introduceSamplePage() {
+  if (!sampleIntroPending) return;
+  sampleIntroPending = false;
+  window.setTimeout(() => notify("第一次来？昨天那页是一份示范，看看都能做什么", { label: "去看看", run: openSamplePage }), 500);
+}
+
 async function startApp() {
   await hydrateStoredMedia();
+  seedSamplePageIfFirstRun();
   applyGlobalSettings();
   setSaveState(state.lastSavedAt ? "saved" : "ready");
   bindInstallPrompt();
   bindEvents();
   setupCanvas();
   loadEntryIntoForm();
-  if (!shouldShowCover()) openNotebookWithoutCover();
-  else scheduleBookPreparation(900);
+  if (!shouldShowCover()) {
+    openNotebookWithoutCover();
+    introduceSamplePage();
+  } else scheduleBookPreparation(900);
   window.addEventListener("resize", discardPreparedBook);
   bindWorkspaceShell();
   registerServiceWorker();

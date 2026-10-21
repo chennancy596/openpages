@@ -2,7 +2,7 @@
   "id": "./",
   "name": "开页 OpenPages",
   "short_name": "开页",
-  "description": "本地优先的电子手帐：一日一页、周月计划、手写与拼贴，记录只保存在你的设备上。",
+  "description": "不用注册的电子手帐：日记、周计划、月计划，打字和手写都行，写的东西只存在你自己的设备上。",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

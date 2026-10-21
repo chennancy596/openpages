@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta
       name="description"
-      content="开页 OpenPages：本地优先的电子手帐。一日一页、周月计划、手写与拼贴，记录只保存在你的设备上。"
+      content="开页 OpenPages：不用注册的电子手帐。日记、周计划、月计划，打字和手写都行，写的东西只存在你自己的设备上。"
     />
     <meta name="theme-color" content="#f4f6f5" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -13,11 +13,11 @@
     <meta name="apple-mobile-web-app-title" content="开页" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="format-detection" content="telephone=no" />
-    <title>开页 OpenPages · 本地优先的电子手帐</title>
+    <title>开页 · 电子手帐</title>
     <link rel="icon" href="./assets/openpages-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=20261021-fix6" />
+    <link rel="stylesheet" href="./app.css?v=20261021-app8" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -449,13 +449,13 @@
               <span class="page-print page-print--kissa" aria-hidden="true"></span>
               <div class="paper-header">
                 <div>
-                  <p class="eyebrow" id="rightPageModeLabel">Plan & Ritual</p>
+                  <p class="eyebrow" id="rightPageModeLabel">Freehand</p>
                   <h2 id="dateLabel">今天</h2>
                   <h2 class="ink-page-title">自由手写</h2>
                 </div>
               </div>
 
-              <section class="canvas-card">
+              <section class="canvas-card" data-hint="用笔、手指或鼠标，直接写在这一页">
                 <canvas id="inkCanvas" width="900" height="1260" aria-label="手写草稿画布"></canvas>
               </section>
 
@@ -490,7 +490,7 @@
                     <option value="note">- 笔记</option>
                     <option value="migrate">&gt; 迁移</option>
                   </select>
-                  <input id="bulletInput" placeholder="快速记录一条子弹" />
+                  <input id="bulletInput" placeholder="写一条速记" />
                   <button id="addBulletButton" type="button">记录</button>
                 </div>
                 <ul class="bullet-list" id="bulletList"></ul>
@@ -644,24 +644,24 @@
           <div class="sticker-palette" id="stickerPalette">
             <button class="sticker-sample tape coral" draggable="true" data-sticker="tape-coral" type="button">Memo</button>
             <button class="sticker-sample tape leaf" draggable="true" data-sticker="tape-leaf" type="button">Today</button>
-            <button class="sticker-sample tape indigo tape-pattern" draggable="true" data-sticker="tape-indigo" type="button">青藍</button>
+            <button class="sticker-sample tape indigo tape-pattern" draggable="true" data-sticker="tape-indigo" type="button">青蓝</button>
             <button class="sticker-sample tape gridtape" draggable="true" data-sticker="tape-grid" type="button">Grid</button>
             <button class="sticker-sample tape kraft" draggable="true" data-sticker="tape-kraft" type="button">NOTE</button>
             <button class="sticker-sample tape moss" draggable="true" data-sticker="tape-moss" type="button">FOREST</button>
-            <button class="sticker-sample tape plum" draggable="true" data-sticker="tape-plum" type="button">余韻</button>
+            <button class="sticker-sample tape plum" draggable="true" data-sticker="tape-plum" type="button">余韵</button>
             <button class="sticker-sample tape stripe" draggable="true" data-sticker="tape-stripe" type="button">LINE</button>
             <button class="sticker-sample note butter" draggable="true" data-sticker="note-butter" type="button">想法</button>
             <button class="sticker-sample note sky" draggable="true" data-sticker="note-sky" type="button">灵感</button>
-            <button class="sticker-sample note matcha" draggable="true" data-sticker="note-matcha" type="button">観察</button>
+            <button class="sticker-sample note matcha" draggable="true" data-sticker="note-matcha" type="button">观察</button>
             <button class="sticker-sample note mauve" draggable="true" data-sticker="note-mauve" type="button">余白</button>
-            <button class="sticker-sample note linen" draggable="true" data-sticker="note-linen" type="button">日付</button>
-            <button class="sticker-sample note bluegray" draggable="true" data-sticker="note-bluegray" type="button">読書</button>
+            <button class="sticker-sample note linen" draggable="true" data-sticker="note-linen" type="button">日期</button>
+            <button class="sticker-sample note bluegray" draggable="true" data-sticker="note-bluegray" type="button">读书</button>
             <button class="sticker-sample stamp rose" draggable="true" data-sticker="stamp-rose" type="button">DONE</button>
             <button class="sticker-sample stamp ink" draggable="true" data-sticker="stamp-ink" type="button">OPEN</button>
-            <button class="sticker-sample stamp vermilion" draggable="true" data-sticker="stamp-vermilion" type="button">済</button>
+            <button class="sticker-sample stamp vermilion" draggable="true" data-sticker="stamp-vermilion" type="button">毕</button>
             <button class="sticker-sample stamp brass-stamp" draggable="true" data-sticker="stamp-brass" type="button">旅</button>
             <button class="sticker-sample stamp tea-stamp" draggable="true" data-sticker="stamp-tea" type="button">喫茶</button>
-            <button class="sticker-sample stamp read-stamp" draggable="true" data-sticker="stamp-read" type="button">読</button>
+            <button class="sticker-sample stamp read-stamp" draggable="true" data-sticker="stamp-read" type="button">读</button>
             <button class="sticker-sample index-tab sage-tab" draggable="true" data-sticker="index-sage" type="button">INDEX</button>
             <button class="sticker-sample index-tab rust-tab" draggable="true" data-sticker="index-rust" type="button">TODAY</button>
             <button class="sticker-sample ticket ticket-cream" draggable="true" data-sticker="ticket-cream" type="button">TICKET</button>
@@ -673,9 +673,9 @@
             <button class="sticker-sample botanical botanical-leaf" draggable="true" data-sticker="botanical-leaf" type="button">葉</button>
             <button class="sticker-sample botanical botanical-flower" draggable="true" data-sticker="botanical-flower" type="button">花</button>
             <button class="sticker-sample art-sticker art-fern" draggable="true" data-sticker="art-fern" type="button" aria-label="蕨类植物标本">蕨</button>
-            <button class="sticker-sample art-sticker art-sakura" draggable="true" data-sticker="art-sakura" type="button" aria-label="樱花枝插画">桜</button>
-            <button class="sticker-sample art-sticker art-ginkgo" draggable="true" data-sticker="art-ginkgo" type="button" aria-label="银杏叶插画">銀杏</button>
-            <button class="sticker-sample art-sticker art-kissa" draggable="true" data-sticker="art-kissa" type="button" aria-label="喫茶店咖啡杯">珈琲</button>
+            <button class="sticker-sample art-sticker art-sakura" draggable="true" data-sticker="art-sakura" type="button" aria-label="樱花枝插画">樱</button>
+            <button class="sticker-sample art-sticker art-ginkgo" draggable="true" data-sticker="art-ginkgo" type="button" aria-label="银杏叶插画">银杏</button>
+            <button class="sticker-sample art-sticker art-kissa" draggable="true" data-sticker="art-kissa" type="button" aria-label="喫茶店咖啡杯">咖啡</button>
             <button class="sticker-sample art-sticker art-mountain" draggable="true" data-sticker="art-mountain" type="button" aria-label="远山与日出">山</button>
             <button class="sticker-sample art-sticker art-window" draggable="true" data-sticker="art-window" type="button" aria-label="雨日窗景">雨</button>
             <button class="sticker-sample art-sticker art-bird" draggable="true" data-sticker="art-bird" type="button" aria-label="飞鸟旅行插画">旅</button>
@@ -958,7 +958,7 @@
           <details class="settings-group">
             <summary><span>数据与分享</span><small>安装、备份与导出</small></summary>
             <div class="settings-group__content settings-actions">
-            <button class="wide-button" id="installAppButton" type="button" title="通过浏览器安装为 PWA">
+            <button class="wide-button" id="installAppButton" type="button" title="装到桌面，以后像 App 一样从图标打开">
               <svg><use href="#icon-download"></use></svg>
               安装到当前设备
             </button>
@@ -966,21 +966,21 @@
               <svg><use href="#icon-check"></use></svg>
               复制应用链接
             </button>
-            <button class="wide-button" id="exportButton" type="button" title="导出全部本地数据 JSON" aria-label="导出全部本地数据 JSON">
+            <button class="wide-button" id="exportButton" type="button" title="导出完整备份：所有日子、照片和手写" aria-label="导出完整备份">
               <svg><use href="#icon-download"></use></svg>
-              导出全部本地数据
+              导出完整备份
             </button>
-            <button class="wide-button" id="exportMarkdownButton" type="button" title="导出当前日页为 Markdown">
+            <button class="wide-button" id="exportMarkdownButton" type="button" title="把当前页导出为纯文本（Markdown）">
               <svg><use href="#icon-download"></use></svg>
-              导出当前页 Markdown
+              导出当前页文字
             </button>
             <button class="wide-button" id="printDayButton" type="button" title="打印当前日页或另存为 PDF">
               <svg><use href="#icon-print"></use></svg>
               打印 / 保存为 PDF
             </button>
-            <label class="wide-button file-button" title="导入 OpenPages JSON 备份，替换本机记录" aria-label="导入 OpenPages JSON 备份，替换本机记录">
+            <label class="wide-button file-button" title="用一份完整备份替换本机记录" aria-label="从完整备份恢复，会替换本机记录">
               <svg><use href="#icon-upload"></use></svg>
-              导入 OpenPages 备份
+              从备份恢复（会替换本机记录）
               <input id="importInput" type="file" accept="application/json" />
             </label>
             </div>
@@ -1034,19 +1034,20 @@
                 <p class="trash-bin__note">删除的内页会在这里保留 30 天，可以恢复到原来的日期。</p>
                 <div class="trash-list" id="trashList"></div>
               </details>
-              <p class="workflow-note" id="workflowNote">内容默认只保存在当前设备；更换设备前请导出 JSON 备份。</p>
+              <p class="workflow-note" id="workflowNote">内容只保存在这台设备上；换设备前，请先导出一份完整备份。</p>
             </div>
           </details>
 
           <details class="settings-group about-group">
             <summary><span>关于开页</span><small id="aboutVersion">版本</small></summary>
             <div class="settings-group__content about-content">
-              <p>开页是本地优先的电子手帐。你写下的文字、照片和手写都只保存在这台设备上，不上传，也没有统计或广告代码。</p>
+              <p>开页是一本不用注册的电子手帐。你写下的文字、照片和手写都只保存在这台设备上，不上传，也没有统计或广告代码。</p>
               <dl class="about-facts">
                 <div><dt>版本</dt><dd id="aboutVersionValue"></dd></div>
-                <div><dt>数据</dt><dd>只在本机 · 可随时导出 JSON / Markdown</dd></div>
+                <div><dt>数据</dt><dd>只在本机 · 随时可以导出完整备份或文字</dd></div>
                 <div><dt>开源许可</dt><dd>MIT</dd></div>
               </dl>
+              <button class="wide-button" id="openSampleButton" type="button">看看示范页</button>
               <a class="wide-button" href="./privacypolicy.html" target="_blank" rel="noopener">隐私说明</a>
               <a class="wide-button" id="feedbackLink" href="#" target="_blank" rel="noopener" hidden>意见反馈</a>
             </div>
@@ -1098,6 +1099,6 @@
     </nav>
 
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261021-fix6" defer></script>
+    <script src="./app.js?v=20261021-app8" defer></script>
   </body>
 </html>
