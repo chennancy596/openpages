@@ -141,10 +141,13 @@ test("automatic versions are capped and expire; hand-saved ones are kept", () =>
   assert.equal(result, "manual-old,auto-2,auto-3,auto-4,auto-5,auto-6,auto-7");
 });
 
-test("the cover shows once a day by default and follows the setting", () => {
+test("the cover shows on every launch by default and follows the setting", () => {
   const store = new Map();
   const window = windowOn(store);
   assert.equal(window.run("shouldShowCover()"), true);
+  window.run("rememberCoverOpened();");
+  assert.equal(window.run("shouldShowCover()"), true);
+  window.run('state.coverDisplay = "daily";');
   window.run("rememberCoverOpened();");
   assert.equal(window.run("shouldShowCover()"), false);
   store.set("openpages.cover.openedOn", "2020-01-01");

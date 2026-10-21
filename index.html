@@ -17,7 +17,7 @@
     <link rel="icon" href="./assets/openpages-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=20261016-release" />
+    <link rel="stylesheet" href="./app.css?v=20261021-fix6" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -156,6 +156,7 @@
 
         <div class="sidebar-footer">
           <button type="button" data-open-mobile-panel="open"><svg><use href="#icon-sliders"></use></svg><span>设置与备份</span></button>
+          <button type="button" id="sidebarCloseBookButton"><svg><use href="#icon-book"></use></svg><span>合上本子</span></button>
           <span class="local-indicator"><i aria-hidden="true"></i>本地手帐</span>
         </div>
         <section class="stats-card" aria-label="记录统计" hidden>
@@ -201,6 +202,10 @@
             <button type="button" id="todayButton" class="today-button" title="回到今天（T）" hidden>今天</button>
           </div>
           <div class="topbar-actions">
+            <button class="icon-button action-button" id="closeBookButton" type="button" title="合上本子" aria-label="合上本子">
+              <svg><use href="#icon-book"></use></svg>
+              <span>合上</span>
+            </button>
             <button class="icon-button action-button" id="focusModeButton" type="button" title="专注书写" aria-label="进入专注书写">
               <svg><use href="#icon-focus"></use></svg>
               <span>专注</span>
@@ -333,7 +338,6 @@
             <span class="brass-clip" aria-hidden="true"></span>
             <span class="page-turn-shadow" aria-hidden="true"></span>
             <div class="page-turn-sheet" aria-hidden="true"></div>
-            <div class="page-flip-engine" id="pageFlipEngine" aria-hidden="true" hidden></div>
             <button class="daily-stamp" id="dailyStampButton" type="button" aria-label="今日印章">
               <span id="dailyStampIcon">未</span>
               <small aria-hidden="true">印章</small>
@@ -475,7 +479,7 @@
 
               <section class="bullet-panel mode-panel" aria-label="子弹笔记流">
                 <div class="section-title">
-                  <h3>Bullet Log</h3>
+                  <h3>子弹记录</h3>
                   <span>任务 / 事件 / 笔记 / 迁移</span>
                   <button class="inline-action" type="button" data-sync-bullets>整理到左页</button>
                 </div>
@@ -918,8 +922,8 @@
             <label class="field settings-field settings-field--wide">
               <span>打开时的封面</span>
               <select id="coverDisplaySelect">
-                <option value="daily">每天第一次打开时显示</option>
                 <option value="always">每次打开都显示</option>
+                <option value="daily">每天第一次打开时显示</option>
                 <option value="never">直接进入内页</option>
               </select>
             </label>
@@ -1093,8 +1097,7 @@
       </button>
     </nav>
 
-    <script src="./vendor/page-flip.browser.js?v=2.0.7" defer></script>
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261016-release2" defer></script>
+    <script src="./app.js?v=20261021-fix6" defer></script>
   </body>
 </html>

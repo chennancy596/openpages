@@ -6368,27 +6368,27 @@ body[data-paper-tone="washi"] {
   --paper-light: rgba(255, 255, 255, 0.16);
 }
 body[data-paper-tone="ivory"] {
-  --paper: #e6d3b5;
-  --paper-edge: #cdb38c;
-  --paper-rule: #927858;
+  --paper: #f3ead6;
+  --paper-edge: #e0d3b8;
+  --paper-rule: #b9a789;
   --paper-light: rgba(255, 248, 231, 0.09);
 }
 body[data-paper-tone="gray"] {
-  --paper: #d8e1dc;
-  --paper-edge: #b6c7bf;
-  --paper-rule: #778e84;
+  --paper: #eceeeb;
+  --paper-edge: #d6dbd7;
+  --paper-rule: #9aa59f;
   --paper-light: rgba(248, 252, 249, 0.09);
 }
 body[data-paper-tone="blue"] {
-  --paper: #cfe3e8;
-  --paper-edge: #a5c8d0;
-  --paper-rule: #638c96;
+  --paper: #e9f0f1;
+  --paper-edge: #cfdde0;
+  --paper-rule: #8fa9b0;
   --paper-light: rgba(244, 253, 255, 0.08);
 }
 body[data-paper-tone="sakura"] {
-  --paper: #ecd2da;
-  --paper-edge: #d7a9b6;
-  --paper-rule: #9f6a79;
+  --paper: #f6eaeb;
+  --paper-edge: #e6cfd3;
+  --paper-rule: #b98f98;
   --paper-light: rgba(255, 247, 250, 0.08);
 }
 .paper-page {
@@ -12254,7 +12254,8 @@ body.editor-shell[data-book=closed] .document-tools {
     font-size: 12px;
   }
   body.editor-shell #privacyButton,
-  body.editor-shell #focusModeButton {
+  body.editor-shell #focusModeButton,
+  body.editor-shell #closeBookButton {
     display: none !important;
   }
   body.editor-shell .document-tools {
@@ -12736,11 +12737,12 @@ body.editor-shell .recent-page span {
   -webkit-line-clamp: 2;
   overflow: hidden;
 }
-/* The closed notebook fits the stage instead of running under the footer. */
+/* The closed notebook fits the stage instead of running under the footer, as a golden rectangle. */
 body.editor-shell:is([data-book=closed], [data-book=opening]) .journal-spread {
-  height: min(calc(100dvh - 236px), 680px) !important;
+  width: min(88vw, 420px, calc((100dvh - 236px) / 1.618)) !important;
+  height: auto !important;
   min-height: 0 !important;
-  width: min(88vw, 430px, calc((100dvh - 236px) * 0.632)) !important;
+  aspect-ratio: 1 / 1.618;
 }
 /* Month, reading, travel and five-year right pages: the heading sits on the same line as the left title. */
 @media (min-width: 761px) {
@@ -13282,3 +13284,720 @@ body.editor-shell .about-facts div { display: flex; justify-content: space-betwe
 body.editor-shell .about-facts dt { color: var(--ui-secondary); }
 body.editor-shell .about-facts dd { margin: 0; color: var(--ui-content); text-align: right; }
 body.editor-shell .about-content .wide-button + .wide-button { margin-top: 8px; }
+
+/* ---- Page turn (see startLeafTurn in app.js) ----
+   A layer over the spread holds still copies of the pages being covered and uncovered, and one sheet
+   that turns around the spine. Only transform and opacity animate. */
+body.editor-shell .journal-spread > .leaf-turn {
+  position: absolute; inset: 0; z-index: 40; pointer-events: none;
+  perspective: 3600px; perspective-origin: 50% 45%;
+}
+body.editor-shell .leaf-turn__sheet { position: absolute; overflow: hidden; border-radius: 2px; }
+body.editor-shell .leaf-turn__leaf { overflow: visible; transform-style: preserve-3d; will-change: transform; }
+body.editor-shell .leaf-turn__leaf--right { transform-origin: left center; }
+body.editor-shell .leaf-turn__leaf--left { transform-origin: right center; }
+body.editor-shell .leaf-turn__face {
+  position: absolute; inset: 0; overflow: hidden; border-radius: 2px;
+  -webkit-backface-visibility: hidden; backface-visibility: hidden;
+  box-shadow: 0 0 0 0.5px #1f2a2214;
+}
+body.editor-shell .leaf-turn__face--back { transform: rotateY(180deg); }
+body.editor-shell .leaf-turn .page-flip-engine__content {
+  position: absolute !important; inset: 0 !important; display: flex !important;
+  width: 100% !important; height: 100% !important; min-width: 0 !important; min-height: 0 !important;
+  margin: 0 !important; transform: none !important; overflow: hidden !important; pointer-events: none !important;
+}
+/* Shading is darkest at the spine: right-turning sheet front (spine on its left), its back (spine on its right),
+   and the mirror for the left-turning sheet. */
+body.editor-shell .leaf-turn__shade { position: absolute; inset: 0; z-index: 2; opacity: 0; pointer-events: none; }
+body.editor-shell .leaf-turn__leaf--right > .leaf-turn__face:not(.leaf-turn__face--back) > .leaf-turn__shade,
+body.editor-shell .leaf-turn__leaf--left > .leaf-turn__face--back > .leaf-turn__shade {
+  background: linear-gradient(90deg, #1b221d8c, #1b221d1f 38%, transparent 72%);
+}
+body.editor-shell .leaf-turn__leaf--right > .leaf-turn__face--back > .leaf-turn__shade,
+body.editor-shell .leaf-turn__leaf--left > .leaf-turn__face:not(.leaf-turn__face--back) > .leaf-turn__shade {
+  background: linear-gradient(270deg, #1b221d8c, #1b221d1f 38%, transparent 72%);
+}
+/* The uncovered page sits in the turning sheet's shadow, which fades as the sheet lifts away. */
+body.editor-shell .leaf-turn__reveal { z-index: 1; }
+body.editor-shell .leaf-turn__reveal--right { background: linear-gradient(90deg, #1b221d59, transparent 46%); }
+body.editor-shell .leaf-turn__reveal--left { background: linear-gradient(270deg, #1b221d59, transparent 46%); }
+body.editor-shell .leaf-turn__leaf { z-index: 3; }
+
+/* ---- Opening the notebook: composited only ----
+   The cover turns with transform and opacity alone; the old keyframes also animated
+   filter: brightness() on the textured cover, which repaints it every frame. */
+@keyframes openCoverComposited {
+  0% { opacity: 1; transform: rotateY(0deg) translateX(0) translateZ(0); }
+  28% { transform: rotateY(-18deg) translateX(-4px) translateZ(24px); }
+  62% { opacity: 1; transform: rotateY(-74deg) translateX(-12px) translateZ(34px); }
+  100% { opacity: 0; transform: rotateY(-106deg) translateX(-26px) translateZ(0); }
+}
+body.editor-shell[data-book="opening"] .closed-cover { animation-name: openCoverComposited !important; will-change: transform, opacity; }
+/* The corner illustration fades in by opacity; a blur/saturate filter animation was the costliest
+   effect on screen. Redefined here, so this later definition is the one used. */
+@keyframes motifInkSettle {
+  0% { opacity: 0; }
+  48% { opacity: 0.15; }
+  100% { opacity: 0.12; }
+}
+/* No colour or shadow transitions across the closed → open switch (see settleBookState in app.js). */
+body.is-book-settling *, body.is-book-settling *::before, body.is-book-settling *::after { transition: none !important; }
+/* Page illustrations fade by opacity only when the page changes. */
+body.editor-shell .page-print { transition: opacity 0.28s ease !important; }
+
+/* ---- Opening and closing the notebook (see buildBookStage in app.js) ----
+   A stand-in book above the already painted layout: the cover turns on its spine and the notebook
+   comes up to full size with the real pages on it. Only transform and opacity are animated. */
+body.editor-shell > .book-overlay { position: fixed; inset: 0; z-index: 1000; pointer-events: none; overflow: hidden; }
+.book-overlay__backdrop { position: absolute; inset: 0; will-change: opacity; }
+/* Prepared and waiting for the click: the stand-in cover is the cover. */
+body.editor-shell > .book-overlay.is-prepared { pointer-events: auto; }
+.book-overlay.is-prepared .book-stage__leaf { cursor: pointer; outline: none; }
+.book-overlay.is-prepared .book-stage__leaf:focus-visible .closed-cover { outline: 2px solid rgba(162, 79, 72, 0.62) !important; outline-offset: 8px; }
+.book-overlay > .book-stage { position: fixed; transform-origin: 0 0; will-change: transform, opacity; }
+.book-stage__board,
+.book-stage__face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: 7px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.book-stage__board { z-index: 0; box-shadow: 0 18px 40px rgba(28, 24, 18, 0.2), 0 4px 12px rgba(28, 24, 18, 0.12); }
+.book-stage__board--right { border-radius: 0 7px 7px 0; }
+.book-stage__leaf { z-index: 1; position: absolute; top: 0; bottom: 0; left: 0; transform-origin: 0 50%; transform-style: preserve-3d; will-change: transform; }
+.book-stage__face { overflow: visible; }
+.book-stage__face--back { right: auto; transform: rotateY(180deg); overflow: hidden; border-radius: 7px 0 0 7px; }
+.book-stage__cover { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.book-overlay .book-stage__cover .closed-cover {
+  position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
+  opacity: 1 !important; animation: none !important; pointer-events: none !important;
+  transform: none !important; transition: none !important;
+}
+.book-stage__shade { position: absolute; inset: 0; border-radius: inherit; background: #1b1a16; opacity: 0; pointer-events: none; }
+.book-stage__cover > .book-stage__shade { border-radius: 28px 20px 20px 28px; }
+/* The shadow the lifting cover throws on the first page, deepest at the spine. */
+.book-stage__cast {
+  position: absolute; inset: 0; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(20, 18, 14, 0.55), rgba(20, 18, 14, 0.18) 34%, transparent 72%);
+}
+.book-stage__page { position: absolute; overflow: hidden; border-radius: 2px; }
+/* The spread's own rules are many and !important; the id in :is() only lifts these above them. */
+.journal-spread.book-stage__context:is(.book-stage__context, #book-stage-context) {
+  all: unset !important;
+  display: block !important;
+  position: absolute !important;
+  inset: 0 !important;
+}
+.journal-spread.book-stage__context:is(.book-stage__context, #book-stage-context)::before,
+.journal-spread.book-stage__context:is(.book-stage__context, #book-stage-context)::after { content: none !important; }
+.book-stage__context:is(.book-stage__context, #book-stage-context) > .paper-page {
+  position: absolute !important; inset: 0 !important; width: 100% !important; height: 100% !important;
+  margin: 0 !important; display: flex !important; opacity: 1 !important; transform: none !important;
+  animation: none !important; transition: none !important;
+}
+/* The spine: both pages fall slightly into shadow towards the fold. */
+.book-stage__board--right > .book-stage__page::after,
+.book-stage__face--back > .book-stage__page::after {
+  content: ""; position: absolute; top: 0; bottom: 0; width: 28px; pointer-events: none;
+}
+.book-stage__board--right > .book-stage__page::after { left: 0; background: linear-gradient(90deg, rgba(60, 48, 32, 0.12), transparent); }
+.book-stage__face--back > .book-stage__page::after { right: 0; background: linear-gradient(270deg, rgba(60, 48, 32, 0.12), transparent); }
+/* While the cover leaves, the notebook and the controls are already in place: their own arrival
+   animations (a 3D tilt and scale of the whole spread) would only repeat work under the fade. */
+body:is(.is-cover-leaving, .is-cover-opened) :is(.journal-spread, .sidebar, .topbar, .mobile-page-switcher, .mobile-dock) { animation: none !important; }
+
+/* ---- Proportion and alignment ----
+   The closed cover is a golden rectangle (1 : 1.618). Its clip and closing band stand on one
+   vertical axis; the cross band lies on the lower golden line (61.8%); the title row is centred in the
+   field beneath it (80.9%), starting where the cross band starts. */
+/* (The cover's size: see "The closed notebook fits the stage" above.)
+   The sidebar and toolbars stay laid out, invisible, while the notebook is closed, so centring it in
+   the workspace put it 110px right of the window's centre. It is placed on the window instead: centred
+   across, and down on the golden section, the space above to the space below as 0.382 to 0.618. */
+body.editor-shell:is([data-book=closed], [data-book=opening]) .journal-spread {
+  position: fixed !important;
+  left: 50% !important;
+  top: 38.2% !important;
+  margin: 0 !important;
+  translate: -50% -38.2%;
+  /* The opening's arrival animation otherwise holds the closed notebook on its first frame, tilted
+     and 10px low. */
+  animation: none !important;
+}
+/* A perspective on the stage would make it, not the window, what the notebook is placed on. */
+body.editor-shell:is([data-book=closed], [data-book=opening]) .view-stage { perspective: none !important; }
+body .closed-cover { --cover-margin: 13.5%; --cover-axis: 79%; }
+/* Cover layout: margin 13.5% · axis 79% · cross band 61.8% · title row 80.9%. */
+body .closed-cover .closed-cover__elastic--vertical,
+body .closed-cover .closed-cover__clip {
+  left: var(--cover-axis) !important;
+  right: auto !important;
+  translate: -50% 0;
+}
+body .closed-cover .closed-cover__elastic--horizontal {
+  left: var(--cover-margin) !important;
+  right: var(--cover-margin) !important;
+  top: 61.8% !important;
+  translate: 0 -50%;
+}
+body .closed-cover .closed-cover__label {
+  left: var(--cover-margin) !important;
+  top: 80.9% !important;
+  bottom: auto !important;
+  translate: 0 -50%;
+}
+/* The seal is blind-embossed in the open field at top left: on the text margin, level with the clip,
+   so seal and clip make one row across the top (the band no longer runs through its letters). */
+body .closed-cover { --clip-top: clamp(24px, 6%, 44px); --clip-height: 58px; }
+body .closed-cover .closed-cover__stamp {
+  left: var(--cover-margin) !important;
+  right: auto !important;
+  top: calc(var(--clip-top) + var(--clip-height) / 2) !important;
+  bottom: auto !important;
+  translate: 0 -50%;
+}
+body .closed-cover .closed-cover__clip { top: var(--clip-top) !important; }
+@media (max-width: 1079px) {
+  body .closed-cover { --clip-height: 46px; }
+}
+
+/* The page number stands on the text block's right edge, centred in the top margin. */
+body.editor-shell .page-number {
+  right: 38px !important;
+  top: 17px !important;
+}
+
+/* Desktop shell grid. Toolbar icons, the page switcher and the notebook share one edge 28px in from
+   the workspace on each side; the sidebar's brand is centred on the two toolbar rows (98px) and its
+   first row starts level with the notebook. */
+@media (min-width: 1101px) {
+  /* Ghost icon buttons are 34–38px around a 17–18px glyph, so their container sits nearer the edge
+     than filled controls do: every glyph or edge then lands on the line 28px in. */
+  body.editor-shell .topbar { padding: 0 18px 0 20px !important; }
+  body.editor-shell .document-tools { padding: 0 20px 0 28px; }
+  body.editor-shell .document-footer { padding-right: 28px !important; }
+  body.editor-shell .sidebar { padding-top: 0 !important; }
+  body.editor-shell .brand {
+    display: flex !important;
+    align-items: center;
+    min-height: 98px;
+    margin: 0 !important;
+  }
+  body.editor-shell .library-nav { margin-top: 30px; }
+}
+
+/* ==== Paper typography ====
+   One system for every inner page, after the printed refills it borrows from (Traveler's Notebook,
+   Hobonichi, Midori MD, Leuchtturm1917): quiet type, a single fine grid, hairline rules, labels set
+   small and spaced, nothing bold.
+
+   Faces   Display and page text: a book serif for Latin and figures (Iowan Old Style / Palatino) over
+           Songti for Chinese, at regular weight. Labels and controls: the system sans.
+   Scale   12 label · 13 small · 16 text · 20 subhead · 26 title (16 × 1.618).
+   Grid    14px (Hobonichi's 3.7mm); text runs on 28px lines, two squares.
+   Margins 56px top and bottom, 42px at the sides: four and three squares, so text edges fall on the grid.
+   Rules   one hairline weight; fields are a line to write on, not a box. */
+/* The book serif, limited to Latin letters and figures: curly quotes, the em dash and the ellipsis
+   come from the Chinese face, full width, as Chinese text sets them. */
+@font-face {
+  font-family: "OP Serif Latin";
+  font-style: normal;
+  font-weight: 400;
+  src: local("IowanOldStyle-Roman"), local("Iowan Old Style Roman"), local("Palatino-Roman"), local("PalatinoLinotype-Roman"), local("Palatino Linotype"), local("Georgia"), local("NotoSerif"), local("Noto Serif");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DC, U+2013, U+2020-2022, U+20AC, U+2122;
+}
+@font-face {
+  font-family: "OP Serif Latin";
+  font-style: italic;
+  font-weight: 400;
+  src: local("IowanOldStyle-Italic"), local("Iowan Old Style Italic"), local("Palatino-Italic"), local("PalatinoLinotype-Italic"), local("Georgia Italic"), local("Georgia-Italic"), local("NotoSerif-Italic");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DC, U+2013, U+2020-2022, U+20AC, U+2122;
+}
+@font-face {
+  font-family: "OP Serif Latin";
+  font-style: normal;
+  font-weight: 600 700;
+  src: local("IowanOldStyle-Bold"), local("Iowan Old Style Bold"), local("Palatino-Bold"), local("PalatinoLinotype-Bold"), local("Georgia Bold"), local("Georgia-Bold"), local("NotoSerif-Bold");
+  unicode-range: U+0020-007E, U+00A0-00FF, U+0131, U+0152-0153, U+02C6, U+02DC, U+2013, U+2020-2022, U+20AC, U+2122;
+}
+:root {
+  --font-latin-serif: "OP Serif Latin", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia;
+  --font-display: var(--font-latin-serif), "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "Noto Serif CJK SC", serif;
+  --font-serif: var(--font-display);
+  /* Where no good Chinese serif is installed (Windows), YaHei reads far better than SimSun. */
+  --font-page: var(--font-latin-serif), "Songti SC", "STSong", "Noto Serif SC", "Source Han Serif SC", "Noto Serif CJK SC", "Microsoft YaHei", serif;
+  --grid: 14px;
+  --line: 28px;
+  --ink: #2b322d;
+  --ink-soft: #566059;
+  /* Small labels meet 4.5:1 on the paper; placeholder hints sit a step lighter, about 3.7:1, which is
+     readable as a hint without being mistaken for writing (they were 2.2:1). */
+  --ink-muted: #6c736d;
+  --ink-hint: #7a807b;
+  --hairline: color-mix(in srgb, var(--paper-rule, #aeb8b0) 58%, transparent);
+  --hairline-strong: color-mix(in srgb, var(--ink) 34%, transparent);
+}
+body.editor-shell .journal-spread .paper-page {
+  padding: 56px 42px !important;
+  color: var(--ink);
+  /* Never a faked bold; Chinese has no italic of its own, so a slant is allowed. */
+  font-synthesis: style;
+  font-variant-numeric: proportional-nums oldstyle-nums;
+}
+
+/* The ruling: one layer (::after), on the 14px grid from the page's corner. The faint fibre layer
+   underneath (::before) used to carry a second pattern of its own, 16px dots and 30px lines against
+   18px and 32px above. Ruled pages rule their writing areas instead, so the lines run exactly under
+   the text. */
+body.editor-shell .journal-spread .paper-page::before {
+  background: linear-gradient(var(--paper-light), var(--paper-light)), url("./assets/paper-fiber.png"), var(--paper) !important;
+  background-size: 100% 100%, 384px 384px, auto !important;
+}
+body.editor-shell .journal-spread .paper-page::after { opacity: 1 !important; background: none !important; }
+body.editor-shell[data-page=dot] .journal-spread .paper-page::after {
+  background: radial-gradient(circle, color-mix(in srgb, var(--paper-rule) 55%, transparent) 0.85px, transparent 1.25px) calc(var(--grid) / -2) calc(var(--grid) / -2) / var(--grid) var(--grid) !important;
+}
+body.editor-shell[data-page=grid] .journal-spread .paper-page::after {
+  background: linear-gradient(color-mix(in srgb, var(--paper-rule) 16%, transparent) 1px, transparent 1px) 0 0 / var(--grid) var(--grid), linear-gradient(90deg, color-mix(in srgb, var(--paper-rule) 16%, transparent) 1px, transparent 1px) 0 0 / var(--grid) var(--grid) !important;
+}
+/* Only where text runs in paragraphs, set on the 28px line from the top of the area. (The week's
+   rows have their own rules.) */
+body.editor-shell[data-page=line] .journal-spread .paper-page :is(.journal-editor, .collection-view textarea) {
+  padding-top: 0 !important;
+  line-height: var(--line) !important;
+  background: repeating-linear-gradient(180deg, transparent 0 calc(var(--line) - 1px), var(--hairline) calc(var(--line) - 1px) var(--line)) !important;
+  background-attachment: local !important;
+}
+
+/* Page heads: a small spaced label over the title, the two pages' heads equal in height and resting on
+   one hairline. */
+body.editor-shell .journal-spread .paper-header {
+  align-items: flex-end !important;
+  min-height: 0 !important;
+  margin: 0 0 var(--grid) !important;
+  padding: 0 0 13px !important;
+  border-bottom: 1px solid var(--hairline) !important;
+}
+body.editor-shell .journal-spread .paper-header .eyebrow {
+  display: block !important;
+  margin: 0 !important;
+  font: 500 11px/14px var(--font-ui) !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread :is(.title-input, .paper-header h2) {
+  font: 400 26px/42px var(--font-display) !important;
+  letter-spacing: 0.02em;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .paper-page--right .paper-header :is(#dateLabel, [data-source-id="dateLabel"]) { display: none !important; }
+body.editor-shell .journal-spread .paper-page--right .ink-page-title {
+  display: block !important;
+  font: 400 20px/42px var(--font-display) !important;
+  color: var(--ink-soft) !important;
+}
+
+/* Page numbers at the foot of the outer corners, as in a printed book. */
+body.editor-shell .journal-spread .page-number {
+  top: auto !important;
+  bottom: 21px !important;
+  font: 400 12px/14px var(--font-latin-serif) !important;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .paper-page--left .page-number { left: 42px !important; right: auto !important; }
+body.editor-shell .journal-spread .paper-page--right .page-number { right: 42px !important; left: auto !important; }
+
+/* Writing. */
+body.editor-shell .journal-spread .journal-editor,
+body.editor-shell .journal-spread .journal-editor :is(p, li, blockquote) {
+  font-family: var(--font-page) !important;
+  font-size: 16px !important;
+  line-height: var(--line) !important;
+  letter-spacing: 0.02em;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .journal-editor :is(p, ul, ol, blockquote) { margin: 0 !important; }
+/* Lists hang on the grid: markers in the first two squares, text from the third. */
+body.editor-shell .journal-spread .journal-editor :is(ul, ol) { padding-left: var(--line) !important; }
+body.editor-shell .journal-spread .journal-editor li::marker { color: var(--ink-muted); }
+body.editor-shell .journal-spread .journal-editor blockquote {
+  padding: 0 0 0 var(--grid) !important;
+  border-left: 2px solid var(--hairline-strong) !important;
+  color: var(--ink-soft) !important;
+}
+
+/* Labels: small, spaced, quiet. */
+body.editor-shell .journal-spread .paper-page :is(.section-title:not(.weekly-view > .section-title) > span, .collection-heading > span, .daily-prompt__label, .mode-focus > span, label > span:first-child:not(:only-child), .page-extras summary small, .collection-rating > span, .collection-progress > span, .collection-wide-field > span) {
+  font: 500 12px/18px var(--font-ui) !important;
+  letter-spacing: 0.08em !important;
+  text-transform: none;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .paper-page .section-title h3 {
+  font: 400 17px/28px var(--font-display) !important;
+  letter-spacing: 0.02em;
+  color: var(--ink) !important;
+}
+
+/* Fields: a line to write on. */
+body.editor-shell .journal-spread .paper-page :is(input:not([type=range], [type=checkbox], [type=radio], [type=file], [type=color], .title-input), select, textarea) {
+  border: 0 !important;
+  border-bottom: 1px solid var(--hairline) !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+  font-family: var(--font-page) !important;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .paper-page :is(input, textarea)::placeholder {
+  color: var(--ink-muted) !important;
+  opacity: 0.75;
+}
+/* The hint also shows over a single empty paragraph, which is what the editor holds once touched. */
+body.editor-shell .journal-spread .journal-editor { position: relative; }
+body.editor-shell .journal-spread .journal-editor:is(:empty, :has(> p:only-child:empty))::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset: 0 0 auto;
+  pointer-events: none;
+  color: var(--ink-muted) !important;
+  opacity: 0.75;
+}
+body.editor-shell .journal-spread .paper-page :is(input:not([type=range], [type=checkbox], [type=radio], [type=file], [type=color], .title-input), select, textarea):focus {
+  outline: none !important;
+  border-bottom-color: var(--hairline-strong) !important;
+}
+
+/* Actions on the page: hairline pills in ink, never a block of colour. */
+body.editor-shell .journal-spread .paper-page :is(#addBulletButton, #addFragmentButton, .inline-action, .daily-prompt__actions button, [data-sync-bullets]) {
+  min-height: 28px !important;
+  height: 28px;
+  padding: 0 12px !important;
+  border: 1px solid var(--hairline-strong) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 500 13px/26px var(--font-ui) !important;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .paper-page :is(#addBulletButton, #addFragmentButton, .inline-action, .daily-prompt__actions button, [data-sync-bullets]):hover {
+  border-color: var(--ink) !important;
+  color: var(--ink) !important;
+}
+
+/* The day's prompt: a margin note, not a grey box. */
+body.editor-shell .journal-spread .daily-prompt {
+  padding: 0 0 0 var(--grid) !important;
+  border: 0 !important;
+  border-left: 2px solid color-mix(in srgb, var(--page-accent, #667b72) 55%, transparent) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .daily-prompt p {
+  font: 400 17px/28px var(--font-display) !important;
+  color: var(--ink-soft) !important;
+}
+
+/* Boxes become notes. A printed refill has no panels: keys sit on a hairline, notes hang in the margin
+   on a short rule, empty places are a quiet line of text, and only a place to paste a photo is drawn,
+   dashed, as scrapbook refills draw it. */
+body.editor-shell .journal-spread .paper-page .bullet-key {
+  padding: 0 0 6px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--hairline) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .paper-page .bullet-index-note {
+  padding: 0 0 0 var(--grid) !important;
+  border: 0 !important;
+  border-left: 2px solid color-mix(in srgb, var(--page-accent, #667b72) 55%, transparent) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .paper-page .bullet-index-note strong {
+  font: 400 17px/28px var(--font-display) !important;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .paper-page :is(.empty-state, .health-empty span) {
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 400 13px/28px var(--font-ui) !important;
+  letter-spacing: 0.04em;
+  text-align: left !important;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .paper-page .photo-drop {
+  border: 1px dashed var(--hairline-strong) !important;
+  border-radius: 2px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 500 13px/20px var(--font-ui) !important;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .paper-page .tag-input-row {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Right-page heads (month, reading, travel, five-year, week) are set like the left page's: label over
+   title, the same height, on the same hairline, so the two heads read as one line across the spread. */
+body.editor-shell .journal-spread .paper-page :is(.collection-heading, .weekly-view > .section-title) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: flex-end !important;
+  gap: 0 !important;
+  height: auto !important;
+  min-height: 70px !important;
+  margin: 0 0 var(--grid) !important;
+  padding: 0 0 13px !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--hairline) !important;
+}
+body.editor-shell .journal-spread .paper-page .collection-heading > div {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0 !important;
+  width: 100%;
+}
+body.editor-shell .journal-spread .paper-page :is(.collection-heading > div > span, .weekly-view > .section-title > span) {
+  order: -1;
+  margin: 0 !important;
+  font: 500 11px/14px var(--font-ui) !important;
+  letter-spacing: 0.16em !important;
+  text-transform: uppercase;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .paper-page :is(.collection-heading h3, .weekly-view > .section-title h3) {
+  margin: 0 !important;
+  font: 400 20px/42px var(--font-display) !important;
+  letter-spacing: 0.02em !important;
+  color: var(--ink-soft) !important;
+}
+
+/* Reading progress: a hairline with a small ink bead, not a form slider. */
+body.editor-shell .journal-spread .paper-page input[type=range] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  background: linear-gradient(var(--hairline-strong), var(--hairline-strong)) 0 50% / 100% 1px no-repeat !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .paper-page input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  box-shadow: 0 0 0 3px var(--paper, #f8f6ef);
+}
+body.editor-shell .journal-spread .paper-page input[type=range]::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+}
+body.editor-shell .journal-spread .paper-page .collection-rating button {
+  color: var(--ink-soft) !important;
+  font-family: var(--font-latin-serif) !important;
+}
+body.editor-shell .journal-spread .paper-page output {
+  font: 400 13px/18px var(--font-latin-serif) !important;
+  color: var(--ink-soft) !important;
+}
+/* Text areas grow with their text (see app.js), so the corner grip is only noise. */
+body.editor-shell .journal-spread .paper-page textarea { resize: none !important; }
+
+/* Five-year rows: the year in book figures, this year's row marked by a rule, not a wash of colour. */
+body.editor-shell .journal-spread .paper-page .fiveyear-row {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .paper-page .fiveyear-row strong {
+  font: 400 16px/28px var(--font-latin-serif) !important;
+  letter-spacing: 0.04em;
+  color: color-mix(in srgb, var(--page-accent, #8a4a46) 80%, var(--ink)) !important;
+}
+body.editor-shell .journal-spread .paper-page .fiveyear-row.is-current {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--page-accent, #8a4a46) 70%, transparent) !important;
+}
+/* The week's head starts where every other head starts. */
+body.editor-shell .journal-spread .paper-page--right .weekly-view { padding-top: 0 !important; margin-top: 0 !important; }
+/* One rule above the page's extras, not that and the panel's own three pixels below it. */
+body.editor-shell .journal-spread .paper-page .page-extras .mode-panel { border-top: 0 !important; }
+
+/* The week (after Hobonichi Weeks and the TN weekly refill): each day a row four squares high, its
+   date large in book figures over a small weekday, no fill and no column rule; Saturday blue, Sunday red. */
+:root {
+  --saturday-ink: #4d6a8c;
+  --sunday-ink: #a5574b;
+}
+body.editor-shell .journal-spread[data-mode=weekly] .week-day {
+  grid-template-columns: calc(var(--grid) * 4) minmax(0, 1fr) !important;
+  min-height: calc(var(--grid) * 4) !important;
+  border-top: 1px solid var(--hairline) !important;
+}
+body.editor-shell .journal-spread .week-day__date {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  justify-content: center !important;
+  gap: 0 !important;
+  min-height: calc(var(--grid) * 4) !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--ink) !important;
+}
+body.editor-shell .journal-spread .week-day__date:hover { background: transparent !important; color: var(--ink) !important; }
+body.editor-shell .journal-spread .week-day__date small {
+  order: -1;
+  font: 400 22px/26px var(--font-latin-serif) !important;
+  font-variant-numeric: lining-nums proportional-nums;
+  letter-spacing: 0;
+  color: inherit !important;
+}
+body.editor-shell .journal-spread .week-day__date span {
+  font: 500 11px/14px var(--font-ui) !important;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .week-day__date span::before { content: "周"; }
+body.editor-shell .journal-spread .week-day.is-saturday .week-day__date { color: var(--saturday-ink) !important; }
+body.editor-shell .journal-spread .week-day.is-sunday .week-day__date { color: var(--sunday-ink) !important; }
+body.editor-shell .journal-spread .week-day.has-entry .week-day__date::after {
+  right: auto !important;
+  left: 30px !important;
+  bottom: auto !important;
+  top: 15px !important;
+}
+body.editor-shell .journal-spread[data-mode=weekly] .week-day textarea {
+  min-height: calc(var(--grid) * 4) !important;
+  padding: var(--grid) 0 !important;
+  border: 0 !important;
+  font: 400 15px/var(--line) var(--font-page) !important;
+  line-height: var(--line) !important;
+  background: none !important;
+}
+
+/* The month: book figures, weekday initials small and spaced, Saturday and Sunday columns in their
+   colours, today ringed in a hairline rather than filled. */
+body.editor-shell .journal-spread .collection-calendar > span {
+  font: 500 11px/28px var(--font-ui) !important;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted) !important;
+}
+body.editor-shell .journal-spread .collection-calendar > button {
+  font: 400 16px/1 var(--font-latin-serif) !important;
+  font-variant-numeric: lining-nums tabular-nums;
+  color: var(--ink) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell .journal-spread .collection-calendar > :nth-child(7n + 6) { color: var(--saturday-ink) !important; }
+body.editor-shell .journal-spread .collection-calendar > :nth-child(7n + 7) { color: var(--sunday-ink) !important; }
+body.editor-shell .journal-spread .collection-calendar > button.is-muted { opacity: 0.32; }
+body.editor-shell .journal-spread .collection-calendar > button.is-current {
+  border: 1px solid color-mix(in srgb, var(--page-accent, #8a4a46) 70%, transparent) !important;
+  border-radius: 50% !important;
+  width: 30px !important;
+  height: 30px !important;
+  justify-self: center;
+  align-self: center;
+}
+/* On a phone the page keeps two squares at each side and three at the top, so a line holds ~19 characters, not 17. */
+@media (max-width: 600px) {
+  body.editor-shell .journal-spread .paper-page { padding: calc(var(--grid) * 3) calc(var(--grid) * 2) calc(var(--grid) * 4) !important; }
+  body.editor-shell .journal-spread .paper-page--left .page-number { left: calc(var(--grid) * 2) !important; }
+  body.editor-shell .journal-spread .paper-page--right .page-number { right: calc(var(--grid) * 2) !important; }
+}
+
+/* Panel head: title and close button centred on one line, the button's edge on the content's edge. */
+body.editor-shell .right-dock__header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+body.editor-shell .right-dock__header .dock-close {
+  position: static !important;
+  margin: 0 !important;
+  flex: none;
+}
+/* The search field draws the box; the input inside it draws none (its own edge showed as a stray line). */
+body.editor-shell .search-field :is(input, #searchInput) {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  outline: none;
+}
+/* The mood-and-tags card floats over the page as a control, so it keeps the interface face. */
+body.editor-shell .journal-spread .paper-page .entry-context__content :is(input, select, textarea) {
+  font: 400 14px/22px var(--font-ui) !important;
+}
+/* Text on a field line starts on the same edge as the labels and headings above it. */
+body.editor-shell .journal-spread .paper-page input:not([type=range], [type=checkbox], [type=radio], [type=file], [type=color], .title-input) {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+/* Every button that ends an input row is the same hairline pill. */
+body.editor-shell .journal-spread .paper-page [class$="-input-row"] > button {
+  min-height: 28px !important;
+  height: 28px;
+  padding: 0 12px !important;
+  border: 1px solid var(--hairline-strong) !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font: 500 13px/26px var(--font-ui) !important;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft) !important;
+}
+body.editor-shell .journal-spread .paper-page [class$="-input-row"] > button:hover { border-color: var(--ink) !important; color: var(--ink) !important; }
+body.editor-shell .journal-spread .paper-page .health-empty strong {
+  font: 500 12px/18px var(--font-ui) !important;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted) !important;
+}
+
+/* Both pages are on screen above 1100px, so the switch between them would do nothing there. */
+@media (min-width: 1101px) {
+  body.editor-shell .mobile-page-switcher { display: none !important; }
+  /* The row now starts with a ghost icon button (glyph 8px inside), so its edge sits 8px further out
+     and the glyph lands on the line 28px in, under the sidebar toggle and over the notebook's edge. */
+  body.editor-shell .document-tools { padding-left: 20px !important; }
+}
+/* Pages with a head of their own (week, month, reading, travel, five-year) never show the general
+   right-page head as well; on a phone both used to stack. */
+body.editor-shell .journal-spread:is([data-mode=weekly], [data-mode=monthly], [data-mode=reading], [data-mode=travel], [data-mode=fiveyear]) .paper-page--right > .paper-header {
+  display: none !important;
+}
+/* Hints read as hints, but are legible: one quiet grey at full strength, not a pale grey made paler. */
+body.editor-shell .journal-spread .paper-page :is(input, textarea)::placeholder { color: var(--ink-hint) !important; opacity: 1 !important; }
+body.editor-shell .journal-spread .journal-editor:is(:empty, :has(> p:only-child:empty))::before { color: var(--ink-hint) !important; opacity: 1 !important; }
+/* One hairline under every head: the week's and month's no longer carry a coloured third of a line on
+   top of it, which read as a misprint. */
+body.editor-shell .journal-spread :is(.collection-heading, .weekly-view .section-title)::after { content: none !important; }
+/* The head's rule is the top of Monday's row; a second rule 14px under it doubled the line. */
+body.editor-shell .journal-spread .weekly-view > .section-title { margin-bottom: 0 !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day:first-child { border-top: 0 !important; }
+/* Today in the week: its date in the page's accent (the bar down the row's edge ran into the figures). */
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current { box-shadow: none !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current .week-day__date { color: color-mix(in srgb, var(--page-accent, #8a4a46) 82%, var(--ink)) !important; }

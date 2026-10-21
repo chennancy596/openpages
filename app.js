@@ -160,12 +160,14 @@ const COVER_TOKENS = {
   burgundy: ["#321d1f", "#5b3335", "#825154"],
   natural: ["#55402d", "#896745", "#b28c62"],
 };
+// Tinted papers are the faint tints of real stationery (Midori MD cream, pale TN refills): writing
+// and hints keep their contrast on every one. They used to be strong enough to grey the text.
 const PAPER_TOKENS = {
   washi: ["#f8f6ef", "#e2dfd6", "#aeb8b0"],
-  ivory: ["#e6d3b5", "#cdb38c", "#927858"],
-  gray: ["#d8e1dc", "#b6c7bf", "#778e84"],
-  blue: ["#cfe3e8", "#a5c8d0", "#638c96"],
-  sakura: ["#ecd2da", "#d7a9b6", "#9f6a79"],
+  ivory: ["#f3ead6", "#e0d3b8", "#b9a789"],
+  gray: ["#eceeeb", "#d6dbd7", "#9aa59f"],
+  blue: ["#e9f0f1", "#cfdde0", "#8fa9b0"],
+  sakura: ["#f6eaeb", "#e6cfd3", "#b98f98"],
 };
 const THEME_PRESETS = {
   morning: {
@@ -548,7 +550,6 @@ const elements = {
   deleteStickerButton: $("#deleteStickerButton"),
   journalSpread: $("#journalSpread"),
   pageTurnSheet: $(".page-turn-sheet"),
-  pageFlipEngine: $("#pageFlipEngine"),
   openCoverButton: $("#openCoverButton"),
   rightDock: $("#rightDock"),
   dockCloseButton: $("#dockCloseButton"),
@@ -623,7 +624,6 @@ let inkRedoByDate = new Map();
 let pageTurnInProgress = false;
 let pageTurnSwapTimer = null;
 let pageTurnFallbackTimer = null;
-let pageFlipInstance = null;
 let pageTurnCompletion = null;
 let reviewScope = "all";
 let reviewLimit = 20;
@@ -666,7 +666,10 @@ function normalizeState(saved) {
   saved.customCoverColor = saved.customCoverColor || "#4f5b50";
   saved.paperTone = saved.paperTone || "washi";
   saved.decorativePrints = saved.decorativePrints !== false;
-  saved.coverDisplay = ["daily", "always", "never"].includes(saved.coverDisplay) ? saved.coverDisplay : "daily";
+  // "daily" used to be the default and was saved with every journal; only a choice made in the
+  // settings (coverDisplayChosen) is kept, so everyone else now opens the notebook by hand each time.
+  if (saved.coverDisplay === "daily" && !saved.coverDisplayChosen) saved.coverDisplay = "always";
+  saved.coverDisplay = ["daily", "always", "never"].includes(saved.coverDisplay) ? saved.coverDisplay : "always";
   saved.trash = Array.isArray(saved.trash) ? saved.trash : [];
   return saved;
 }
@@ -710,7 +713,7 @@ function loadState() {
     customCoverColor: "#4f5b50",
     paperTone: "washi",
     decorativePrints: true,
-    coverDisplay: "daily",
+    coverDisplay: "always",
     health: { summaries: {}, source: "", connection: null },
     trash: [],
     entries: {},
@@ -1012,6 +1015,8 @@ function handleExternalStorageChange(event) {
   if (event.key !== STORAGE_KEY || !event.newValue) return;
   const revision = event.newValue.match(/"lastSavedAt":"([^"]+)"/)?.[1] || null;
   if (revision !== knownStoredRevision) syncExternalState(event.newValue);
+  // The prepared stand-in pages would show the old content.
+  discardPreparedBook();
 }
 
 async function syncExternalState(raw) {
@@ -1170,8 +1175,8 @@ function notify(message, action = null) {
   if ("vibrate" in navigator && navigator.userActivation?.isActive) navigator.vibrate(8);
 }
 
-// The cover is shown on the first launch of each day by default; reopening the same day goes
-// straight to the page. The day is remembered per device, outside the journal and its backups.
+// The cover is shown on every launch by default, and the notebook is opened by hand. The setting can
+// show it only on the first launch of each day instead. The day is remembered per device, outside the journal and its backups.
 const COVER_OPENED_KEY = "openpages.cover.openedOn";
 
 function shouldShowCover() {
@@ -1192,33 +1197,424 @@ function rememberCoverOpened() {
   }
 }
 
+// Switching closed → open changes the notebook's size and many colours and shadows at once.
+// Transitions are held off across that switch, otherwise shadows on the whole spread repaint every
+// frame for half a second right after the cover opens.
+function settleBookState(afterwards) {
+  let done = false;
+  const release = () => {
+    if (done) return;
+    done = true;
+    elements.body.classList.remove("is-book-settling");
+    afterwards?.();
+  };
+  requestAnimationFrame(() => requestAnimationFrame(release));
+  // Frames do not run while the page is hidden; transitions are never held off for long.
+  window.setTimeout(release, 160);
+}
+
 function openNotebookWithoutCover() {
+  window.clearTimeout(prepareBookTimer);
+  // A stand-in cover prepared for an animated opening is put away first.
+  if (preparedBook) {
+    const { book, animations, inertNodes } = preparedBook;
+    preparedBook = null;
+    animations.forEach((animation) => animation.cancel());
+    inertNodes.forEach((node) => { node.inert = false; });
+    book.overlay.remove();
+    elements.body.classList.remove("is-cover-leaving");
+  }
+  elements.body.classList.add("is-book-settling");
   elements.body.dataset.book = "open";
   elements.journalSpread.classList.add("is-opened-once");
+  settleBookState();
+}
+
+// Opening and closing the notebook, played on a stand-in book above the real layout:
+// the cover turns on its spine to lie flat on the left, the notebook slides to centre on its spine, then
+// comes up to full size, showing the person's real pages all the way. The open layout is laid out and
+// painted underneath before anything moves, and every moving part changes only transform or opacity.
+// Closing plays the same timeline backwards.
+const BOOK_TIMELINE = {
+  total: 1260,
+  move: { delay: 0, duration: 1150 },
+  turn: { delay: 40, duration: 700 },
+  backdrop: { delay: 560, duration: 560 },
+  handOff: { delay: 1100, duration: 160 },
+};
+
+function focusEditorAfterOpening() {
+  if (elements.body.dataset.inputMode === "write" && window.matchMedia("(pointer: fine)").matches) {
+    elements.journalEditor.focus({ preventScroll: true });
+  }
+}
+
+function copyCoverMaterial(target, source) {
+  const style = getComputedStyle(source);
+  for (const property of ["backgroundColor", "backgroundImage", "backgroundSize", "backgroundPosition", "backgroundRepeat"]) {
+    target.style[property] = style[property];
+  }
+}
+
+// Builds the stand-in book over the open layout, which must already be in place. `closedRect` is where
+// the closed cover sits; `backdrop` is the colour behind the closed notebook.
+function buildBookStage(closedRect, backdrop) {
+  const spread = elements.journalSpread;
+  const cover = elements.openCoverButton;
+  const boardSource = spread.querySelector(".notebook-cover") || spread;
+  const board = boardSource.getBoundingClientRect();
+  const pages = $$(".paper-page", spread).filter((page) => page.offsetWidth).map((page) => ({ page, rect: page.getBoundingClientRect() }));
+  if (!board.width || !pages.length) return null;
+  const twoPages = pages.length > 1;
+  const spineX = twoPages ? (pages[0].rect.right + pages[1].rect.left) / 2 : board.left;
+  const block = { left: spineX, top: board.top, width: board.right - spineX, height: board.height };
+  const rightPage = pages[pages.length - 1];
+  // One scale for both axes, so the pages are never squashed on the way up; the cover may then be a
+  // little wider than the pages under it, as a real cover is.
+  const scale = closedRect.height / block.height;
+  const leafWidth = closedRect.width / scale;
+
+  const overlay = document.createElement("div");
+  overlay.className = "book-overlay";
+  overlay.setAttribute("aria-hidden", "true");
+  const shade = document.createElement("div");
+  shade.className = "book-overlay__backdrop";
+  shade.style.backgroundColor = backdrop;
+
+  const stage = document.createElement("div");
+  stage.className = "book-stage";
+  Object.assign(stage.style, {
+    left: `${block.left}px`, top: `${block.top}px`, width: `${block.width}px`, height: `${block.height}px`,
+    perspective: `${Math.round(block.width * 4)}px`, perspectiveOrigin: twoPages ? "0 50%" : "50% 50%",
+  });
+
+  // A page is styled by the spread around it (its mode, palette, illustration, which page shows on a
+  // phone), so each copy sits in an unstyled element carrying the spread's class and attributes.
+  const placePage = (parent, page, originX, originY) => {
+    const holder = document.createElement("div");
+    holder.className = "book-stage__page";
+    Object.assign(holder.style, { left: `${page.rect.left - originX}px`, top: `${page.rect.top - originY}px`, width: `${page.rect.width}px`, height: `${page.rect.height}px` });
+    const context = document.createElement("div");
+    context.className = "journal-spread book-stage__context";
+    Object.assign(context.dataset, spread.dataset);
+    context.append(clonePageForFlip(page.page));
+    holder.append(context);
+    parent.append(holder);
+  };
+
+  const boardRight = document.createElement("div");
+  boardRight.className = `book-stage__board${twoPages ? " book-stage__board--right" : ""}`;
+  copyCoverMaterial(boardRight, boardSource);
+  placePage(boardRight, rightPage, block.left, block.top);
+  const cast = document.createElement("div");
+  cast.className = "book-stage__cast";
+  boardRight.append(cast);
+
+  const leaf = document.createElement("div");
+  leaf.className = "book-stage__leaf";
+  leaf.style.width = `${leafWidth}px`;
+  const front = document.createElement("div");
+  front.className = "book-stage__face";
+  const coverHolder = document.createElement("div");
+  coverHolder.className = "book-stage__cover";
+  Object.assign(coverHolder.style, {
+    width: `${closedRect.width}px`, height: `${closedRect.height}px`,
+    transform: `scale(${1 / scale})`,
+  });
+  const coverCopy = cover.cloneNode(true);
+  coverCopy.removeAttribute("id");
+  coverCopy.tabIndex = -1;
+  coverHolder.append(coverCopy);
+  const frontShade = document.createElement("div");
+  frontShade.className = "book-stage__shade";
+  coverHolder.append(frontShade);
+  front.append(coverHolder);
+
+  // The inside of the cover. Turned with the leaf, it lies flat to the left of the spine, where the left page is.
+  const back = document.createElement("div");
+  back.className = "book-stage__face book-stage__face--back";
+  back.style.width = `${block.width}px`;
+  copyCoverMaterial(back, boardSource);
+  if (twoPages) placePage(back, pages[0], spineX - block.width, block.top);
+  // Turned about its own centre and then with the leaf, the back face lies just left of the spine.
+  const backShade = document.createElement("div");
+  backShade.className = "book-stage__shade";
+  back.append(backShade);
+  leaf.append(front, back);
+
+  stage.append(boardRight, leaf);
+  overlay.append(shade, stage);
+
+  const closedTransform = `translate(${closedRect.left - block.left}px, ${closedRect.top - block.top}px) scale(${scale})`;
+  // Lying open at the closed size, centred on its spine where the closed notebook was.
+  const centredX = twoPages ? closedRect.left + closedRect.width / 2 - block.left : closedRect.left - block.left;
+  const openSmallTransform = `translate(${centredX}px, ${closedRect.top - block.top}px) scale(${scale})`;
+  return { overlay, shade, stage, board: boardRight, leaf, cast, frontShade, backShade, closedTransform, openSmallTransform };
+}
+
+// Creates the timeline forwards (opening) or backwards (closing); every animation starts at once.
+function createBookAnimations(book, reverse) {
+  const t = BOOK_TIMELINE;
+  const timing = ({ delay, duration }, easing) => ({
+    delay: reverse ? t.total - delay - duration : delay,
+    duration, easing, fill: "both", direction: reverse ? "reverse" : "normal",
+  });
+  const turnEasing = "cubic-bezier(0.36, 0.02, 0.22, 1)";
+  return [
+    book.stage.animate([
+      { transform: book.closedTransform, easing: "cubic-bezier(0.45, 0, 0.55, 1)" },
+      { transform: book.openSmallTransform, offset: 0.52, easing: "cubic-bezier(0.3, 0.05, 0.12, 1)" },
+      { transform: "translate(0px, 0px) scale(1)" },
+    ], timing(t.move, "linear")),
+    book.leaf.animate([{ transform: "rotateY(0deg)" }, { transform: "rotateY(-180deg)" }], timing(t.turn, turnEasing)),
+    // Light: the cover darkens as it turns away, its inside brightens as it settles, and it shades the
+    // first page while it is still low over it.
+    book.frontShade.animate([{ opacity: 0 }, { opacity: 0.3, offset: 0.5 }, { opacity: 0.3 }], timing(t.turn, turnEasing)),
+    book.backShade.animate([{ opacity: 0.32 }, { opacity: 0.32, offset: 0.5 }, { opacity: 0 }], timing(t.turn, turnEasing)),
+    book.cast.animate([{ opacity: 0 }, { opacity: 0.55, offset: 0.16 }, { opacity: 0.18, offset: 0.5 }, { opacity: 0 }], timing(t.turn, turnEasing)),
+    // The pages under the cover are square-cornered where the cover is rounded: at rest they would show
+    // at its corners, so they come in only as the cover lifts.
+    book.board.animate([{ opacity: 0 }, { opacity: 1, offset: 0.08 }, { opacity: 1 }], timing(t.turn, turnEasing)),
+    book.shade.animate([{ opacity: 1 }, { opacity: 0 }], timing(t.backdrop, "ease-in-out")),
+    book.stage.animate([{ opacity: 1 }, { opacity: 0 }], timing(t.handOff, "linear")),
+  ];
+}
+
+// The animations are made, and held at their first frame, as soon as the stand-in book is in the page:
+// without them its plain styles would show for a frame or two (the cover at full size, an opaque
+// backdrop). `start` lets them run and resolves when they have finished.
+function holdBookStage(book, reverse) {
+  const animations = createBookAnimations(book, reverse);
+  animations.forEach((animation) => animation.pause());
+  return {
+    animations,
+    start: () => {
+      animations.forEach((animation) => animation.play());
+      return Promise.all(animations.map((animation) => animation.finished));
+    },
+  };
+}
+
+// The first time the open notebook is drawn costs a few hundred milliseconds (its layout, paper and
+// cover textures, the stand-in book), and in a click that shows as the cover sticking before it moves.
+// So while the closed cover is on screen and nothing else happens, all of it is prepared underneath:
+// the open layout, and the stand-in book posed exactly as the closed cover, with its animations made
+// and held at their first frame. The click then only has to let them run.
+let preparedBook = null;
+let prepareBookTimer = 0;
+// Where the closed cover sits, remembered from the last opening so closing need not lay out the closed
+// notebook again while the window keeps its size.
+let closedCoverGeometry = null;
+
+function rememberClosedCover(rect, backdrop) {
+  closedCoverGeometry = { rect, backdrop, width: window.innerWidth, height: window.innerHeight };
+}
+
+function scheduleBookPreparation(delay = 700) {
+  window.clearTimeout(prepareBookTimer);
+  prepareBookTimer = window.setTimeout(() => {
+    if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(prepareNotebookOpening, { timeout: 1200 });
+    else prepareNotebookOpening();
+  }, delay);
+}
+
+function prepareNotebookOpening() {
+  if (preparedBook || elements.body.dataset.book !== "closed") return;
+  const cover = elements.openCoverButton;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || typeof cover?.animate !== "function") return;
+  const closedRect = cover.getBoundingClientRect();
+  if (!closedRect.width) return;
+  const backdrop = getComputedStyle(elements.body).backgroundColor;
+  const coverHadFocus = document.activeElement === cover;
+  rememberClosedCover(closedRect, backdrop);
+
+  elements.body.classList.add("is-book-settling", "is-cover-leaving");
+  elements.body.dataset.book = "open";
+  elements.journalSpread.classList.add("is-opened-once");
+  $(".view-stage").scrollTop = 0;
+  const book = buildBookStage(closedRect, backdrop);
+  if (!book) {
+    elements.body.dataset.book = "closed";
+    elements.body.classList.remove("is-cover-leaving");
+    settleBookState();
+    return;
+  }
+  // Until it opens, the stand-in cover is the cover: it takes the clicks, the keys and the focus, and the
+  // notebook under it cannot be reached.
+  const inertNodes = [...elements.body.children].filter((node) => node !== book.overlay && !node.inert && node.tagName !== "SCRIPT");
+  inertNodes.forEach((node) => { node.inert = true; });
+  book.overlay.classList.add("is-prepared");
+  book.overlay.removeAttribute("aria-hidden");
+  Object.assign(book.leaf, { tabIndex: 0 });
+  book.leaf.setAttribute("role", "button");
+  book.leaf.setAttribute("aria-label", cover.getAttribute("aria-label") || "打开手帐封面");
+  book.leaf.addEventListener("click", openNotebook);
+  book.leaf.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openNotebook();
+  });
+  elements.body.append(book.overlay);
+  const { animations } = holdBookStage(book, false);
+  preparedBook = { book, animations, inertNodes };
+  if (coverHadFocus) book.leaf.focus({ preventScroll: true });
+  settleBookState();
+}
+
+// Puts the real closed cover back, for a new window size or new content; it is prepared again later.
+function discardPreparedBook() {
+  if (!preparedBook) return;
+  const { book, animations, inertNodes } = preparedBook;
+  preparedBook = null;
+  const hadFocus = document.activeElement === book.leaf;
+  animations.forEach((animation) => animation.cancel());
+  inertNodes.forEach((node) => { node.inert = false; });
+  book.overlay.remove();
+  elements.body.classList.add("is-book-settling");
+  elements.body.classList.remove("is-cover-leaving");
+  elements.body.dataset.book = "closed";
+  settleBookState();
+  if (hadFocus) elements.openCoverButton.focus({ preventScroll: true });
+  scheduleBookPreparation();
 }
 
 function openNotebook() {
-  if (elements.body.dataset.book === "open" || elements.body.dataset.book === "opening") return;
-  rememberCoverOpened();
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    openNotebookWithoutCover();
-    if (elements.body.dataset.inputMode === "write" && window.matchMedia("(pointer: fine)").matches) {
-      elements.journalEditor.focus({ preventScroll: true });
-    }
+  if (preparedBook) {
+    openPreparedNotebook();
     return;
   }
-  elements.body.dataset.book = "opening";
-  elements.journalSpread.classList.add("is-opening-cover");
-  window.setTimeout(() => {
+  if (elements.body.dataset.book === "open" || elements.body.dataset.book === "opening") return;
+  window.clearTimeout(prepareBookTimer);
+  rememberCoverOpened();
+  const cover = elements.openCoverButton;
+  const closedRect = cover?.getBoundingClientRect();
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (reduceMotion || !closedRect?.width || typeof cover.animate !== "function") {
+    openNotebookWithoutCover();
+    focusEditorAfterOpening();
+    return;
+  }
+  const backdrop = getComputedStyle(elements.body).backgroundColor;
+  rememberClosedCover(closedRect, backdrop);
+
+  elements.body.classList.add("is-book-settling", "is-cover-leaving");
+  elements.body.dataset.book = "open";
+  elements.journalSpread.classList.add("is-opened-once");
+  $(".view-stage").scrollTop = 0;
+  const book = buildBookStage(closedRect, backdrop);
+  if (!book) {
+    elements.body.classList.remove("is-cover-leaving");
+    settleBookState();
+    focusEditorAfterOpening();
+    return;
+  }
+  elements.body.append(book.overlay);
+  const held = holdBookStage(book, false);
+  const finish = finishOpeningOnce(book);
+  // Two frames: the open layout and the stand-in book are painted while still, before anything moves.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!finish.done) held.start().then(finish, finish);
+  }));
+  // Frames do not run while the page is hidden; the notebook must never stay covered.
+  window.setTimeout(finish, BOOK_TIMELINE.total + 1000);
+}
+
+function openPreparedNotebook() {
+  const { book, animations, inertNodes } = preparedBook;
+  preparedBook = null;
+  rememberCoverOpened();
+  book.overlay.classList.remove("is-prepared");
+  book.overlay.setAttribute("aria-hidden", "true");
+  book.leaf.removeAttribute("role");
+  book.leaf.removeAttribute("tabindex");
+  // The notebook becomes reachable once it is open: changing that now restyles the whole page in the
+  // first frame of the turn.
+  const finish = finishOpeningOnce(book, () => inertNodes.forEach((node) => { node.inert = false; }));
+  animations.forEach((animation) => animation.play());
+  Promise.all(animations.map((animation) => animation.finished)).then(finish, finish);
+  window.setTimeout(finish, BOOK_TIMELINE.total + 1000);
+}
+
+function finishOpeningOnce(book, beforeFocus) {
+  const finish = () => {
+    if (finish.done) return;
+    finish.done = true;
+    book.overlay.remove();
+    beforeFocus?.();
+    // is-cover-opened keeps the arrival animations off: removing the suppression would start them now.
+    elements.body.classList.add("is-cover-opened");
+    elements.body.classList.remove("is-cover-leaving", "is-book-settling");
+    focusEditorAfterOpening();
+  };
+  finish.done = false;
+  return finish;
+}
+
+function closeNotebook() {
+  if (elements.body.dataset.book !== "open" || elements.body.classList.contains("is-cover-leaving")) return;
+  settlePageTurn();
+  closeMobilePanel();
+  if (elements.body.classList.contains("is-focus-mode")) toggleFocusMode(false);
+  const cover = elements.openCoverButton;
+  const showClosed = () => {
+    flushState();
+    elements.body.classList.add("is-book-settling");
+    elements.body.dataset.book = "closed";
+    settleBookState();
+    cover?.focus({ preventScroll: true });
+    scheduleBookPreparation();
+  };
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || typeof cover?.animate !== "function") {
+    showClosed();
+    return;
+  }
+
+  // Where the cover will rest, and the colour behind it. Unless the window changed size since it was
+  // last open, both are known; otherwise they are read from the closed layout and switched back within
+  // the same task, so it is laid out once but never painted.
+  let closedRect;
+  let backdrop;
+  const known = closedCoverGeometry;
+  if (known && known.width === window.innerWidth && known.height === window.innerHeight) {
+    ({ rect: closedRect, backdrop } = known);
+  } else {
+    elements.body.classList.add("is-book-settling");
+    elements.body.dataset.book = "closed";
+    closedRect = cover.getBoundingClientRect();
+    backdrop = getComputedStyle(elements.body).backgroundColor;
     elements.body.dataset.book = "open";
-    elements.journalSpread.classList.remove("is-opening-cover");
-    elements.journalSpread.classList.add("is-opened-once");
-    revealPageMotif();
-    $(".view-stage").scrollTop = 0;
-    if (elements.body.dataset.inputMode === "write" && window.matchMedia("(pointer: fine)").matches) {
-      elements.journalEditor.focus({ preventScroll: true });
-    }
-  }, 640);
+    rememberClosedCover(closedRect, backdrop);
+  }
+  const book = closedRect.width ? buildBookStage(closedRect, backdrop) : null;
+  if (!book) {
+    showClosed();
+    return;
+  }
+  elements.body.append(book.overlay);
+  const held = holdBookStage(book, true);
+  elements.body.classList.add("is-cover-leaving");
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    // The backdrop is opaque and the stand-in cover rests exactly where the real one will be drawn.
+    elements.body.classList.add("is-book-settling");
+    elements.body.dataset.book = "closed";
+    cover.focus({ preventScroll: true });
+    settleBookState(() => {
+      book.overlay.remove();
+      elements.body.classList.remove("is-cover-leaving");
+      scheduleBookPreparation();
+    });
+  };
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (finished) return;
+    held.start().then(finish, finish);
+    // Saved once the cover is already moving: the turn runs off the main thread, the save on it.
+    flushState();
+  }));
+  window.setTimeout(() => { if (!finished) flushState(); finish(); }, BOOK_TIMELINE.total + 1000);
 }
 
 function appendEmptyState(parent, text, tagName = "li") {
@@ -2036,7 +2432,6 @@ function selectDate(key) {
   if (!key || key === state.selectedDate) return;
   syncEntryFromForm();
   pageTurnCompletion = null;
-  const previousKey = state.selectedDate;
   const preservedMobilePage = mobilePageForTransition(currentEntry().mode, state.entries[key]?.mode || "daily", elements.journalSpread.dataset.mobilePage);
   const direction = key > state.selectedDate ? "forward" : "backward";
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -2046,39 +2441,15 @@ function selectDate(key) {
     return;
   }
 
-  pageTurnInProgress = true;
-  const spread = elements.journalSpread;
-  const turnClass = `is-turning-${direction}`;
-  spread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped");
-  const turnDuration = turnDurationNow();
-  spread.style.setProperty("--turn-duration", `${turnDuration}ms`);
   const previousSpread = capturePageFlipSnapshot();
   commitSelectedDate(key);
   setMobilePage(preservedMobilePage);
-  const usesPageFlipEngine = startPageFlipEngine(direction, turnDuration, previousSpread);
-  if (!usesPageFlipEngine) {
-    commitSelectedDate(previousKey);
-    setMobilePage(preservedMobilePage);
-    preparePageTurnFace(direction);
+  pageTurnInProgress = true;
+  if (!startLeafTurn(direction, turnDurationNow(), previousSpread)) {
+    pageTurnInProgress = false;
+    return;
   }
-  void spread.offsetWidth;
-  spread.classList.add(turnClass);
   setDateNavigationDisabled(true);
-
-  if (!usesPageFlipEngine) {
-    pendingTurnCommit = () => {
-      commitSelectedDate(key);
-      setMobilePage(preservedMobilePage);
-      spread.classList.add("is-turn-content-swapped");
-    };
-    pageTurnSwapTimer = window.setTimeout(() => {
-      const commit = pendingTurnCommit;
-      pendingTurnCommit = null;
-      commit?.();
-    }, Math.round(turnDuration * 0.48));
-  }
-
-  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 80);
 }
 
 function clonePageForFlip(source) {
@@ -2113,15 +2484,6 @@ function clonePageForFlip(source) {
   return clone;
 }
 
-function makePageFlipLeaf(content = null) {
-  const page = document.createElement("div");
-  page.className = "page-flip-engine__page";
-  page.dataset.density = "soft";
-  if (content) page.append(content);
-  else page.innerHTML = '<span class="page-flip-engine__blank" aria-hidden="true"></span>';
-  return page;
-}
-
 function capturePageFlipSnapshot() {
   const spread = elements.journalSpread;
   const leftPage = spread?.querySelector(".paper-page--left");
@@ -2139,118 +2501,111 @@ function capturePageFlipSnapshot() {
   }
 }
 
-function startPageFlipEngine(direction, duration, previousSpread) {
-  const PageFlip = window.St?.PageFlip || window.OpenPagesPageFlip;
-  const engine = elements.pageFlipEngine;
-  if (!PageFlip || !engine || !previousSpread) return false;
+// Page turn: one sheet turns around the spine, front = the page being left, back = the page it
+// reveals. Copies of the pages it uncovers and lands on stay still underneath until it lands, so the
+// live pages (already showing the new content) appear only when the turn completes. Only transform
+// and opacity animate, on a few composited layers, through the Web Animations API, so it runs off
+// the main thread and settles instantly when interrupted.
+let leafTurnLayer = null;
+let leafTurnAnimations = [];
 
+function startLeafTurn(direction, duration, previous) {
   const spread = elements.journalSpread;
+  if (!previous || typeof spread.animate !== "function") return false;
   const leftPage = spread.querySelector(".paper-page--left");
   const rightPage = spread.querySelector(".paper-page--right");
-  if (!leftPage || !rightPage) return false;
-  const rect = spread.getBoundingClientRect();
-  const isNarrowScreen = window.matchMedia("(max-width: 1100px)").matches;
-  const visiblePage = isNarrowScreen && spread.dataset.mobilePage === "ink" ? rightPage : leftPage;
-  const pageRect = visiblePage.getBoundingClientRect();
-  const pageWidth = Math.round(pageRect.width);
-  const pageHeight = Math.round(pageRect.height);
-  if (!pageWidth || !pageHeight) return false;
-  engine.style.setProperty("top", `${pageRect.top - rect.top}px`, "important");
-  engine.style.setProperty("left", `${pageRect.left - rect.left}px`, "important");
-  engine.style.setProperty("right", "auto", "important");
-  engine.style.setProperty("bottom", "auto", "important");
-  engine.style.setProperty("width", `${pageWidth * (isNarrowScreen ? 1 : 2)}px`, "important");
-  engine.style.setProperty("height", `${pageHeight}px`, "important");
-  const targetLeft = clonePageForFlip(leftPage);
-  const targetRight = clonePageForFlip(rightPage);
-  const visibleTarget = spread.dataset.mobilePage === "ink" ? targetRight : targetLeft;
-  const visiblePrevious = previousSpread.mobilePage === "ink" ? previousSpread.right : previousSpread.left;
-  const pages = [];
-  const startPage = direction === "forward" ? 0 : isNarrowScreen ? 1 : 2;
+  const spreadRect = spread.getBoundingClientRect();
+  const box = (page) => {
+    const rect = page.getBoundingClientRect();
+    return { x: rect.left - spreadRect.left, y: rect.top - spreadRect.top, w: rect.width, h: rect.height };
+  };
+  const leftBox = box(leftPage);
+  const rightBox = box(rightPage);
+  const visible = (b) => b.w > 1 && b.h > 1;
+  const twoPages = visible(leftBox) && visible(rightBox) && rightBox.x >= leftBox.x + leftBox.w - 4;
+  if (!visible(leftBox) && !visible(rightBox)) return false;
 
-  if (isNarrowScreen) {
-    if (direction === "forward") pages.push(makePageFlipLeaf(visiblePrevious), makePageFlipLeaf(visibleTarget));
-    else pages.push(makePageFlipLeaf(visibleTarget), makePageFlipLeaf(visiblePrevious));
-  } else if (direction === "forward") {
-    pages.push(
-      makePageFlipLeaf(previousSpread.left),
-      makePageFlipLeaf(previousSpread.right),
-      makePageFlipLeaf(targetLeft),
-      makePageFlipLeaf(targetRight),
-    );
+  const layer = document.createElement("div");
+  layer.className = "leaf-turn";
+  layer.setAttribute("aria-hidden", "true");
+  const place = (node, b) => {
+    node.style.left = `${b.x}px`;
+    node.style.top = `${b.y}px`;
+    node.style.width = `${b.w}px`;
+    node.style.height = `${b.h}px`;
+  };
+  const sheet = (clone, b, extra = "") => {
+    const node = document.createElement("div");
+    node.className = `leaf-turn__sheet ${extra}`.trim();
+    place(node, b);
+    if (clone) node.append(clone);
+    return node;
+  };
+  const face = (clone, back = false) => {
+    const node = document.createElement("div");
+    node.className = back ? "leaf-turn__face leaf-turn__face--back" : "leaf-turn__face";
+    if (clone) node.append(clone);
+    const shade = document.createElement("div");
+    shade.className = "leaf-turn__shade";
+    node.append(shade);
+    return { node, shade };
+  };
+  const easing = "cubic-bezier(0.42, 0.06, 0.22, 1)";
+  const timing = { duration, easing, fill: "both" };
+  const animations = [];
+  let leaf;
+  let front;
+  let back;
+  let reveal;
+
+  if (twoPages) {
+    const forward = direction === "forward";
+    // The page that stays put until the sheet lands on it, and the page the sheet uncovers.
+    layer.append(sheet(forward ? previous.left : previous.right, forward ? leftBox : rightBox));
+    reveal = sheet(null, forward ? rightBox : leftBox, `leaf-turn__reveal leaf-turn__reveal--${forward ? "right" : "left"}`);
+    layer.append(reveal);
+    leaf = sheet(null, forward ? rightBox : leftBox, `leaf-turn__leaf leaf-turn__leaf--${forward ? "right" : "left"}`);
+    front = face(forward ? previous.right : previous.left);
+    back = face(clonePageForFlip(forward ? leftPage : rightPage), true);
+    leaf.append(front.node, back.node);
+    layer.append(leaf);
+    const end = forward ? -180 : 180;
+    animations.push(leaf.animate([{ transform: "rotateY(0deg)" }, { transform: `rotateY(${end}deg)` }], timing));
   } else {
-    pages.push(
-      makePageFlipLeaf(targetLeft),
-      makePageFlipLeaf(targetRight),
-      makePageFlipLeaf(previousSpread.left),
-      makePageFlipLeaf(previousSpread.right),
-    );
+    // One page on screen: forward turns the old page away; backward brings the earlier page in.
+    const target = visible(leftBox) ? leftBox : rightBox;
+    const livePage = visible(leftBox) ? leftPage : rightPage;
+    const previousVisible = previous.mobilePage === "ink" ? previous.right : previous.left;
+    const forward = direction === "forward";
+    if (!forward) layer.append(sheet(previousVisible, target));
+    reveal = sheet(null, target, "leaf-turn__reveal leaf-turn__reveal--right");
+    layer.append(reveal);
+    leaf = sheet(null, target, "leaf-turn__leaf leaf-turn__leaf--right");
+    front = face(forward ? previousVisible : clonePageForFlip(livePage));
+    leaf.append(front.node);
+    layer.append(leaf);
+    const frames = forward
+      ? [{ transform: "rotateY(0deg)", opacity: 1 }, { transform: "rotateY(-96deg)", opacity: 1, offset: 0.82 }, { transform: "rotateY(-110deg)", opacity: 0 }]
+      : [{ transform: "rotateY(-110deg)", opacity: 0 }, { transform: "rotateY(-96deg)", opacity: 1, offset: 0.18 }, { transform: "rotateY(0deg)", opacity: 1 }];
+    animations.push(leaf.animate(frames, timing));
   }
 
-  engine.replaceChildren(...pages);
-  engine.hidden = false;
-  try {
-    pageFlipInstance = new PageFlip(engine, {
-      width: pageWidth,
-      height: pageHeight,
-      size: "fixed",
-      minWidth: pageWidth,
-      maxWidth: pageWidth,
-      minHeight: pageHeight,
-      maxHeight: pageHeight,
-      startPage,
-      drawShadow: true,
-      flippingTime: duration,
-      usePortrait: isNarrowScreen,
-      autoSize: false,
-      maxShadowOpacity: 0.18,
-      showCover: false,
-      mobileScrollSupport: false,
-      clickEventForward: false,
-      useMouseEvents: false,
-      showPageCorners: false,
-      disableFlipByClick: true,
-    });
-    pageFlipInstance.loadFromHTML(pages);
-    spread.classList.add("is-pageflip-engine-active");
-    window.setTimeout(() => {
-      try {
-        if (direction === "forward") pageFlipInstance?.flipNext("bottom");
-        else pageFlipInstance?.flipPrev("bottom");
-      } catch {
-        finishPageTurn();
-      }
-    }, 18);
-    return true;
-  } catch {
-    engine.hidden = true;
-    engine.replaceChildren();
-    pageFlipInstance = null;
-    return false;
-  }
-}
+  // Shading follows the angle: the turning face darkens toward the spine, the uncovered page lightens.
+  animations.push(front.shade.animate([{ opacity: 0 }, { opacity: 0.22, offset: 0.5 }, { opacity: 0.3 }], timing));
+  if (back) animations.push(back.shade.animate([{ opacity: 0.3 }, { opacity: 0.22, offset: 0.5 }, { opacity: 0 }], timing));
+  animations.push(reveal.animate([{ opacity: 0.55 }, { opacity: 0 }], timing));
 
-function preparePageTurnFace(direction) {
-  if (!elements.pageTurnSheet) return;
-  const spread = elements.journalSpread;
-  const isNarrowScreen = window.matchMedia("(max-width: 760px)").matches;
-  const mobilePage = spread.dataset.mobilePage;
-  const sourcePage = isNarrowScreen
-    ? mobilePage === "ink" ? ".paper-page--right" : ".paper-page--left"
-    : direction === "forward" ? ".paper-page--right" : ".paper-page--left";
-  elements.pageTurnSheet.replaceChildren();
-  elements.pageTurnSheet.classList.remove("has-page-turn-content");
-  elements.pageTurnSheet.dataset.sourcePage = sourcePage;
-  elements.pageTurnSheet.dataset.direction = direction;
-  if (isNarrowScreen) {
-    const source = spread.querySelector(sourcePage);
-    if (source) {
-      const face = clonePageForFlip(source);
-      face.classList.add("page-turn-content");
-      elements.pageTurnSheet.append(face);
-      elements.pageTurnSheet.classList.add("has-page-turn-content");
-    }
-  }
+  spread.append(layer);
+  leafTurnLayer = layer;
+  leafTurnAnimations = animations;
+  animations[0].finished.then(() => {
+    if (leafTurnLayer === layer) finishPageTurn();
+  }).catch(() => {});
+  // If the animation clock stalls, the copies must never stay drawn over the live page.
+  pageTurnFallbackTimer = window.setTimeout(() => {
+    if (leafTurnLayer === layer) finishPageTurn();
+  }, duration + 400);
+  return true;
 }
 
 function finishPageTurn() {
@@ -2262,30 +2617,16 @@ function finishPageTurn() {
     commit();
   }
   window.clearTimeout(pageTurnFallbackTimer);
-  elements.journalSpread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped", "is-pageflip-engine-active");
-  elements.pageTurnSheet?.replaceChildren();
-  elements.pageTurnSheet?.classList.remove("has-page-turn-content");
-  try {
-    pageFlipInstance?.destroy();
-  } catch {}
-  pageFlipInstance = null;
-  if (elements.pageFlipEngine) {
-    if (!elements.pageFlipEngine.isConnected && elements.dailyStampButton) {
-      elements.journalSpread.insertBefore(elements.pageFlipEngine, elements.dailyStampButton);
-    }
-    elements.pageFlipEngine.hidden = true;
-    elements.pageFlipEngine.replaceChildren();
-  }
+  const animations = leafTurnAnimations;
+  leafTurnAnimations = [];
+  animations.forEach((animation) => animation.cancel());
+  leafTurnLayer?.remove();
+  leafTurnLayer = null;
   pageTurnInProgress = false;
   setDateNavigationDisabled(false);
   const completion = pageTurnCompletion;
   pageTurnCompletion = null;
   completion?.();
-}
-
-function handlePageTurnEnd(event) {
-  if (event.target !== elements.pageTurnSheet || !/^(pageLeaf|mobilePaper)/.test(event.animationName)) return;
-  finishPageTurn();
 }
 
 function commitSelectedDate(key) {
@@ -2328,39 +2669,18 @@ function selectPageGroup(index, options = {}) {
     return;
   }
 
-  pageTurnInProgress = true;
-  pageTurnCompletion = complete;
-  const spread = elements.journalSpread;
-  const turnClass = `is-turning-${direction}`;
-  spread.classList.remove("is-turning-forward", "is-turning-backward", "is-turn-content-swapped");
-  const turnDuration = turnDurationNow();
-  spread.style.setProperty("--turn-duration", `${turnDuration}ms`);
   const previousSpread = capturePageFlipSnapshot();
   commitPageGroup(targetIndex);
   setMobilePage(preservedMobilePage);
-  const usesPageFlipEngine = startPageFlipEngine(direction, turnDuration, previousSpread);
-  if (!usesPageFlipEngine) {
-    commitPageGroup(previousIndex);
-    setMobilePage(preservedMobilePage);
-    preparePageTurnFace(direction);
+  pageTurnInProgress = true;
+  pageTurnCompletion = complete;
+  if (!startLeafTurn(direction, turnDurationNow(), previousSpread)) {
+    pageTurnInProgress = false;
+    pageTurnCompletion = null;
+    complete();
+    return;
   }
-  void spread.offsetWidth;
-  spread.classList.add(turnClass);
   setDateNavigationDisabled(true);
-
-  if (!usesPageFlipEngine) {
-    pendingTurnCommit = () => {
-      commitPageGroup(targetIndex);
-      setMobilePage(preservedMobilePage);
-      spread.classList.add("is-turn-content-swapped");
-    };
-    pageTurnSwapTimer = window.setTimeout(() => {
-      const commit = pendingTurnCommit;
-      pendingTurnCommit = null;
-      commit?.();
-    }, Math.round(turnDuration * 0.48));
-  }
-  pageTurnFallbackTimer = window.setTimeout(finishPageTurn, turnDuration + 80);
 }
 
 function addPageGroup() {
@@ -3779,6 +4099,9 @@ function renderMode() {
   elements.body.dataset.editorTemplate = mode;
   if (elements.entryModeLabel) elements.entryModeLabel.textContent = copy.eyebrow;
   if (elements.rightPageModeLabel) elements.rightPageModeLabel.textContent = copy.rightEyebrow;
+  // The right page is titled by what it is for; the date already heads the left page.
+  const rightTitle = $(".paper-page--right .ink-page-title");
+  if (rightTitle) rightTitle.textContent = mode === "daily" ? "自由手写" : LAYOUT_LABELS[mode] || copy.rightEyebrow;
   if (elements.editorLabel) elements.editorLabel.textContent = copy.editorLabel;
   if (elements.modeFocus) {
     elements.modeFocus.hidden = !copy.focusLabel;
@@ -3885,6 +4208,13 @@ function renderCollectionView(mode) {
   if (mode === "reading") renderReadingCollection(root, data);
   if (mode === "travel") renderTravelCollection(root, data);
   if (mode === "fiveyear") renderFiveYearCollection(root, data);
+  // Text areas on these pages grow with their text, like the week's; there is no corner grip.
+  requestAnimationFrame(() => root.querySelectorAll("textarea").forEach(fitTextareaToText));
+}
+
+function fitTextareaToText(textarea) {
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
 }
 
 function renderMonthlyCollection(root, data) {
@@ -3905,7 +4235,7 @@ function renderMonthlyCollection(root, data) {
     days.push(`<button type="button" data-collection-date="${key}" class="${date.getMonth() === month ? "" : "is-muted"} ${key === focusKey ? "is-current" : ""} ${saved ? "has-entry" : ""}" aria-label="打开 ${key} 的日页">${date.getDate()}</button>`);
   }
   root.innerHTML = `
-    <div class="collection-heading"><div><span>月历</span><h3>${year}.${String(month + 1).padStart(2, "0")}</h3></div></div>
+    <div class="collection-heading"><div><span>${headingEyebrow("monthly")}</span><h3>${year}.${String(month + 1).padStart(2, "0")}</h3></div></div>
     <div class="collection-calendar" aria-label="月历">
       <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
       ${days.join("")}
@@ -3916,10 +4246,15 @@ function renderMonthlyCollection(root, data) {
     </div>`;
 }
 
+// A right page is headed like the left one: a small label in English over its title.
+function headingEyebrow(mode) {
+  return (MODE_COPY[mode]?.rightEyebrow || "").replace(/&/g, "&amp;");
+}
+
 function renderReadingCollection(root, data) {
   const rating = Number(data.rating) || 0;
   root.innerHTML = `
-    <div class="collection-heading"><div><h3>阅读札记</h3></div></div>
+    <div class="collection-heading"><div><span>${headingEyebrow("reading")}</span><h3>${moduleValue(data.book) || "阅读札记"}</h3></div></div>
     <div class="collection-fields collection-fields--book">
       <label><span>书名</span><input data-module-field="book" value="${moduleValue(data.book)}" placeholder="正在读什么" /></label>
       <label><span>作者</span><input data-module-field="author" value="${moduleValue(data.author)}" placeholder="作者 / 译者" /></label>
@@ -3934,7 +4269,7 @@ function renderReadingCollection(root, data) {
 
 function renderTravelCollection(root, data) {
   root.innerHTML = `
-    <div class="collection-heading"><div><span>旅行手帐</span><h3>${moduleValue(data.destination) || "旅途采集"}</h3></div></div>
+    <div class="collection-heading"><div><span>${headingEyebrow("travel")}</span><h3>${moduleValue(data.destination) || "旅途采集"}</h3></div></div>
     <div class="collection-fields collection-fields--book">
       <label><span>目的地</span><input data-module-field="destination" value="${moduleValue(data.destination)}" placeholder="城市 / 山 / 海" /></label>
       <label><span>预算</span><input data-module-field="budget" value="${moduleValue(data.budget)}" placeholder="可留空" /></label>
@@ -3965,7 +4300,7 @@ function renderFiveYearCollection(root, data) {
     rows.push(`<button type="button" class="fiveyear-row ${key === state.selectedDate ? "is-current" : ""}" data-collection-date="${key}"><strong>${date.getFullYear()}</strong><span>${moduleValue(excerpt)}</span></button>`);
   }
   root.innerHTML = `
-    <div class="collection-heading"><div><span>同日五年</span><h3>${selected.getMonth() + 1}月${selected.getDate()}日</h3></div></div>
+    <div class="collection-heading"><div><span>${headingEyebrow("fiveyear")}</span><h3>${selected.getMonth() + 1}月${selected.getDate()}日</h3></div></div>
     <div class="fiveyear-list">${rows.join("")}</div>
     <label class="collection-wide-field"><span>这一年的一句话</span><input data-module-field="line" value="${moduleValue(data.line)}" placeholder="一句就够了" /></label>`;
 }
@@ -3975,6 +4310,7 @@ function handleCollectionInput(event) {
   if (!field) return;
   const mode = currentEntry().mode;
   currentModeModule(mode)[field.dataset.moduleField] = field.value;
+  if (field instanceof HTMLTextAreaElement) fitTextareaToText(field);
   if (field.type === "range") field.closest("label")?.querySelector("output")?.replaceChildren(`${field.value}%`);
   persistState();
 }
@@ -4267,6 +4603,9 @@ function renderWeek() {
     const card = document.createElement("div");
     card.className = "week-day";
     if (key === focusKey) card.classList.add("is-current");
+    // Planner convention: Saturday in blue, Sunday in red.
+    if (date.getDay() === 6) card.classList.add("is-saturday");
+    if (date.getDay() === 0) card.classList.add("is-sunday");
     const dayEntry = state.entries[key];
     let linkedPageCount = 0;
     let linkedExcerpt = "";
@@ -4289,7 +4628,8 @@ function renderWeek() {
     const dayLabel = document.createElement("span");
     dayLabel.textContent = weekday;
     const dateLabel = document.createElement("small");
-    dateLabel.textContent = `${date.getMonth() + 1}/${date.getDate()}`;
+    // The day of the month, large; the month is in the page's head.
+    dateLabel.textContent = String(date.getDate());
     title.append(dayLabel, dateLabel);
     title.addEventListener("click", () => navigateToCalendarPage(key, "day"));
 
@@ -4941,7 +5281,7 @@ function applyGlobalSettings() {
   elements.customCoverColor.value = state.customCoverColor || "#4f5b50";
   elements.paperToneSelect.value = state.paperTone || "washi";
   elements.decorativePrintToggle.checked = state.decorativePrints !== false;
-  if (elements.coverDisplaySelect) elements.coverDisplaySelect.value = state.coverDisplay || "daily";
+  if (elements.coverDisplaySelect) elements.coverDisplaySelect.value = state.coverDisplay || "always";
   inkColor = state.inkColor || INK_PALETTES.stationery.colors[0];
   inkSize = Number(state.inkSize || 4);
   inkBrush = INK_BRUSHES[state.inkBrush] ? state.inkBrush : "fountain";
@@ -5742,7 +6082,6 @@ function bindEvents() {
     elements.searchResults.children[previousCount]?.focus({ preventScroll: true });
   });
   elements.openCoverButton?.addEventListener("click", openNotebook);
-  elements.pageTurnSheet?.addEventListener("animationend", handlePageTurnEnd);
   elements.collectionView?.addEventListener("input", handleCollectionInput);
   elements.collectionView?.addEventListener("change", handleCollectionInput);
   elements.collectionView?.addEventListener("click", handleCollectionClick);
@@ -5901,6 +6240,7 @@ function bindEvents() {
   });
   elements.coverDisplaySelect?.addEventListener("change", () => {
     state.coverDisplay = elements.coverDisplaySelect.value;
+    state.coverDisplayChosen = true;
     persistState();
     notify(selectedOptionLabel(elements.coverDisplaySelect));
   });
@@ -6029,6 +6369,8 @@ function bindEvents() {
   window.addEventListener("pointermove", moveSticker);
   window.addEventListener("pointerup", endStickerMove);
   window.addEventListener("keydown", (event) => {
+    // While the cover is closed, the notebook under it does not take shortcuts.
+    if (preparedBook) return;
     const target = event.target;
     const isEditing = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target?.isContentEditable;
     if ((event.key === "Delete" || event.key === "Backspace") && selectedStickerId && !isEditing) {
@@ -6134,6 +6476,7 @@ function bindEvents() {
   });
 
   document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") settlePageTurn();
     if (document.visibilityState === "hidden" && hasPendingChanges) flushState();
     if (document.visibilityState === "visible") checkStoredRevision();
   });
@@ -6217,6 +6560,11 @@ function bindWorkspaceShell() {
   });
   scrim.addEventListener("click", () => { setSidebarOpen(false); toggle.focus(); });
   compact.addEventListener("change", () => setSidebarOpen(!compact.matches));
+  $("#closeBookButton").addEventListener("click", closeNotebook);
+  $("#sidebarCloseBookButton").addEventListener("click", () => {
+    if (compact.matches) setSidebarOpen(false);
+    closeNotebook();
+  });
   $("#returnToNotebook").addEventListener("click", () => {
     closeMobilePanel();
     if (compact.matches) setSidebarOpen(false);
@@ -6268,6 +6616,8 @@ async function startApp() {
   setupCanvas();
   loadEntryIntoForm();
   if (!shouldShowCover()) openNotebookWithoutCover();
+  else scheduleBookPreparation(900);
+  window.addEventListener("resize", discardPreparedBook);
   bindWorkspaceShell();
   registerServiceWorker();
   migrateInlineMedia();

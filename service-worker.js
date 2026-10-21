@@ -1,11 +1,10 @@
-const CACHE_NAME = "openpages-v66-release";
+const CACHE_NAME = "openpages-v106-fix";
 const ASSETS = [
   "./",
   "./index.html",
   "./privacypolicy.html",
   "./app.css",
   "./generated/runtime-bridge-v2.js",
-  "./vendor/page-flip.browser.js",
   "./app.js",
   "./manifest.webmanifest",
   "./service-worker.js",
