@@ -1,5 +1,5 @@
 const STORAGE_KEY = "openpages.state.v1";
-const APP_VERSION = "0.3.3-beta";
+const APP_VERSION = "0.4.0-beta";
 // Where 意见反馈 opens (a questionnaire, a 小红书 profile or a GitHub Issues page). Empty hides the link.
 const FEEDBACK_URL = "";
 const LOCAL_STORAGE_SOFT_LIMIT = 4_000_000;

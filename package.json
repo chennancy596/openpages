@@ -1,6 +1,6 @@
 {
   "name": "openpages",
-  "version": "0.3.3-beta",
+  "version": "0.4.0-beta",
   "description": "Open source, local-first digital journal for desktop, mobile, and PWA distribution.",
   "type": "module",
   "license": "MIT",
