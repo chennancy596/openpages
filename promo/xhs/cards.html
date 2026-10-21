@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开页 · 小红书配图</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Songti SC", "STSong", "Noto Serif SC", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --ink: #2b322d;
+    --ink-soft: #566059;
+    --ink-muted: #6c736d;
+    --paper: #f8f6ef;
+    --desk: #e7ebe6;
+    --green: #2f3a30;
+    --accent: #8a4a46;
+    --line: rgba(118, 128, 120, 0.32);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 16px 64px;
+    background: #dfe3de;
+    color: var(--ink);
+    font-family: var(--sans);
+  }
+  .guide {
+    max-width: 760px;
+    margin: 0 auto 28px;
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+  }
+  .guide h1 { margin: 0 0 6px; font: 400 24px/1.4 var(--serif); color: var(--ink); }
+  .guide ol { margin: 6px 0 0; padding-left: 20px; }
+  .guide button {
+    margin-top: 12px;
+    height: 34px;
+    padding: 0 16px;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    background: transparent;
+    font: 500 14px var(--sans);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 28px;
+  }
+  .slot { display: grid; gap: 10px; justify-items: center; }
+  .slot > button {
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid rgba(43, 50, 45, 0.3);
+    border-radius: 999px;
+    background: transparent;
+    font: 500 13px var(--sans);
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+
+  /* One card: 360 × 480 on screen (3:4), saved at 3× as 1080 × 1440. */
+  .card {
+    position: relative;
+    width: 360px;
+    height: 480px;
+    overflow: hidden;
+    background-color: var(--paper);
+    background-repeat: repeat;
+    background-size: 14px 14px;
+    box-shadow: 0 10px 30px rgba(30, 36, 31, 0.14);
+  }
+  [contenteditable] { outline: none; }
+  [contenteditable]:focus { box-shadow: 0 0 0 1px rgba(138, 74, 70, 0.35); }
+
+  .label {
+    font: 500 10px/14px var(--sans);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-muted);
+  }
+  .title {
+    margin: 4px 0 0;
+    font: 400 26px/38px var(--serif);
+    letter-spacing: 0.02em;
+    color: var(--ink);
+  }
+  .rule { height: 1px; background: var(--line); }
+
+  /* Cover card */
+  .card--cover { background-color: var(--desk); background-image: none !important; }
+  .card--cover .head { position: absolute; left: 42px; right: 42px; top: 42px; }
+  .card--cover .title { font-size: 30px; line-height: 42px; }
+  .notebook {
+    position: absolute;
+    left: 50%;
+    top: 172px;
+    width: 142px;
+    height: 230px; /* 1 : 1.618 */
+    margin-left: -71px;
+    border-radius: 14px 10px 10px 14px;
+    background: linear-gradient(135deg, #20281f 0%, #364134 45%, #5a604c 100%);
+    box-shadow: 0 18px 36px rgba(25, 29, 24, 0.32), inset 8px 0 14px rgba(0, 0, 0, 0.32);
+  }
+  .notebook::before { /* paper edge */
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    right: -4px;
+    width: 10px;
+    border-radius: 0 8px 8px 0;
+    background: linear-gradient(90deg, #d8ceb9, #f5eedf 42%, #c2b296);
+  }
+  .notebook .band-v { position: absolute; top: -8px; bottom: -8px; left: 79%; width: 4px; margin-left: -2px; background: #16120f; border-radius: 4px; }
+  .notebook .band-h { position: absolute; left: 13.5%; right: 13.5%; top: 61.8%; height: 3px; margin-top: -1.5px; background: rgba(20, 16, 13, 0.85); border-radius: 3px; }
+  .notebook .clip { position: absolute; left: 79%; top: 14px; width: 26px; height: 20px; margin-left: -13px; border-radius: 8px 8px 3px 3px; background: linear-gradient(180deg, #c5a05b, #9d7638 48%, #6c4a24); }
+  .notebook .name { position: absolute; left: 13.5%; top: 74%; font: 500 9px/12px var(--sans); letter-spacing: 0.16em; color: rgba(241, 232, 211, 0.55); }
+  .card--cover .foot {
+    position: absolute;
+    left: 42px;
+    right: 42px;
+    bottom: 30px;
+    font: 400 13px/20px var(--sans);
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+
+  /* Screenshot cards */
+  .card--shot .head { position: absolute; left: 32px; right: 32px; top: 30px; }
+  .card--shot .title { font-size: 20px; line-height: 30px; }
+  .card--shot .note { margin: 2px 0 0; font: 400 13px/22px var(--sans); color: var(--ink-soft); }
+  .phone {
+    position: absolute;
+    left: 50%;
+    top: 132px;
+    width: 160px;
+    height: 330px;
+    margin-left: -80px;
+    border-radius: 22px;
+    border: 6px solid #1d221e;
+    background: #fff center top / cover no-repeat;
+    box-shadow: 0 14px 30px rgba(25, 29, 24, 0.22);
+    cursor: pointer;
+  }
+  .phone.is-empty {
+    display: grid;
+    place-items: center;
+    border: 1px dashed rgba(43, 50, 45, 0.4);
+    background-color: transparent;
+    box-shadow: none;
+    font: 400 12px/18px var(--sans);
+    color: var(--ink-muted);
+    text-align: center;
+    padding: 0 18px;
+  }
+  .phone.is-dragging { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+  /* How-to card */
+  .card--steps .head { position: absolute; left: 42px; right: 42px; top: 42px; }
+  .steps { position: absolute; left: 42px; right: 42px; top: 150px; margin: 0; padding: 0; list-style: none; }
+  .steps li { display: grid; grid-template-columns: 34px 1fr; padding: 14px 0; border-top: 1px solid var(--line); }
+  .steps li:last-child { border-bottom: 1px solid var(--line); }
+  .steps b { font: 400 22px/28px var(--serif); color: var(--accent); }
+  .steps span { font: 400 14px/28px var(--sans); color: var(--ink); }
+  .card--steps .foot { position: absolute; left: 42px; right: 42px; bottom: 36px; }
+  .card--steps .link { font: 400 14px/22px var(--serif); color: var(--ink); }
+  .card--steps .ask { margin-top: 6px; font: 400 13px/20px var(--sans); color: var(--ink-soft); }
+
+  .page-no { position: absolute; bottom: 14px; right: 18px; font: 400 10px/14px var(--serif); letter-spacing: 0.08em; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+  <section class="guide">
+    <h1>开页 · 小红书配图</h1>
+    <ol>
+      <li>在手机上用<strong>演示内容</strong>（不要用真实日记）把开页摆好，截四张图：封面翻开的一瞬间、一页日记、周计划、合上的封面。</li>
+      <li>把截图拖到对应的手机框里，或者点一下手机框选图。</li>
+      <li>图上的文字都能直接点进去改。</li>
+      <li>点每张图下面的“保存这张”，存成 1080 × 1440 的图片，按顺序发到小红书。</li>
+    </ol>
+    <button type="button" id="saveAll">全部保存</button>
+  </section>
+
+  <div class="cards">
+    <div class="slot">
+      <div class="card card--cover" data-name="01-封面">
+        <div class="head">
+          <div class="label" contenteditable>OpenPages · 开页</div>
+          <p class="title" contenteditable>一本要先翻开的<br />电子手帐</p>
+        </div>
+        <div class="notebook" aria-hidden="true">
+          <span class="band-h"></span><span class="band-v"></span><span class="clip"></span><span class="name">OPENPAGES</span>
+        </div>
+        <div class="foot" contenteditable>不用注册 · 只存在你手机里 · 可以手写</div>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+
+    <div class="slot">
+      <div class="card card--shot" data-name="02-翻开">
+        <div class="head">
+          <div class="label" contenteditable>01 · 翻开</div>
+          <p class="title" contenteditable>点一下，封面沿书脊翻过去</p>
+          <p class="note" contenteditable>里面是你上次写的那页，写完还能合上。</p>
+        </div>
+        <div class="phone is-empty" data-shot>点这里放截图<br />（封面翻开的一瞬间）</div>
+        <span class="page-no">02</span>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+
+    <div class="slot">
+      <div class="card card--shot" data-name="03-日记">
+        <div class="head">
+          <div class="label" contenteditable>02 · 日记</div>
+          <p class="title" contenteditable>排版照着纸质手帐来</p>
+          <p class="note" contenteditable>细方格、宋体正文，打字和手写都行。</p>
+        </div>
+        <div class="phone is-empty" data-shot>点这里放截图<br />（一页写了几行的日记）</div>
+        <span class="page-no">03</span>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+
+    <div class="slot">
+      <div class="card card--shot" data-name="04-周计划">
+        <div class="head">
+          <div class="label" contenteditable>03 · 周计划</div>
+          <p class="title" contenteditable>一天一行，周六蓝、周日红</p>
+          <p class="note" contenteditable>日记、周计划、月计划在同一本里。</p>
+        </div>
+        <div class="phone is-empty" data-shot>点这里放截图<br />（周计划的右页）</div>
+        <span class="page-no">04</span>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+
+    <div class="slot">
+      <div class="card card--shot" data-name="05-合上">
+        <div class="head">
+          <div class="label" contenteditable>04 · 只在你手机里</div>
+          <p class="title" contenteditable>没有账号，我也看不到</p>
+          <p class="note" contenteditable>断网能写。换手机前记得导出一份备份。</p>
+        </div>
+        <div class="phone is-empty" data-shot>点这里放截图<br />（合上的封面，或设置里的备份）</div>
+        <span class="page-no">05</span>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+
+    <div class="slot">
+      <div class="card card--steps" data-name="06-怎么开始">
+        <div class="head">
+          <div class="label" contenteditable>How to start</div>
+          <p class="title" contenteditable>三步装到手机上</p>
+        </div>
+        <ol class="steps">
+          <li><b>1</b><span contenteditable>Safari 打开置顶评论里的链接</span></li>
+          <li><b>2</b><span contenteditable>点下面的分享，选“添加到主屏幕”</span></li>
+          <li><b>3</b><span contenteditable>以后从桌面上的“开页”进去</span></li>
+        </ol>
+        <div class="foot">
+          <div class="link" contenteditable>chennancy596.github.io/openpages</div>
+          <div class="ask" contenteditable>想一起内测的，评论区说一声，我拉你进群。</div>
+        </div>
+        <span class="page-no">06</span>
+      </div>
+      <button type="button" data-save>保存这张</button>
+    </div>
+  </div>
+
+  <input type="file" id="picker" accept="image/*" hidden />
+
+<script>
+  // The paper's dot grid as a small PNG, so the saved image draws it exactly as the screen does.
+  (function paintGrid() {
+    const c = document.createElement("canvas");
+    c.width = c.height = 42; // 14px at 3x
+    const g = c.getContext("2d");
+    g.fillStyle = "rgba(150, 160, 152, 0.55)";
+    g.beginPath();
+    g.arc(21, 21, 2.2, 0, Math.PI * 2);
+    g.fill();
+    const url = c.toDataURL("image/png");
+    document.querySelectorAll(".card:not(.card--cover)").forEach((card) => {
+      card.style.backgroundImage = `url(${url})`;
+    });
+  })();
+
+  // Screenshots: click to choose, or drop a file on the phone frame. They stay in this page only.
+  const picker = document.getElementById("picker");
+  let target = null;
+  const place = (frame, file) => {
+    if (!file || !file.type.startsWith("image/")) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      frame.classList.remove("is-empty");
+      frame.textContent = "";
+      frame.style.backgroundImage = `url(${reader.result})`;
+    };
+    reader.readAsDataURL(file);
+  };
+  document.querySelectorAll("[data-shot]").forEach((frame) => {
+    frame.addEventListener("click", () => { target = frame; picker.click(); });
+    frame.addEventListener("dragover", (event) => { event.preventDefault(); frame.classList.add("is-dragging"); });
+    frame.addEventListener("dragleave", () => frame.classList.remove("is-dragging"));
+    frame.addEventListener("drop", (event) => {
+      event.preventDefault();
+      frame.classList.remove("is-dragging");
+      place(frame, event.dataTransfer.files[0]);
+    });
+  });
+  picker.addEventListener("change", () => {
+    if (target) place(target, picker.files[0]);
+    picker.value = "";
+  });
+
+  // Saving: each card at 3x, 1080 × 1440.
+  async function save(card) {
+    if (typeof html2canvas !== "function") {
+      alert("保存需要联网加载一次图片工具，请连上网后刷新再试。");
+      return;
+    }
+    document.activeElement?.blur();
+    const canvas = await html2canvas(card, { scale: 3, backgroundColor: null, useCORS: true });
+    const link = document.createElement("a");
+    link.download = `开页-${card.dataset.name}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+  document.querySelectorAll("[data-save]").forEach((button) => {
+    button.addEventListener("click", () => save(button.previousElementSibling));
+  });
+  document.getElementById("saveAll").addEventListener("click", async () => {
+    for (const card of document.querySelectorAll(".card")) await save(card);
+  });
+</script>
+</body>
+</html>
