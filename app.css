@@ -13743,6 +13743,8 @@ body.editor-shell .journal-spread .paper-page :is(.empty-state, .health-empty sp
   font: 400 13px/28px var(--font-ui) !important;
   letter-spacing: 0.04em;
   text-align: left !important;
+  place-items: start !important;
+  justify-content: start !important;
   color: var(--ink-muted) !important;
 }
 body.editor-shell .journal-spread .paper-page .photo-drop {
@@ -14305,3 +14307,214 @@ body.editor-shell .about-content .support-primary {
 body.editor-shell .about-content .support-primary:hover { background: #7a3f36 !important; }
 body.editor-shell .about-content .support-primary svg { width: 17px; height: 17px; }
 body.editor-shell .about-content .support-primary[hidden] { display: none; }
+
+/* ==== The whole notebook on screen ====
+   The open notebook is sized to the desk, not to the window's width: two golden pages (1 : 1.618)
+   inside a 9px board, as large as fits between a 28px margin of desk and the floating page controls
+   (76px), centred. Nothing of a page is ever below the fold; a page that is written beyond its
+   height scrolls within itself, its ruling and page number travelling with it. */
+@media screen {
+  body.editor-shell[data-book=open] .view-stage {
+    container-type: size;
+    display: grid !important;
+    place-items: center;
+    overflow: hidden !important;
+    padding: 28px 28px calc(76px + env(safe-area-inset-bottom)) !important;
+  }
+  body.editor-shell[data-book=open] .journal-spread {
+    --frame: 9px;
+    --page-w: min((100cqw - 2 * var(--frame)) / 2, (100cqh - 2 * var(--frame)) / 1.618);
+    width: calc(var(--page-w) * 2 + 2 * var(--frame)) !important;
+    height: calc(var(--page-w) * 1.618 + 2 * var(--frame)) !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: var(--frame) !important;
+    grid-template-rows: minmax(0, 1fr) !important;
+  }
+  /* (Both pages named, and the phone's page attribute too: older rules gave the handwriting page its
+     own minimum height of 650px on phones.) */
+  body.editor-shell[data-book=open] .journal-spread[data-mobile-page] :is(.paper-page--left, .paper-page--right),
+  body.editor-shell[data-book=open] .journal-spread .paper-page {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+  }
+  body.editor-shell[data-book=open] .journal-spread .paper-page::-webkit-scrollbar { display: none; }
+
+  /* The ruling scrolls with the writing (on the page's own background, attached locally), rather than
+     staying behind as a layer the size of the first screen. */
+  body.editor-shell[data-book=open] .journal-spread .paper-page { background-attachment: local !important; }
+  body.editor-shell[data-book=open] .journal-spread .paper-page::after { display: none !important; }
+  body.editor-shell[data-book=open][data-page=dot] .journal-spread .paper-page {
+    background-image: radial-gradient(circle, color-mix(in srgb, var(--paper-rule) 55%, transparent) 0.85px, transparent 1.25px) !important;
+    background-size: var(--grid) var(--grid) !important;
+    background-position: calc(var(--grid) / -2) calc(var(--grid) / -2) !important;
+  }
+  body.editor-shell[data-book=open][data-page=grid] .journal-spread .paper-page {
+    background-image: linear-gradient(color-mix(in srgb, var(--paper-rule) 16%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--paper-rule) 16%, transparent) 1px, transparent 1px) !important;
+    background-size: var(--grid) var(--grid), var(--grid) var(--grid) !important;
+    background-position: 0 0, 0 0 !important;
+  }
+
+  /* The page number stays at the foot of the outer corner however far the page is scrolled: last in
+     the page's column, pulled down into the bottom margin, and held there. */
+  body.editor-shell[data-book=open] .journal-spread .paper-page > .page-number {
+    position: sticky !important;
+    order: 99;
+    top: auto !important;
+    /* Held at the foot of the text block (sticky offsets count from inside the page's 56px bottom
+       padding), then moved down into the margin, 21px from the edge, by a translation that takes no
+       room, so an empty page never gains a scroll. */
+    bottom: 0 !important;
+    left: auto !important;
+    right: auto !important;
+    flex: none;
+    margin: auto 0 0 !important;
+    translate: 0 35px;
+    z-index: 2;
+  }
+  body.editor-shell[data-book=open] .journal-spread .paper-page--left > .page-number { align-self: flex-start; }
+  body.editor-shell[data-book=open] .journal-spread .paper-page--right > .page-number { align-self: flex-end; }
+}
+@media screen and (max-width: 1100px) {
+  body.editor-shell[data-book=open] .journal-spread {
+    --page-w: min(100cqw - 2 * var(--frame), (100cqh - 2 * var(--frame)) / 1.618);
+    width: calc(var(--page-w) + 2 * var(--frame)) !important;
+  }
+}
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .view-stage { padding: 14px 12px calc(70px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* A day with writing is marked by a dot centred under its date. */
+body.editor-shell .journal-spread .collection-calendar > button.has-entry::after {
+  right: auto !important;
+  left: 50% !important;
+  bottom: 6px !important;
+  translate: -50% 0;
+}
+
+/* The day's stamp is pressed beside the date it belongs to: on the left page's head, at the text's
+   right edge, centred on the title line, rather than in the corner the page number now holds. */
+@media screen {
+  body.editor-shell[data-book=open] .journal-spread > .daily-stamp {
+    left: calc(var(--frame) + var(--page-w) - 42px - 56px) !important;
+    right: auto !important;
+    top: calc(var(--frame) + 63px) !important;
+    bottom: auto !important;
+  }
+  body.editor-shell[data-book=open] .journal-spread .paper-header--entry .title-input { padding-right: 68px !important; }
+}
+
+/* The writing area takes the room the page has left, rather than a fixed height that pushed even an
+   empty page past its foot. */
+@media screen {
+  body.editor-shell[data-book=open] .journal-spread .paper-page > .field.grow {
+    display: flex !important;
+    flex-direction: column;
+    flex: 1 0 auto;
+    min-height: 0 !important;
+  }
+  /* Fills what is left of the page, so a tap anywhere below the text still lands in it. */
+  body.editor-shell[data-book=open] .journal-spread #journalEditor { flex: 1 1 auto; min-height: calc(var(--line) * 4) !important; }
+}
+
+/* Page margins as variables, so the page number, the stamp and the text block move together.
+   Full size: four squares top and bottom, three at the sides. Where the notebook has to be small
+   (a short window, or a phone), three and two squares, so the text keeps its width. */
+@media screen {
+  body.editor-shell .journal-spread { --pad-top: 56px; --pad-bottom: 56px; --pad-x: 42px; }
+  body.editor-shell[data-book=open] .journal-spread .paper-page { padding: var(--pad-top) var(--pad-x) var(--pad-bottom) !important; }
+  body.editor-shell[data-book=open] .journal-spread .paper-page > .page-number { translate: 0 calc(var(--pad-bottom) - 21px); }
+  body.editor-shell[data-book=open] .journal-spread > .daily-stamp {
+    left: calc(var(--frame) + var(--page-w) - var(--pad-x) - 56px) !important;
+    top: calc(var(--frame) + var(--pad-top) + 7px) !important;
+  }
+}
+@media screen and (max-height: 820px), screen and (max-width: 600px) {
+  body.editor-shell .journal-spread { --pad-top: 42px; --pad-bottom: 42px; --pad-x: 28px; }
+}
+@media screen and (max-height: 820px) and (min-width: 721px) {
+  body.editor-shell[data-book=open] .view-stage { padding: 20px 28px calc(70px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* The day's stamp belongs to a day: week and month pages have none, and their titles keep the room. */
+body.editor-shell .journal-spread:is([data-mode=weekly], [data-mode=monthly]) > .daily-stamp { display: none !important; }
+body.editor-shell .journal-spread:is([data-mode=weekly], [data-mode=monthly]) .paper-header--entry .title-input { padding-right: 0 !important; }
+
+/* ==== Filling the desk ====
+   The open spread is itself a golden rectangle, 1.618 wide to 1 high, and each page the 1 : 1.236 of
+   a leaf of it. That is the shape of a 16:10 laptop screen, so the notebook can fill the desk: as
+   large as fits within 20px above, 28px at the sides and the page controls below, centred. A single
+   page (phones, narrow windows) stays a golden portrait, 1 : 1.618. */
+@media screen and (min-width: 1101px) {
+  body.editor-shell[data-book=open] .journal-spread {
+    --spread-h: min(100cqh, 100cqw / 1.618);
+    --page-w: calc((var(--spread-h) * 1.618 - 2 * var(--frame)) / 2);
+    width: calc(var(--spread-h) * 1.618) !important;
+    height: var(--spread-h) !important;
+  }
+}
+@media screen {
+  body.editor-shell[data-book=open] .view-stage { padding: 20px 28px calc(72px + env(safe-area-inset-bottom)) !important; }
+}
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .view-stage { padding: 14px 12px calc(70px + env(safe-area-inset-bottom)) !important; }
+}
+
+/* A landscape tablet (or a narrow desktop window) is wide enough for both pages: the spread opens
+   there too, as the same golden rectangle, instead of one small page in the middle of the screen. */
+@media screen and (min-width: 861px) and (max-width: 1100px) and (min-aspect-ratio: 5/4) {
+  body.editor-shell[data-book=open] .journal-spread {
+    --spread-h: min(100cqh, 100cqw / 1.618);
+    --page-w: calc((var(--spread-h) * 1.618 - 2 * var(--frame)) / 2);
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    max-width: none !important;
+    width: calc(var(--spread-h) * 1.618) !important;
+    height: var(--spread-h) !important;
+  }
+  body.editor-shell[data-book=open] .journal-spread[data-mobile-page] :is(.paper-page--left, .paper-page--right) { display: flex !important; }
+  body.editor-shell[data-book=open] .journal-spread[data-mobile-page=ink] .paper-page--right { padding: var(--pad-top) var(--pad-x) var(--pad-bottom) !important; }
+  body.editor-shell[data-book=open] .mobile-page-switcher { display: none !important; }
+  body.editor-shell[data-book=open] .journal-spread::after { display: block !important; }
+}
+
+/* One toolbar row where there is width for it (1200px and up): the date, the formatting tools, the
+   insert menus and the window actions share a single 52px bar instead of two, which gives the
+   notebook another 48px of height. Edges stay on the 28px line. */
+@media screen and (min-width: 1200px) {
+  body.editor-shell[data-book=open] .document-chrome {
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    height: 52px;
+    padding: 0 18px 0 20px;
+    border-bottom: 1px solid var(--shell-line, #e2e7e4);
+  }
+  body.editor-shell[data-book=open] .document-chrome > :is(.topbar, .document-tools) { display: contents !important; }
+  body.editor-shell[data-book=open] .document-chrome #sidebarToggle { order: 1 !important; }
+  body.editor-shell[data-book=open] .document-chrome .date-nav { order: 2 !important; }
+  body.editor-shell[data-book=open] .document-chrome .context-tools {
+    order: 3 !important;
+    margin-left: 8px !important;
+    padding-left: 16px !important;
+    border-left: 1px solid var(--shell-line, #e2e7e4) !important;
+  }
+  body.editor-shell[data-book=open] .document-chrome .insert-tools { order: 4 !important; margin-left: auto !important; }
+  body.editor-shell[data-book=open] .document-chrome .topbar-actions {
+    order: 5 !important;
+    margin-left: 4px !important;
+    padding-left: 12px !important;
+    border-left: 1px solid var(--shell-line, #e2e7e4) !important;
+  }
+  body.editor-shell.is-focus-mode .document-chrome { opacity: 0.3; transition: opacity 0.2s ease; }
+  body.editor-shell.is-focus-mode .document-chrome:is(:hover, :focus-within) { opacity: 1; }
+  /* The sidebar's brand is centred on the single bar now, its first row level with the notebook. */
+  body.editor-shell .brand { min-height: 52px !important; }
+  body.editor-shell .library-nav { margin-top: 20px !important; }
+}
