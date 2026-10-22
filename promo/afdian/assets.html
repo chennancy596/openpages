@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开页 · 爱发电头像与封面</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+  :root {
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Songti SC", "STSong", "Noto Serif SC", serif;
+    --sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    --ink: #2b322d;
+    --ink-soft: #566059;
+    --ink-muted: #6c736d;
+    --paper: #f8f6ef;
+    --green: #355b49;
+    --ribbon: #b46c62;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 16px 64px; background: #dfe3de; color: var(--ink); font-family: var(--sans); }
+  .guide { max-width: 760px; margin: 0 auto 24px; font-size: 14px; line-height: 1.8; color: var(--ink-soft); }
+  .guide h1 { margin: 0 0 6px; font: 400 24px/1.4 var(--serif); color: var(--ink); }
+  .guide ol { margin: 6px 0 0; padding-left: 20px; }
+  .items { display: grid; gap: 28px; justify-items: center; }
+  .slot { display: grid; gap: 10px; justify-items: center; }
+  .slot > small { color: var(--ink-muted); font-size: 12px; }
+  .slot > button {
+    height: 30px; padding: 0 14px; border: 1px solid rgba(43, 50, 45, 0.3); border-radius: 999px;
+    background: transparent; font: 500 13px var(--sans); color: var(--ink-soft); cursor: pointer;
+  }
+
+  /* Avatar: shown at 320, saved at 3× (960 × 960). Everything important stays inside the circle the
+     site crops it to. */
+  .avatar {
+    position: relative; width: 320px; height: 320px; overflow: hidden;
+    background: radial-gradient(120% 120% at 30% 20%, #3f6a56, var(--green) 55%, #2b4b3c);
+  }
+  .avatar svg { position: absolute; left: 50%; top: 50%; width: 176px; height: 176px; margin: -88px 0 0 -88px; }
+
+  /* Cover: shown at 750 × 250, saved at 2× (1500 × 500); keep the words left of centre so a crop
+     on either side still shows them. */
+  .cover {
+    position: relative; width: 750px; height: 250px; overflow: hidden;
+    background-color: var(--paper); background-size: 14px 14px;
+  }
+  .cover .words { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); }
+  .cover .eyebrow { font: 500 11px/14px var(--sans); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-muted); }
+  .cover .name { margin: 6px 0 0; font: 400 44px/56px var(--serif); letter-spacing: 0.06em; color: var(--ink); }
+  .cover .line { margin: 8px 0 0; font: 400 16px/26px var(--serif); color: var(--ink-soft); }
+  .cover .rule { position: absolute; left: 64px; right: 64px; bottom: 34px; height: 1px; background: rgba(118, 128, 120, 0.3); }
+  .cover .sprig { position: absolute; right: 70px; top: 18px; width: 170px; height: 214px; }
+  .cover .tape {
+    position: absolute; right: 214px; top: -6px; width: 84px; height: 26px; transform: rotate(-4deg);
+    background: linear-gradient(90deg, rgba(196, 170, 128, 0.82), rgba(214, 192, 152, 0.82));
+    font: 700 11px/26px var(--sans); letter-spacing: 0.14em; text-align: center; color: rgba(255, 255, 255, 0.92);
+  }
+</style>
+</head>
+<body>
+  <section class="guide">
+    <h1>开页 · 爱发电头像与封面</h1>
+    <ol>
+      <li>点每张图下面的“保存”，头像存成 960 × 960，封面存成 1500 × 500。</li>
+      <li>上传到爱发电时，按网站给出的裁剪框调整：头像会被裁成圆形，封面两边可能被裁掉一些。</li>
+      <li>封面上的字可以直接点进去改。保存需要联网，用来加载导出工具。</li>
+    </ol>
+  </section>
+
+  <div class="items">
+    <div class="slot">
+      <div class="avatar" data-name="avatar" data-scale="3">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M14 16c7-1 12 1 16 5v28c-4-4-9-6-16-5V16Z" fill="#f7f8f2"/>
+          <path d="M34 21c5-4 10-6 16-5v28c-6-1-11 1-16 5V21Z" fill="#f7f8f2"/>
+          <path d="M43 16v15l3-2 3 2V16h-6Z" fill="#b46c62"/>
+        </svg>
+      </div>
+      <small>头像 · 960 × 960</small>
+      <button type="button" data-save>保存头像</button>
+    </div>
+
+    <div class="slot">
+      <div class="cover" data-name="cover" data-scale="2">
+        <span class="tape">NOTE</span>
+        <div class="words">
+          <div class="eyebrow" contenteditable>OpenPages · Journal</div>
+          <p class="name" contenteditable>开页</p>
+          <p class="line" contenteditable>一本不用注册的电子手帐，只存在你自己的设备里。</p>
+        </div>
+        <svg class="sprig" viewBox="0 0 170 214" fill="none" stroke="#35413a" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"></svg>
+        <span class="rule"></span>
+      </div>
+      <small>封面 · 1500 × 500</small>
+      <button type="button" data-save>保存封面</button>
+    </div>
+  </div>
+
+<script>
+  // Dot grid paper, as a PNG so the saved image draws it exactly as the screen does.
+  (() => {
+    const c = document.createElement("canvas");
+    c.width = c.height = 28;
+    const g = c.getContext("2d");
+    g.fillStyle = "rgba(150, 160, 152, 0.55)";
+    g.beginPath();
+    g.arc(14, 14, 1.4, 0, Math.PI * 2);
+    g.fill();
+    document.querySelector(".cover").style.backgroundImage = `url(${c.toDataURL()})`;
+  })();
+
+  // The same sprig as on the sample page: a curved stem with seven alternate leaves and their midribs.
+  (() => {
+    const svg = document.querySelector(".sprig");
+    const stem = (t) => {
+      const [x0, y0, x1, y1, x2, y2] = [110, 206, 34, 128, 82, 8];
+      const u = 1 - t;
+      return [u * u * x0 + 2 * u * t * x1 + t * t * x2, u * u * y0 + 2 * u * t * y1 + t * t * y2];
+    };
+    const tangent = (t) => {
+      const [ax, ay] = stem(Math.max(0, t - 0.01));
+      const [bx, by] = stem(Math.min(1, t + 0.01));
+      const l = Math.hypot(bx - ax, by - ay) || 1;
+      return [(bx - ax) / l, (by - ay) / l];
+    };
+    const path = (points) => points.map(([x, y], i) => `${i ? "L" : "M"}${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+    const add = (d, width) => {
+      const p = document.createElementNS("http://www.w3.org/2000/svg", "path");
+      p.setAttribute("d", d);
+      if (width) p.setAttribute("stroke-width", width);
+      svg.append(p);
+    };
+    const stemPoints = [];
+    for (let i = 0; i <= 48; i += 1) stemPoints.push(stem(i / 48));
+    add(path(stemPoints), 1.5);
+    [0.18, 0.3, 0.42, 0.54, 0.66, 0.78, 0.9].forEach((t, index) => {
+      const [bx, by] = stem(t);
+      const [tx, ty] = tangent(t);
+      const side = index % 2 ? 1 : -1;
+      const a = (side * 48 * Math.PI) / 180;
+      const dx = tx * Math.cos(a) - ty * Math.sin(a);
+      const dy = tx * Math.sin(a) + ty * Math.cos(a);
+      const nx = -dy;
+      const ny = dx;
+      const length = 36 * (1 - 0.45 * t);
+      const width = length * 0.44;
+      const outline = [];
+      for (let s = 0; s <= 20; s += 1) {
+        const k = s / 20;
+        const b = (Math.sin(Math.PI * k) * width) / 2;
+        outline.push([bx + dx * length * k + nx * b, by + dy * length * k + ny * b]);
+      }
+      for (let s = 19; s >= 0; s -= 1) {
+        const k = s / 20;
+        const b = (Math.sin(Math.PI * k) * width) / 2;
+        outline.push([bx + dx * length * k - nx * b, by + dy * length * k - ny * b]);
+      }
+      add(path(outline));
+      add(path([[bx, by], [bx + dx * length * 0.66, by + dy * length * 0.66]]), 0.8);
+    });
+  })();
+
+  async function save(node) {
+    if (typeof html2canvas !== "function") {
+      alert("保存需要联网加载一次导出工具，请连上网后刷新再试。");
+      return;
+    }
+    document.activeElement?.blur();
+    const canvas = await html2canvas(node, { scale: Number(node.dataset.scale) || 2, backgroundColor: null });
+    const link = document.createElement("a");
+    link.download = `开页-爱发电-${node.dataset.name}.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  }
+  document.querySelectorAll("[data-save]").forEach((button) => {
+    button.addEventListener("click", () => save(button.parentElement.querySelector("[data-name]")));
+  });
+</script>
+</body>
+</html>

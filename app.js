@@ -2,6 +2,8 @@ const STORAGE_KEY = "openpages.state.v1";
 const APP_VERSION = "0.4.0-beta";
 // Where 意见反馈 opens (a questionnaire, a 小红书 profile or a GitHub Issues page). Empty hides the link.
 const FEEDBACK_URL = "";
+// Where someone who wants to pay for 开页 can do so (an 爱发电 page, say). Empty keeps the button hidden.
+const SUPPORT_URL = "https://afdian.com/a/OpenPages";
 const LOCAL_STORAGE_SOFT_LIMIT = 4_000_000;
 const TEMPLATE_PACK_VERSION = 1;
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
@@ -594,6 +596,7 @@ const elements = {
   aboutVersion: $("#aboutVersion"),
   aboutVersionValue: $("#aboutVersionValue"),
   feedbackLink: $("#feedbackLink"),
+  supportLink: $("#supportLink"),
   trashMeta: $("#trashMeta"),
   trashList: $("#trashList"),
   recentPages: $("#recentPages"),
@@ -5049,6 +5052,10 @@ function renderAbout() {
   if (elements.feedbackLink) {
     elements.feedbackLink.hidden = !FEEDBACK_URL;
     if (FEEDBACK_URL) elements.feedbackLink.href = FEEDBACK_URL;
+  }
+  if (elements.supportLink) {
+    elements.supportLink.hidden = !SUPPORT_URL;
+    if (SUPPORT_URL) elements.supportLink.href = SUPPORT_URL;
   }
 }
 
