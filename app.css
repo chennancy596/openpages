@@ -14271,3 +14271,37 @@ body.editor-shell .date-nav .top-date { order: 2; }
 body.editor-shell .date-nav > #nextDayButton { order: 3; }
 body.editor-shell .date-nav > #todayButton { order: 4; }
 body.editor-shell .date-nav .calendar-scale-nav { order: 5; margin-left: 10px; }
+
+/* The way to support 开页: in the sidebar above the settings, warm and set apart but not loud; first
+   and filled in About. */
+body.editor-shell .sidebar-footer .support-link {
+  display: grid;
+  grid-template-columns: 17px minmax(0, 1fr);
+  column-gap: 10px;
+  align-items: center;
+  margin: 0 0 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #b46c62 9%, transparent);
+  color: #8c4a40;
+  text-decoration: none;
+  cursor: default;
+}
+body.editor-shell .sidebar-footer .support-link:hover { background: color-mix(in srgb, #b46c62 15%, transparent); }
+body.editor-shell .sidebar-footer .support-link svg { grid-row: span 2; width: 17px; height: 17px; }
+body.editor-shell .sidebar-footer .support-link span { font: 500 13px/18px var(--font-ui); }
+body.editor-shell .sidebar-footer .support-link small { font: 400 11px/16px var(--font-ui); color: color-mix(in srgb, #8c4a40 70%, transparent); }
+body.editor-shell .sidebar-footer .support-link[hidden] { display: none; }
+body.editor-shell .about-content .support-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-color: transparent !important;
+  background: #8c4a40 !important;
+  color: #fff !important;
+  text-decoration: none;
+}
+body.editor-shell .about-content .support-primary:hover { background: #7a3f36 !important; }
+body.editor-shell .about-content .support-primary svg { width: 17px; height: 17px; }
+body.editor-shell .about-content .support-primary[hidden] { display: none; }

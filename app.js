@@ -597,6 +597,7 @@ const elements = {
   aboutVersionValue: $("#aboutVersionValue"),
   feedbackLink: $("#feedbackLink"),
   supportLink: $("#supportLink"),
+  sidebarSupportLink: $("#sidebarSupportLink"),
   trashMeta: $("#trashMeta"),
   trashList: $("#trashList"),
   recentPages: $("#recentPages"),
@@ -1495,6 +1496,7 @@ function openNotebook() {
     openNotebookWithoutCover();
     focusEditorAfterOpening();
     introduceSamplePage();
+    suggestSupportOnce();
     return;
   }
   const backdrop = getComputedStyle(elements.body).backgroundColor;
@@ -1549,6 +1551,7 @@ function finishOpeningOnce(book, beforeFocus) {
     elements.body.classList.remove("is-cover-leaving", "is-book-settling");
     focusEditorAfterOpening();
     introduceSamplePage();
+    suggestSupportOnce();
   };
   finish.done = false;
   return finish;
@@ -5053,10 +5056,11 @@ function renderAbout() {
     elements.feedbackLink.hidden = !FEEDBACK_URL;
     if (FEEDBACK_URL) elements.feedbackLink.href = FEEDBACK_URL;
   }
-  if (elements.supportLink) {
-    elements.supportLink.hidden = !SUPPORT_URL;
-    if (SUPPORT_URL) elements.supportLink.href = SUPPORT_URL;
-  }
+  [elements.supportLink, elements.sidebarSupportLink].forEach((link) => {
+    if (!link) return;
+    link.hidden = !SUPPORT_URL;
+    if (SUPPORT_URL) link.href = SUPPORT_URL;
+  });
 }
 
 function renderBackupStatus() {
@@ -6822,6 +6826,35 @@ function openSamplePage() {
   navigateToCalendarPage(key, "day");
 }
 
+// Once a journal has been written in on seven days, the notebook mentions, once per device, that its
+// maker can be supported. Never for a new journal, never while writing; the sample page does not count.
+const SUPPORT_NUDGE_KEY = "openpages.support.nudged";
+const SUPPORT_NUDGE_DAYS = 7;
+
+function suggestSupportOnce() {
+  if (!SUPPORT_URL || sampleIntroPending) return;
+  try {
+    if (localStorage.getItem(SUPPORT_NUDGE_KEY)) return;
+  } catch {
+    return;
+  }
+  const writtenDays = Object.entries(state.entries).filter(([key, entry]) => !entry.sample && hasMeaningfulContent(entry, key)).length;
+  if (writtenDays < SUPPORT_NUDGE_DAYS) return;
+  window.setTimeout(() => {
+    // Someone already writing is not interrupted; the note waits for another opening.
+    if (document.activeElement === elements.journalEditor) return;
+    try {
+      localStorage.setItem(SUPPORT_NUDGE_KEY, todayKey());
+    } catch {
+      return;
+    }
+    notify(`开页陪你写了 ${writtenDays} 天。喜欢的话，可以请作者喝杯咖啡`, {
+      label: "支持开页",
+      run: () => window.open(SUPPORT_URL, "_blank", "noopener"),
+    });
+  }, 1800);
+}
+
 // Offered once, after the cover of a brand-new journal first opens.
 function introduceSamplePage() {
   if (!sampleIntroPending) return;
@@ -6841,6 +6874,7 @@ async function startApp() {
   if (!shouldShowCover()) {
     openNotebookWithoutCover();
     introduceSamplePage();
+    suggestSupportOnce();
   } else scheduleBookPreparation(900);
   window.addEventListener("resize", discardPreparedBook);
   bindWorkspaceShell();
