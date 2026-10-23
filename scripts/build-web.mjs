@@ -6,7 +6,7 @@ import { build } from "vite";
 const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const dist = join(root, "dist");
 const generated = join(root, "generated");
-const files = ["index.html", "privacypolicy.html", "app.css", "app.js", "manifest.webmanifest", "service-worker.js", "assets", "generated"];
+const files = ["index.html", "privacypolicy.html", "app.css", "app.js", "packs.js", "manifest.webmanifest", "service-worker.js", "assets", "generated"];
 
 
 await build({

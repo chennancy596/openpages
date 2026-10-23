@@ -9,3 +9,6 @@ src-tauri/target/
 
 # Archived promo bundles (zips and their unpacked copy)
 promo/archives/
+
+# 兑换码 for the paid series (scripts/make_pack_codes.py); only their hashes are published
+private/

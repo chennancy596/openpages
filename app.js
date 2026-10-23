@@ -4,6 +4,12 @@ const APP_VERSION = "0.4.0-beta";
 const FEEDBACK_URL = "";
 // Where someone who wants to pay for 开页 can do so (an 爱发电 page, say). Empty keeps the button hidden.
 const SUPPORT_URL = "https://afdian.com/a/OpenPages";
+// Where each paid series is sold (an 爱发电 product page). Empty falls back to SUPPORT_URL.
+const PACK_SHOP_URLS = { washi: "", ribbon: "", ticket: "", flora: "", all: "" };
+// A 兑换码 names its series by its prefix: WASHI-7K3M-Q9TX.
+const PACK_CODE_PREFIXES = { WASHI: "washi", RIBBON: "ribbon", TICKET: "ticket", FLORA: "flora", ALL: "all" };
+// Unlocked series are also kept outside the journal, so restoring an older backup never locks them.
+const PACKS_KEY = "openpages.packs.v1";
 const LOCAL_STORAGE_SOFT_LIMIT = 4_000_000;
 const TEMPLATE_PACK_VERSION = 1;
 const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
@@ -219,8 +225,8 @@ const MODE_COPY = {
     rightEyebrow: "Freehand",
     editorLabel: "文字手帐",
     placeholder: "写下今天的片段、清单、灵感或碎碎念。",
-    mobileLeft: "文字页",
-    mobileRight: "手写页",
+    mobileLeft: "左页",
+    mobileRight: "右页",
     showMood: true,
     showTags: true,
     showToolbar: true,
@@ -409,6 +415,8 @@ const PAGE_GROUP_FIELDS = [
   "stickers",
   "ink",
   "strokes",
+  "leftInk",
+  "marks",
   "versions",
 ];
 
@@ -514,6 +522,7 @@ const elements = {
   themeSelect: $("#themeSelect"),
   themePresetPicker: $("#themePresetPicker"),
   coverThemeSelect: $("#coverThemeSelect"),
+  coverStyleSelect: $("#coverStyleSelect"),
   customCoverColor: $("#customCoverColor"),
   paperToneSelect: $("#paperToneSelect"),
   decorativePrintToggle: $("#decorativePrintToggle"),
@@ -666,14 +675,24 @@ function normalizeState(saved) {
   saved.pageStyle = saved.pageStyle || "dot";
   saved.pageIllustration = saved.pageIllustration || "botanical";
   saved.coverTheme = saved.coverTheme || "olive";
+  saved.coverStyle = saved.coverStyle === "binder" ? "binder" : "tn";
   saved.customCoverColor = saved.customCoverColor || "#4f5b50";
   saved.paperTone = saved.paperTone || "washi";
-  saved.decorativePrints = saved.decorativePrints !== false;
+  // The faint printed illustrations behind the writing used to be on by default; they crowd the
+  // page, so they now show only for someone who turned them on in the settings.
+  saved.decorativePrints = saved.decorativePrintsChosen ? saved.decorativePrints !== false : false;
   // "daily" used to be the default and was saved with every journal; only a choice made in the
   // settings (coverDisplayChosen) is kept, so everyone else now opens the notebook by hand each time.
   if (saved.coverDisplay === "daily" && !saved.coverDisplayChosen) saved.coverDisplay = "always";
   saved.coverDisplay = ["daily", "always", "never"].includes(saved.coverDisplay) ? saved.coverDisplay : "always";
   saved.trash = Array.isArray(saved.trash) ? saved.trash : [];
+  saved.unlockedPacks = Array.isArray(saved.unlockedPacks) ? saved.unlockedPacks.filter((id) => typeof id === "string") : [];
+  saved.ribbon = saved.ribbon && typeof saved.ribbon === "object" ? saved.ribbon : {};
+  saved.ribbon.style = typeof saved.ribbon.style === "string" ? saved.ribbon.style : "theme";
+  saved.ribbon.charm = typeof saved.ribbon.charm === "string" ? saved.ribbon.charm : "cut";
+  saved.binding = saved.binding && typeof saved.binding === "object" ? saved.binding : {};
+  saved.binding.kind = saved.binding.kind === "rings" ? "rings" : "sewn";
+  saved.binding.finish = typeof saved.binding.finish === "string" ? saved.binding.finish : "silver";
   return saved;
 }
 
@@ -715,7 +734,7 @@ function loadState() {
     coverTheme: "olive",
     customCoverColor: "#4f5b50",
     paperTone: "washi",
-    decorativePrints: true,
+    decorativePrints: false,
     coverDisplay: "always",
     health: { summaries: {}, source: "", connection: null },
     trash: [],
@@ -997,6 +1016,9 @@ function adoptExternalState(saved, refs, { keepEdited = false } = {}) {
   }
   saved.selectedDate = state.selectedDate;
   saved.calendarFocusDate = state.calendarFocusDate;
+  saved.unlockedPacks = [...new Set([...(saved.unlockedPacks || []), ...(state.unlockedPacks || [])])];
+  if (keepEdited && state.ribbon) saved.ribbon = state.ribbon;
+  if (keepEdited && state.binding) saved.binding = state.binding;
   const currentPageChanged = !keepEdited
     && JSON.stringify(localEntry?.pageGroups || null) !== JSON.stringify(saved.entries[key]?.pageGroups || null);
   state = saved;
@@ -1646,6 +1668,10 @@ function createEntry(key) {
     title: defaultDayTitle(key),
     bookmarked: false,
     mode: "daily",
+    // A week or month page can give its left page to handwriting instead of typed notes.
+    leftInk: false,
+    // Handwriting laid over a week's or month's right page: strokes in units of the page's width.
+    marks: { left: [], right: [] },
     mood: "",
     text: "",
     html: "",
@@ -2456,6 +2482,7 @@ function selectDate(key) {
   commitSelectedDate(key);
   setMobilePage(preservedMobilePage);
   pageTurnInProgress = true;
+  swayRibbon();
   if (!startLeafTurn(direction, turnDurationNow(), previousSpread)) {
     pageTurnInProgress = false;
     return;
@@ -2684,6 +2711,7 @@ function selectPageGroup(index, options = {}) {
   commitPageGroup(targetIndex);
   setMobilePage(preservedMobilePage);
   pageTurnInProgress = true;
+  swayRibbon();
   pageTurnCompletion = complete;
   if (!startLeafTurn(direction, turnDurationNow(), previousSpread)) {
     pageTurnInProgress = false;
@@ -4135,6 +4163,9 @@ function renderMode() {
   }
   elements.journalSpread.dataset.mode = mode;
   elements.body.dataset.editorTemplate = mode;
+  applyPlanInk(entry, mode);
+  requestAnimationFrame(snapEditorToRules);
+  requestAnimationFrame(() => renderMarks());
   if (elements.entryModeLabel) elements.entryModeLabel.textContent = copy.eyebrow;
   if (elements.rightPageModeLabel) elements.rightPageModeLabel.textContent = copy.rightEyebrow;
   // The right page is titled by what it is for; the date already heads the left page.
@@ -4215,7 +4246,8 @@ function renderMode() {
 
 function modeModuleDefaults(mode) {
   const defaults = {
-    monthly: { priorities: "", memo: "" },
+    // `days` holds the few words typed in a day's box on the month's calendar, by date key.
+    monthly: { priorities: "", memo: "", days: {} },
     reading: { book: "", author: "", progress: 0, rating: 0, quote: "", reflection: "" },
     travel: { destination: "", route: "", budget: "", packing: "", keepsake: "" },
     fiveyear: { line: "" },
@@ -4247,7 +4279,7 @@ function renderCollectionView(mode) {
   if (mode === "travel") renderTravelCollection(root, data);
   if (mode === "fiveyear") renderFiveYearCollection(root, data);
   // Text areas on these pages grow with their text, like the week's; there is no corner grip.
-  requestAnimationFrame(() => root.querySelectorAll("textarea").forEach(fitTextareaToText));
+  requestAnimationFrame(() => root.querySelectorAll("textarea:not([data-day-note])").forEach(fitTextareaToText));
 }
 
 function fitTextareaToText(textarea) {
@@ -4262,21 +4294,34 @@ function renderMonthlyCollection(root, data) {
   const month = selected.getMonth();
   const first = new Date(year, month, 1);
   const start = new Date(year, month, 1 - ((first.getDay() + 6) % 7));
-  const days = [];
-  for (let index = 0; index < 42; index += 1) {
+  // A month as planners print it (and as digital planners link it): a box for each day, its number
+  // small in the corner, which opens the day's page; the rest of the box is for writing, typed here
+  // or by hand on the page's writing layer. Only as many weeks as the month needs.
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const weeks = Math.ceil((((first.getDay() + 6) % 7) + daysInMonth) / 7);
+  const notes = data.days && typeof data.days === "object" ? data.days : {};
+  const today = todayKey();
+  const cells = [];
+  for (let index = 0; index < weeks * 7; index += 1) {
     const date = new Date(start);
     date.setDate(start.getDate() + index);
     const key = toDateKey(date);
+    const inMonth = date.getMonth() === month;
     const candidate = state.entries[key];
     if (candidate) normalizeEntry(candidate, key);
     const saved = candidate && hasMeaningfulContent(candidate, key);
-    days.push(`<button type="button" data-collection-date="${key}" class="${date.getMonth() === month ? "" : "is-muted"} ${key === focusKey ? "is-current" : ""} ${saved ? "has-entry" : ""}" aria-label="打开${shortDateLabel(key)}的日页">${date.getDate()}</button>`);
+    const weekday = (date.getDay() + 6) % 7;
+    const classes = ["month-cell", inMonth ? "" : "is-muted", key === today ? "is-today" : "", key === focusKey ? "is-current" : "", saved ? "has-entry" : "", weekday === 5 ? "is-saturday" : "", weekday === 6 ? "is-sunday" : ""].filter(Boolean).join(" ");
+    const note = inMonth
+      ? `<textarea class="month-cell__note" data-day-note="${key}" rows="2" aria-label="${shortDateLabel(key)}的备注">${moduleValue(notes[key] || "")}</textarea>`
+      : "";
+    cells.push(`<div class="${classes}"><button type="button" class="month-cell__date" data-collection-date="${key}" aria-label="打开${shortDateLabel(key)}的日页">${date.getDate()}</button>${note}</div>`);
   }
   root.innerHTML = `
     <div class="collection-heading"><div><span>${headingEyebrow("monthly")}</span><h3>${year}.${String(month + 1).padStart(2, "0")}</h3></div></div>
-    <div class="collection-calendar" aria-label="月历">
-      <span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span>
-      ${days.join("")}
+    <div class="month-board" aria-label="月历" style="--weeks: ${weeks}">
+      <div class="month-board__weekdays" aria-hidden="true"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span class="is-saturday">六</span><span class="is-sunday">日</span></div>
+      <div class="month-board__cells">${cells.join("")}</div>
     </div>
     <div class="collection-fields collection-fields--split">
       <label><span>本月重点 · 最多三件</span><textarea data-module-field="priorities" placeholder="只留下真正重要的事，也可以空着">${moduleValue(data.priorities)}</textarea></label>
@@ -4344,6 +4389,15 @@ function renderFiveYearCollection(root, data) {
 }
 
 function handleCollectionInput(event) {
+  const dayNote = event.target.closest("[data-day-note]");
+  if (dayNote) {
+    const module = currentModeModule("monthly");
+    module.days = { ...(module.days || {}) };
+    if (dayNote.value.trim()) module.days[dayNote.dataset.dayNote] = dayNote.value;
+    else delete module.days[dayNote.dataset.dayNote];
+    persistState();
+    return;
+  }
   const field = event.target.closest("[data-module-field]");
   if (!field) return;
   const mode = currentEntry().mode;
@@ -4694,7 +4748,9 @@ function renderWeek() {
       const linked = document.createElement("button");
       linked.type = "button";
       linked.className = "week-day__linked";
-      linked.innerHTML = `<strong>当天记录</strong><span>${escapeHtml(linkedExcerpt || "打开当天内页")}</span>`;
+      linked.innerHTML = "日记 ›";
+      linked.title = linkedExcerpt ? `当天记录：${linkedExcerpt}` : "打开当天内页";
+      linked.setAttribute("aria-label", `打开${shortDateLabel(key)}的日记${linkedExcerpt ? `：${linkedExcerpt}` : ""}`);
       linked.addEventListener("click", () => openPageGroupForDate(key, firstLinked.pageIndex));
       card.append(linked);
     }
@@ -4726,38 +4782,61 @@ function pageGroupExcerpt(group) {
 }
 
 function addSticker(type, x, y) {
-  const preset = STICKERS[type] || STICKERS["note-butter"];
+  const item = packItem(type);
+  if (item && !isPackUnlocked(item.pack)) {
+    openPackDialog(item.pack);
+    return;
+  }
+  const preset = item ? { text: item.label, className: `pack-sticker pack-${item.pack}` } : STICKERS[type] || STICKERS["note-butter"];
   const spread = elements.journalSpread.getBoundingClientRect();
+  const width = item?.w || 92;
+  const height = item?.h || 64;
   const sticker = {
     id: crypto.randomUUID(),
-    type,
+    type: STICKERS[type] || item ? type : "note-butter",
     text: preset.text,
     className: preset.className,
-    x: clamp(x, 8, Math.max(8, spread.width - 92)),
-    y: clamp(y, 8, Math.max(8, spread.height - 64)),
-    rotate: Math.round((Math.random() * 8 - 4) * 10) / 10,
+    x: clamp(x, 8, Math.max(8, spread.width - width - 8)),
+    y: clamp(y, 8, Math.max(8, spread.height - height - 8)),
+    // Tape goes on nearly straight; paper things are laid down a little askew.
+    rotate: Math.round((Math.random() * (item?.pack === "washi" ? 4 : 8) - (item?.pack === "washi" ? 2 : 4)) * 10) / 10,
   };
+  if (item?.fields.length) sticker.fields = { date: packDateLabel(state.selectedDate) };
   currentEntry().stickers.push(sticker);
   selectedStickerId = sticker.id;
   renderStickers();
-  notify("贴纸已放到页面上");
+  const placed = elements.stickerLayer.querySelector(`[data-sticker-id="${sticker.id}"]`);
+  placed?.classList.add("is-dropping");
+  placed?.addEventListener("animationend", () => placed.classList.remove("is-dropping"), { once: true });
+  notify(item?.fields.length ? "贴好了。再点一下这张贴纸，可以改上面的字" : "贴纸已放到页面上");
   persistState();
 }
 
 function renderStickers() {
   elements.stickerLayer.innerHTML = "";
   currentEntry().stickers.forEach((sticker) => {
+    const item = packItem(sticker.type);
     const preset = STICKERS[sticker.type] || {};
     const button = document.createElement("button");
     button.type = "button";
     button.className = `placed-sticker ${sticker.className}`;
     button.classList.toggle("is-selected", sticker.id === selectedStickerId);
+    button.classList.toggle("is-dragging", Boolean(dragSticker?.moved && dragSticker.id === sticker.id));
     button.dataset.stickerId = sticker.id;
     button.style.left = `${sticker.x}px`;
     button.style.top = `${sticker.y}px`;
     button.style.setProperty("--rotate", `${sticker.rotate}deg`);
-    button.textContent = sticker.text;
-    button.setAttribute("aria-label", preset.label || preset.text || "贴纸");
+    if (item) {
+      // Painted stickers are drawn as images: cheap to move, and their filters never clash.
+      button.classList.toggle("is-editable", item.fields.length > 0);
+      button.style.width = `${item.w}px`;
+      button.style.height = `${item.h}px`;
+      button.append(packImage(sticker.type, sticker.fields, item.w, item.h));
+      button.setAttribute("aria-label", item.fields.length ? `${item.label}，再点一下可以改字` : item.label);
+    } else {
+      button.textContent = sticker.text;
+      button.setAttribute("aria-label", preset.label || preset.text || "贴纸");
+    }
     button.addEventListener("pointerdown", startStickerMove);
     button.addEventListener("click", () => {
       selectedStickerId = sticker.id;
@@ -4771,6 +4850,7 @@ function startStickerMove(event) {
   const id = event.currentTarget.dataset.stickerId;
   const sticker = currentEntry().stickers.find((candidate) => candidate.id === id);
   if (!sticker) return;
+  const wasSelected = selectedStickerId === id;
   selectedStickerId = id;
   try {
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -4784,6 +4864,7 @@ function startStickerMove(event) {
     startY: event.clientY,
     stickerX: sticker.x,
     stickerY: sticker.y,
+    wasSelected,
   };
   renderStickers();
 }
@@ -4793,6 +4874,8 @@ function moveSticker(event) {
   const sticker = currentEntry().stickers.find((candidate) => candidate.id === dragSticker.id);
   if (!sticker) return;
   const spread = elements.journalSpread.getBoundingClientRect();
+  if (!dragSticker.moved && Math.hypot(event.clientX - dragSticker.startX, event.clientY - dragSticker.startY) < 3) return;
+  dragSticker.moved = true;
   sticker.x = clamp(dragSticker.stickerX + event.clientX - dragSticker.startX, 0, spread.width - 70);
   sticker.y = clamp(dragSticker.stickerY + event.clientY - dragSticker.startY, 0, spread.height - 34);
   renderStickers();
@@ -4800,8 +4883,17 @@ function moveSticker(event) {
 
 function endStickerMove(event) {
   if (!dragSticker || event.pointerId !== dragSticker.pointerId) return;
+  const { id, wasSelected, startX, startY, moved } = dragSticker;
   dragSticker = null;
-  persistState();
+  if (moved) renderStickers();
+  // A second tap (not a drag) on a sticker with words opens them for editing.
+  const still = Math.hypot(event.clientX - startX, event.clientY - startY) < 4;
+  const sticker = currentEntry().stickers.find((candidate) => candidate.id === id);
+  if (still && wasSelected && packItem(sticker?.type)?.fields.length) {
+    openStickerEditor(id);
+    return;
+  }
+  if (!still) persistState();
 }
 
 function clamp(value, min, max) {
@@ -4819,6 +4911,1221 @@ function deleteSelectedSticker() {
   renderStickers();
   notify("已删除贴纸");
   persistState();
+}
+
+// ---- 精选系列 -------------------------------------------------------------------------------------
+// The paid series live in packs.js. Their stickers are drawn as SVG images; a series is opened by a
+// 兑换码 from 爱发电, checked here against the hashes in assets/pack-codes.json (the codes themselves
+// are never published).
+
+function packApi() {
+  return window.OpenPagesPacks || null;
+}
+
+function packItem(type) {
+  return packApi()?.items?.[type] || null;
+}
+
+function packInfo(id) {
+  const api = packApi();
+  if (!api) return null;
+  return api.list.find((pack) => pack.id === id) || (id === "all" ? api.bundle : null);
+}
+
+function packDateLabel(key) {
+  return String(key || todayKey()).replaceAll("-", ".");
+}
+
+const packImageCache = new Map();
+function cachedSvgUrl(key, draw) {
+  if (!packImageCache.has(key)) {
+    if (packImageCache.size > 200) packImageCache.clear();
+    packImageCache.set(key, `data:image/svg+xml;charset=utf-8,${encodeURIComponent(draw())}`);
+  }
+  return packImageCache.get(key);
+}
+
+function svgImage(url, width, height) {
+  const image = new Image(width, height);
+  if (url) image.src = url;
+  image.alt = "";
+  image.draggable = false;
+  image.decoding = "async";
+  return image;
+}
+
+// Painted stickers take a few to some tens of milliseconds each to draw the first time, so the
+// shelf's thumbnails are painted one by one while the browser is idle, never in a single long task.
+const packPaintQueue = [];
+let packPaintScheduled = false;
+function schedulePackPaint() {
+  if (packPaintScheduled || !packPaintQueue.length) return;
+  packPaintScheduled = true;
+  const run = (deadline) => {
+    packPaintScheduled = false;
+    do {
+      packPaintQueue.shift()?.();
+    } while (packPaintQueue.length && (deadline?.timeRemaining?.() ?? 0) > 16);
+    schedulePackPaint();
+  };
+  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 500 });
+  else window.setTimeout(run, 16);
+}
+
+function packImage(type, values, width, height, { lazy = false } = {}) {
+  const api = packApi();
+  if (!api) return document.createTextNode("");
+  const words = api.valuesFor(type, values || {});
+  const key = `${type}|${JSON.stringify(words)}`;
+  const draw = () => cachedSvgUrl(key, () => api.art(type, words));
+  if (!lazy || packImageCache.has(key)) return svgImage(draw(), width, height);
+  const image = svgImage("", width, height);
+  image.classList.add("is-painting");
+  packPaintQueue.push(() => {
+    image.src = draw();
+    image.classList.remove("is-painting");
+  });
+  schedulePackPaint();
+  return image;
+}
+
+// The ribbon that goes with each cover, as a stationer would pair them: terracotta on olive, forest
+// green on camel, ochre on blue-black, antique gold on burgundy, navy on natural. A custom cover
+// gets a lighter tint of its own colour.
+const THEME_RIBBONS = {
+  olive: "#b06a5e",
+  camel: "#4f6c58",
+  blueblack: "#c09445",
+  burgundy: "#bb9a5e",
+  natural: "#3d4c66",
+};
+function themeRibbonColors() {
+  const base = state.coverTheme === "custom"
+    ? mixHex(normalizeHex(state.customCoverColor), "#ffffff", 0.38)
+    : THEME_RIBBONS[state.coverTheme] || THEME_RIBBONS.olive;
+  return { base, light: mixHex(base, "#ffffff", 0.3), dark: mixHex(base, "#000000", 0.28) };
+}
+
+function ribbonImage(style, charm, length) {
+  const api = packApi();
+  const height = length + (charm === "cut" ? 2 : 34);
+  const colors = style === "theme" ? themeRibbonColors() : null;
+  const key = `ribbon|${style}|${colors ? colors.base : ""}|${charm}|${length}`;
+  return svgImage(cachedSvgUrl(key, () => api.ribbon(colors || style, charm, length)), 34, height);
+}
+
+// Rings through the gutter (or along a single page's binding edge), redrawn when the spread's
+// height, its page layout or the choice changes.
+function renderRings() {
+  const spread = elements.journalSpread;
+  const api = packApi();
+  if (!spread || !api?.rings) return;
+  let element = spread.querySelector(":scope > .ring-binding");
+  const binding = state.binding || {};
+  spread.classList.toggle("has-rings", binding.kind === "rings");
+  if (binding.kind !== "rings") {
+    element?.remove();
+    return;
+  }
+  const height = spread.clientHeight;
+  if (!height) return;
+  const pages = [...spread.querySelectorAll(":scope > .paper-page")].filter((page) => getComputedStyle(page).display !== "none");
+  const two = pages.length > 1;
+  if (!element) {
+    element = document.createElement("div");
+    element.className = "ring-binding";
+    element.setAttribute("aria-hidden", "true");
+    spread.append(element);
+  }
+  const finish = binding.finish in api.ringFinishes ? binding.finish : "silver";
+  const key = `${finish}|${two}|${height}`;
+  element.classList.toggle("is-single", !two);
+  if (element.dataset.key === key) return;
+  element.dataset.key = key;
+  element.replaceChildren(svgImage(cachedSvgUrl(`rings|${key}`, () => api.rings(height, two, finish)), two ? 72 : 38, height));
+}
+
+function readStoredPacks() {
+  try {
+    const list = JSON.parse(localStorage.getItem(PACKS_KEY) || "[]");
+    return Array.isArray(list) ? list.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function syncUnlockedPacks() {
+  state.unlockedPacks = [...new Set([...(state.unlockedPacks || []), ...readStoredPacks()])];
+}
+
+function isPackUnlocked(pack) {
+  const list = state.unlockedPacks || [];
+  return list.includes("all") || list.includes(pack);
+}
+
+function unlockPack(pack) {
+  state.unlockedPacks = [...new Set([...(state.unlockedPacks || []), pack])];
+  try {
+    localStorage.setItem(PACKS_KEY, JSON.stringify(state.unlockedPacks));
+  } catch {
+    // Storage blocked: the unlock still travels with the journal and its backups.
+  }
+  persistState();
+  renderPackShelf();
+  renderRibbon();
+}
+
+let packCodeList = null;
+async function loadPackCodes() {
+  if (packCodeList) return packCodeList;
+  const response = await fetch("./assets/pack-codes.json", { cache: "no-cache" });
+  if (!response.ok) throw new Error(`pack codes ${response.status}`);
+  packCodeList = await response.json();
+  return packCodeList;
+}
+
+// "washi 7k3m q9tx", "WASHI-7K3M-Q9TX" and "WASHI7K3MQ9TX" are the same code.
+function canonicalPackCode(raw) {
+  const compact = String(raw || "").toUpperCase().replace(/[^0-9A-Z]/g, "");
+  const prefix = Object.keys(PACK_CODE_PREFIXES).find((candidate) => compact.startsWith(candidate) && compact.length === candidate.length + 8);
+  if (!prefix) return null;
+  const rest = compact.slice(prefix.length);
+  return { pack: PACK_CODE_PREFIXES[prefix], code: `${prefix}-${rest.slice(0, 4)}-${rest.slice(4)}` };
+}
+
+async function sha256Hex(text) {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function redeemPackCode(raw) {
+  const parsed = canonicalPackCode(raw);
+  if (!parsed) return { ok: false, message: "兑换码的格式不对，应该像这样：WASHI-7K3M-Q9TX" };
+  if (!globalThis.crypto?.subtle) return { ok: false, message: "这个地址暂时不能验证兑换码，请从 https 开头的地址打开开页" };
+  let list;
+  try {
+    list = await loadPackCodes();
+  } catch {
+    return { ok: false, message: "需要联网验证一次兑换码，连上网再试" };
+  }
+  const hash = (await sha256Hex(`openpages-pack:${parsed.code}`)).slice(0, 16);
+  if (!(list.packs?.[parsed.pack] || []).includes(hash)) {
+    return { ok: false, message: "没有找到这个兑换码，请再核对一下。码里不会出现 0、O、1、I" };
+  }
+  unlockPack(parsed.pack);
+  return { ok: true, pack: parsed.pack };
+}
+
+function renderPackShelf() {
+  const shelf = document.getElementById("packShelf");
+  const api = packApi();
+  if (!shelf) return;
+  if (!api) {
+    shelf.hidden = true;
+    return;
+  }
+  const intro = document.createElement("div");
+  intro.className = "pack-shelf__intro";
+  const introText = document.createElement("div");
+  introText.innerHTML = "<strong>精选系列</strong><span>手绘的胶带、票据、植物和书签。每套 ¥3，四套一起 ¥9。</span>";
+  const codeButton = document.createElement("button");
+  codeButton.type = "button";
+  codeButton.className = "pack-shelf__code";
+  codeButton.textContent = "输入兑换码";
+  codeButton.addEventListener("click", () => openPackDialog(null));
+  intro.append(introText, codeButton);
+  const cards = api.list.map((pack) => {
+    const owned = isPackUnlocked(pack.id);
+    const card = document.createElement("article");
+    card.className = `pack-card pack-card--${pack.id}`;
+    card.classList.toggle("is-owned", owned);
+    const head = document.createElement("header");
+    head.className = "pack-card__head";
+    const name = document.createElement("h4");
+    name.textContent = pack.name;
+    const badge = document.createElement("span");
+    badge.className = "pack-card__badge";
+    badge.textContent = owned ? "已拥有" : pack.price;
+    const blurb = document.createElement("p");
+    blurb.textContent = pack.blurb;
+    head.append(name, badge);
+    const grid = document.createElement("div");
+    grid.className = "pack-card__items";
+    if (pack.id === "ribbon") renderRibbonPicker(grid, owned);
+    else {
+      Object.entries(api.items).filter(([, item]) => item.pack === pack.id).forEach(([type, item]) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "pack-sample";
+        button.dataset.packItem = type;
+        button.title = item.fields.length ? `${item.label} · 可以改字` : item.label;
+        button.setAttribute("aria-label", owned ? `贴上${item.label}` : `${item.label}（未解锁）`);
+        button.append(packImage(type, { date: packDateLabel(state.selectedDate) }, item.w, item.h, { lazy: true }));
+        if (!owned) button.insertAdjacentHTML("beforeend", '<span class="pack-lock" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3.5 5V3.8a2.5 2.5 0 0 1 5 0V5M2.8 5h6.4v4.6H2.8Z"/></svg></span>');
+        button.addEventListener("click", () => {
+          if (!isPackUnlocked(pack.id)) {
+            openPackDialog(pack.id);
+            return;
+          }
+          const spread = elements.journalSpread.getBoundingClientRect();
+          addSticker(type, spread.width / 2 - item.w / 2, 120);
+          if (window.matchMedia("(max-width: 760px)").matches) window.setTimeout(closeMobilePanel, 140);
+        });
+        grid.append(button);
+      });
+    }
+    card.append(head, blurb, grid);
+    if (!owned) {
+      const unlock = document.createElement("button");
+      unlock.type = "button";
+      unlock.className = "pack-card__unlock";
+      unlock.textContent = `解锁这套 · ${pack.price}`;
+      unlock.addEventListener("click", () => openPackDialog(pack.id));
+      card.append(unlock);
+    }
+    return card;
+  });
+  shelf.replaceChildren(intro, ...cards);
+}
+
+function renderRibbonPicker(grid, owned) {
+  const api = packApi();
+  const choice = state.ribbon || {};
+  const row = (label, buttons) => {
+    const wrap = document.createElement("div");
+    wrap.className = "ribbon-picker";
+    const caption = document.createElement("span");
+    caption.className = "ribbon-picker__label";
+    caption.textContent = label;
+    const list = document.createElement("div");
+    list.className = "ribbon-picker__list";
+    list.append(...buttons);
+    wrap.append(caption, list);
+    return wrap;
+  };
+  const option = ({ pressed, locked, label, image, onPick }) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "ribbon-option";
+    button.setAttribute("aria-pressed", String(pressed));
+    button.title = label;
+    button.setAttribute("aria-label", locked ? `${label}（未解锁）` : label);
+    if (image) button.append(image);
+    else button.insertAdjacentHTML("beforeend", '<span class="ribbon-option__none" aria-hidden="true"></span>');
+    if (locked) button.insertAdjacentHTML("beforeend", '<span class="pack-lock" aria-hidden="true"><svg viewBox="0 0 12 12"><path d="M3.5 5V3.8a2.5 2.5 0 0 1 5 0V5M2.8 5h6.4v4.6H2.8Z"/></svg></span>');
+    button.addEventListener("click", () => {
+      if (locked) {
+        openPackDialog("ribbon");
+        return;
+      }
+      onPick();
+      persistState();
+      renderRibbon();
+      renderPackShelf();
+    });
+    return button;
+  };
+  const styles = [option({ pressed: choice.style === "none", locked: false, label: "不用书签带", image: null, onPick: () => { state.ribbon.style = "none"; } })]
+    .concat(Object.entries(api.ribbonStyles).map(([id, style]) => option({
+      pressed: choice.style === id,
+      locked: !style.free && !owned,
+      label: style.name,
+      image: ribbonImage(id, "cut", 40),
+      onPick: () => { state.ribbon.style = id; },
+    })));
+  const shown = choice.style in api.ribbonStyles ? choice.style : "mist";
+  const charms = Object.entries(api.ribbonCharms).map(([id, charm]) => option({
+    pressed: choice.charm === id,
+    locked: !charm.free && !owned,
+    label: charm.name,
+    image: ribbonImage(shown, id, 10),
+    onPick: () => {
+      state.ribbon.charm = id;
+      if (state.ribbon.style === "none") state.ribbon.style = "mist";
+    },
+  }));
+  const binding = state.binding || {};
+  const ringOption = (id, finish) => {
+    const swatch = document.createElement("span");
+    swatch.className = "ring-swatch";
+    swatch.style.setProperty("--ring-light", finish.light);
+    swatch.style.setProperty("--ring-mid", finish.mid);
+    swatch.style.setProperty("--ring-dark", finish.dark);
+    return option({
+      pressed: binding.kind === "rings" && binding.finish === id,
+      locked: !finish.free && !owned,
+      label: finish.name,
+      image: swatch,
+      onPick: () => { state.binding = { kind: "rings", finish: id }; },
+    });
+  };
+  const sewn = document.createElement("span");
+  sewn.className = "sewn-swatch";
+  const bindings = [option({ pressed: binding.kind !== "rings", locked: false, label: "缝线装订", image: sewn, onPick: () => { state.binding = { kind: "sewn", finish: binding.finish || "silver" }; } })]
+    .concat(Object.entries(api.ringFinishes).map(([id, finish]) => ringOption(id, finish)));
+  grid.append(row("丝带", styles), row("坠饰", charms), row("装订", bindings));
+}
+
+// The ribbon lies from the head of the gutter down the right page's inner margin (on a single page,
+// along its binding edge), redrawn only when its length or choice changes.
+function renderRibbon() {
+  renderRings();
+  const spread = elements.journalSpread;
+  const api = packApi();
+  if (!spread || !api) return;
+  let marker = spread.querySelector(":scope > .ribbon-marker");
+  const choice = state.ribbon || {};
+  if (choice.style === "none") {
+    marker?.remove();
+    return;
+  }
+  const height = spread.clientHeight;
+  if (!height) return;
+  if (!marker) {
+    marker = document.createElement("div");
+    marker.className = "ribbon-marker";
+    marker.setAttribute("aria-hidden", "true");
+    spread.append(marker);
+  }
+  const style = choice.style in api.ribbonStyles ? choice.style : "mist";
+  const charm = choice.charm in api.ribbonCharms ? choice.charm : "cut";
+  const length = Math.round(Math.max(120, height - 18 - (charm === "cut" ? 34 : 64)));
+  const key = `${style}|${style === "theme" ? themeRibbonColors().base : ""}|${charm}|${length}`;
+  if (marker.dataset.key === key) return;
+  marker.dataset.key = key;
+  marker.replaceChildren(ribbonImage(style, charm, length));
+}
+
+// ---- A week or month written by hand ----
+// The handwriting card (the daily page's right-hand canvas) moves onto the left page of a week or
+// month that asks for it; its strokes are that page's own. Back on a typed page, it goes home.
+const canvasHome = { parent: null, next: null };
+
+function applyPlanInk(entry, mode) {
+  const card = elements.inkCanvas?.closest(".canvas-card");
+  const left = elements.journalSpread?.querySelector(":scope > .paper-page--left");
+  const editorField = document.getElementById("journalEditor")?.closest(".field");
+  if (!card || !left) return;
+  if (!canvasHome.parent) {
+    canvasHome.parent = card.parentElement;
+    canvasHome.next = card.nextSibling;
+  }
+  // Superseded by the one toolbar: any page takes the pen now, so no page is turned into a canvas.
+  const planMode = false;
+  const on = false;
+  elements.journalSpread.dataset.leftInk = on ? "on" : "off";
+  renderPlanSwitch(planMode, on, editorField || left.lastElementChild);
+  if (on && card.parentElement !== left) {
+    (editorField || left.lastElementChild).after(card);
+    restoreInk();
+  } else if (!on && card.parentElement !== canvasHome.parent) {
+    canvasHome.parent.insertBefore(card, canvasHome.next);
+    restoreInk();
+  }
+}
+
+function renderPlanSwitch(visible, on, anchor) {
+  let control = document.getElementById("planInputSwitch");
+  if (!control) {
+    control = document.createElement("div");
+    control.id = "planInputSwitch";
+    control.className = "plan-switch";
+    control.setAttribute("role", "group");
+    control.setAttribute("aria-label", "这一页用文字还是手写");
+    control.innerHTML = '<button type="button" data-plan-input="text">文字</button><button type="button" data-plan-input="ink">手写</button>';
+    control.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-plan-input]");
+      if (!button) return;
+      const entry = currentEntry();
+      const ink = button.dataset.planInput === "ink";
+      if (Boolean(entry.leftInk) === ink) return;
+      entry.leftInk = ink;
+      renderMode();
+      elements.body.dataset.inputMode = ink ? "ink" : "write";
+      persistState();
+      notify(ink ? "这一页改为手写，可以随意画、写、贴" : "这一页改回文字");
+    });
+    anchor?.before(control);
+  } else if (anchor && control.nextElementSibling !== anchor && control !== anchor.previousElementSibling) {
+    anchor.before(control);
+  }
+  control.hidden = !visible;
+  control.querySelectorAll("[data-plan-input]").forEach((button) => {
+    button.setAttribute("aria-pressed", String((button.dataset.planInput === "ink") === on));
+  });
+}
+
+// ---- One toolbar, every page ----
+// As in Notability: the tool in the bar decides what a touch does, on any page. 键入 types and taps
+// as always; 钢笔 and 荧光笔 write over both pages of any day, week or month (on a transparent layer
+// per page, so typed text and boxes beneath are untouched); 橡皮 lifts whole strokes. Strokes are
+// kept per page side in units of the page's width, so they sit in the same place on phone and desk.
+const PEN_SIZES = { 1: 0.0028, 2: 0.0042, 3: 0.0064 };
+const MARKER_WIDTH = 0.026;
+const HIGHLIGHTS = ["#f2d36b", "#f2a7b4", "#9fd0b4", "#9fc3e8"];
+let activeTool = "type";
+let toolColor = null;
+let highlightColor = HIGHLIGHTS[0];
+let toolSize = 2;
+// Pen kinds, as on a stationer's counter: 钢笔 swells with pressure, 签字笔 runs even, 铅笔 leaves
+// graphite grain, 毛笔 thins and thickens the most.
+const PEN_KINDS = { fountain: "钢笔", gel: "签字笔", pencil: "铅笔", brush: "毛笔" };
+let penKind = "fountain";
+let markStroke = null;
+const markHistory = [];
+const markFuture = [];
+
+function marksFor(entry, side) {
+  if (Array.isArray(entry.marks)) entry.marks = { left: [], right: entry.marks };
+  if (!entry.marks || typeof entry.marks !== "object") entry.marks = { left: [], right: [] };
+  if (!Array.isArray(entry.marks[side])) entry.marks[side] = [];
+  return entry.marks[side];
+}
+
+function setMarksFor(entry, side, list, record = true) {
+  marksFor(entry, side);
+  if (record) {
+    markHistory.push({ key: state.selectedDate, group: entry.activePageGroup || 0, side, before: entry.marks[side] });
+    if (markHistory.length > 80) markHistory.shift();
+    markFuture.length = 0;
+  }
+  entry.marks = { ...entry.marks, [side]: list };
+}
+
+function inkColors() {
+  return (INK_PALETTES[state.inkPalette] || INK_PALETTES.stationery).colors.slice(0, 6);
+}
+
+function setTool(tool) {
+  activeTool = ["type", "pen", "marker", "eraser"].includes(tool) ? tool : "type";
+  elements.body.dataset.tool = activeTool;
+  elements.journalSpread.dataset.marking = activeTool === "type" ? "off" : "on";
+  if (activeTool !== "type") document.activeElement?.blur?.();
+  renderToolDock();
+  renderMarks();
+}
+
+function renderToolDock() {
+  const host = document.querySelector(".context-tools");
+  if (!host) return;
+  let dock = document.getElementById("toolDock");
+  if (!dock) {
+    dock = document.createElement("div");
+    dock.id = "toolDock";
+    dock.className = "tool-dock";
+    dock.setAttribute("role", "toolbar");
+    dock.setAttribute("aria-label", "书写工具");
+    dock.innerHTML = `
+      <div class="tool-dock__tools" role="group" aria-label="工具">
+        <button type="button" data-tool="type" title="键入" aria-label="键入"><svg viewBox="0 0 20 20"><path d="M5 5.5h10M10 5.5v10M7.5 15.5h5"/></svg></button>
+        <button type="button" data-tool="pen" title="钢笔" aria-label="钢笔"><svg viewBox="0 0 20 20"><path d="M4.5 15.5l1.2-4 7.6-7.6a1.6 1.6 0 0 1 2.3 2.3l-7.6 7.6Z M11.8 5.4l2.8 2.8"/></svg></button>
+        <button type="button" data-tool="marker" title="荧光笔" aria-label="荧光笔"><svg viewBox="0 0 20 20"><path d="M6 13.5l6.5-8.5 3 2.3-6.5 8.5H6Z M4 17h7"/></svg></button>
+        <button type="button" data-tool="eraser" title="橡皮" aria-label="橡皮"><svg viewBox="0 0 20 20"><path d="M8 16h8M4.6 12.6l6.8-6.8a1.6 1.6 0 0 1 2.3 0l2 2a1.6 1.6 0 0 1 0 2.3L10 16H7.9a1.6 1.6 0 0 1-1.1-.5Z M8 9.3l3.5 3.5"/></svg></button>
+      </div>
+      <div class="tool-dock__ink" role="group" aria-label="笔型、颜色和粗细"></div>`;
+    dock.addEventListener("click", (event) => {
+      const tool = event.target.closest("[data-tool]");
+      const color = event.target.closest("[data-tool-color]");
+      const size = event.target.closest("[data-tool-size]");
+      const kind = event.target.closest("[data-pen-kind]");
+      if (kind) penKind = kind.dataset.penKind;
+      if (event.target.closest("[data-clear-page]")) clearPageMarks();
+      if (tool) {
+        setTool(tool.dataset.tool);
+        return;
+      }
+      if (color) {
+        if (activeTool === "marker") highlightColor = color.dataset.toolColor;
+        else toolColor = color.dataset.toolColor;
+        if (activeTool === "eraser" || activeTool === "type") setTool("pen");
+      }
+      if (size) toolSize = Number(size.dataset.toolSize) || 2;
+      if (event.target.closest("[data-tool-undo]")) undoMark();
+      if (event.target.closest("[data-tool-redo]")) redoMark();
+      renderToolDock();
+    });
+    host.prepend(dock);
+    dock.addEventListener("input", (event) => {
+      if (!event.target.matches("[data-custom-color]")) return;
+      if (activeTool === "marker") highlightColor = event.target.value;
+      else toolColor = event.target.value;
+      renderToolDock();
+    });
+  }
+  if (!toolColor) toolColor = inkColors()[0];
+  const ink = dock.querySelector(".tool-dock__ink");
+  const colors = activeTool === "marker" ? HIGHLIGHTS : inkColors();
+  const current = activeTool === "marker" ? highlightColor : toolColor;
+  const kinds = activeTool === "pen"
+    ? `<span class="tool-pens">${Object.entries(PEN_KINDS).map(([id, name]) => `<button type="button" class="tool-pen" data-pen-kind="${id}" aria-pressed="${id === penKind}" title="${name}" aria-label="${name}">${penIcon(id, toolColor)}</button>`).join("")}</span><span class="tool-dock__sep" aria-hidden="true"></span>`
+    : "";
+  const custom = !colors.includes(current) ? current : "";
+  ink.innerHTML = activeTool === "eraser"
+    ? `<span class="tool-hint">划过哪一笔，就擦掉整笔</span><span class="tool-dock__sep" aria-hidden="true"></span><button type="button" class="tool-kind" data-clear-page>清空本页手写</button><span class="tool-dock__sep" aria-hidden="true"></span>`
+    + `<button type="button" class="tool-step" data-tool-undo aria-label="撤销一笔" ${markHistory.length ? "" : "disabled"}><svg viewBox="0 0 20 20"><path d="M7.5 6.5L4 10l3.5 3.5M4.5 10h7a4 4 0 0 1 0 8"/></svg></button>`
+    + `<button type="button" class="tool-step" data-tool-redo aria-label="重做一笔" ${markFuture.length ? "" : "disabled"}><svg viewBox="0 0 20 20"><path d="M12.5 6.5L16 10l-3.5 3.5M15.5 10h-7a4 4 0 0 0 0 8"/></svg></button>`
+    : `${kinds}<span class="tool-group">${colors.map((color) => `<button type="button" class="tool-swatch" data-tool-color="${color}" style="--swatch:${color}" aria-label="颜色" aria-pressed="${color === current}"></button>`).join("")}`
+    + `<label class="tool-swatch tool-swatch--custom" style="--swatch:${custom || "conic-gradient(#e66 0 25%, #eb5 0 50%, #5b8 0 75%, #58c 0)"}" aria-pressed="${Boolean(custom)}" title="自定义颜色"><input type="color" data-custom-color value="${/^#[0-9a-f]{6}$/i.test(current) ? current : "#2f3330"}" aria-label="自定义颜色"></label></span>`
+    + `<span class="tool-dock__sep" aria-hidden="true"></span>`
+    + (activeTool === "pen" ? `<span class="tool-group">${[1, 2, 3].map((size) => `<button type="button" class="tool-size" data-tool-size="${size}" aria-label="${["细", "中", "粗"][size - 1]}" aria-pressed="${size === toolSize}"><i style="--dot:${2 + size * 2}px"></i></button>`).join("")}</span><span class="tool-dock__sep" aria-hidden="true"></span>` : "")
+    + (activeTool === "eraser" ? "" : `<button type="button" class="tool-step" data-tool-undo aria-label="撤销一笔" ${markHistory.length ? "" : "disabled"}><svg viewBox="0 0 20 20"><path d="M7.5 6.5L4 10l3.5 3.5M4.5 10h7a4 4 0 0 1 0 8"/></svg></button>`
+    + `<button type="button" class="tool-step" data-tool-redo aria-label="重做一笔" ${markFuture.length ? "" : "disabled"}><svg viewBox="0 0 20 20"><path d="M12.5 6.5L16 10l-3.5 3.5M15.5 10h-7a4 4 0 0 0 0 8"/></svg></button>`);
+  updatePenCursor();
+  placeToolDock();
+  dock.querySelectorAll("[data-tool]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.tool === activeTool)));
+}
+
+// A small drawing of each pen, standing in the tray, its tip in the current ink.
+function penIcon(kind, color) {
+  const ink = color || "#2f3330";
+  const body = "#f4f2ec";
+  const edge = "rgba(0,0,0,0.18)";
+  const shapes = {
+    fountain: `<rect x="5.5" y="17" width="11" height="27" rx="2.5" fill="${body}" stroke="${edge}" stroke-width="0.6"/><rect x="5.5" y="17" width="11" height="4" fill="${ink}"/><path d="M6.5 17 L11 3 L15.5 17 Z" fill="#c9ccd2" stroke="${edge}" stroke-width="0.5"/><path d="M11 6 V14" stroke="#8b9097" stroke-width="0.7"/><circle cx="11" cy="4.2" r="1.1" fill="${ink}"/>`,
+    gel: `<rect x="6.5" y="15" width="9" height="29" rx="2" fill="${body}" stroke="${edge}" stroke-width="0.6"/><rect x="6.5" y="22" width="9" height="5" fill="${ink}" opacity="0.85"/><path d="M7.5 15 L10 7 H12 L14.5 15 Z" fill="#d8dadf" stroke="${edge}" stroke-width="0.5"/><rect x="10.2" y="3.5" width="1.6" height="4" rx="0.8" fill="${ink}"/>`,
+    pencil: `<rect x="5.5" y="16" width="11" height="28" fill="${ink}" opacity="0.9"/><path d="M5.5 16 L11 4 L16.5 16 Z" fill="#e9cfa4" stroke="${edge}" stroke-width="0.5"/><path d="M9.2 8 L11 4 L12.8 8 Z" fill="#3a3a3c"/><path d="M9.2 16 V44 M12.8 16 V44" stroke="rgba(255,255,255,0.25)" stroke-width="0.6"/>`,
+    brush: `<rect x="7" y="20" width="8" height="24" rx="2" fill="#b98a5a" stroke="${edge}" stroke-width="0.5"/><rect x="6.5" y="14" width="9" height="7" rx="1" fill="#c9ccd2" stroke="${edge}" stroke-width="0.5"/><path d="M7 14 C7 8 9.5 4.5 11 2.5 C12.5 4.5 15 8 15 14 Z" fill="${ink}"/>`,
+  };
+  return `<svg viewBox="0 0 22 44" aria-hidden="true">${shapes[kind] || shapes.fountain}</svg>`;
+}
+
+function clearPageMarks() {
+  const entry = currentEntry();
+  const sides = ["left", "right"].filter((side) => marksFor(entry, side).length);
+  if (!sides.length) {
+    notify("这一页还没有手写");
+    return;
+  }
+  sides.forEach((side) => setMarksFor(entry, side, []));
+  persistState();
+  renderMarks();
+  notify("已清空本页手写", { label: "撤销", run: () => sides.forEach(() => undoMark()) });
+}
+
+// The cursor over the page shows the nib: a dot of the ink's colour and width (a soft bar for the
+// highlighter, a ring for the eraser).
+function updatePenCursor() {
+  const spread = elements.journalSpread;
+  if (!spread) return;
+  if (activeTool === "type") {
+    spread.style.removeProperty("--pen-cursor");
+    return;
+  }
+  const width = spread.querySelector(":scope > .paper-page")?.clientWidth || 560;
+  const color = activeTool === "marker" ? highlightColor : toolColor || "#2f3330";
+  const nib = activeTool === "eraser" ? 18 : activeTool === "marker" ? Math.round(MARKER_WIDTH * width) : Math.max(3, Math.round((PEN_SIZES[toolSize] || PEN_SIZES[2]) * width * 1.4));
+  const box = Math.max(20, nib + 8);
+  const c = box / 2;
+  const shape = activeTool === "eraser"
+    ? `<circle cx="${c}" cy="${c}" r="${nib / 2}" fill="rgba(255,255,255,0.6)" stroke="#5d645e" stroke-width="1.2"/>`
+    : activeTool === "marker"
+      ? `<rect x="${c - 2}" y="${c - nib / 2}" width="4" height="${nib}" rx="1" fill="${color}" fill-opacity="0.6" stroke="rgba(0,0,0,0.25)"/>`
+      : `<circle cx="${c}" cy="${c}" r="${nib / 2}" fill="${color}" stroke="#fff" stroke-width="1"/>`;
+  const svgCursor = `<svg xmlns="http://www.w3.org/2000/svg" width="${box}" height="${box}">${shape}</svg>`;
+  spread.style.setProperty("--pen-cursor", `url("data:image/svg+xml,${encodeURIComponent(svgCursor)}") ${c} ${c}, crosshair`);
+}
+
+// On a phone the tools share the second row of the bar (between 左页/右页 and the panel buttons);
+// on a wider screen they stand in the bar's middle.
+let phoneLayout = null;
+function placeToolDock() {
+  const dock = document.getElementById("toolDock");
+  if (!dock) return;
+  if (!phoneLayout) {
+    phoneLayout = window.matchMedia("(max-width: 720px)");
+    phoneLayout.addEventListener?.("change", placeToolDock);
+  }
+  if (phoneLayout.matches) {
+    const insert = document.querySelector(".document-tools .insert-tools");
+    if (insert && dock.nextElementSibling !== insert) insert.before(dock);
+  } else {
+    const host = document.querySelector(".context-tools");
+    if (host && dock.parentElement !== host) host.prepend(dock);
+  }
+}
+function undoMark() {
+  const step = markHistory.pop();
+  if (!step || step.key !== state.selectedDate) return;
+  const entry = currentEntry();
+  markFuture.push({ ...step, before: marksFor(entry, step.side) });
+  entry.marks = { ...entry.marks, [step.side]: step.before };
+  persistState();
+  renderMarks();
+}
+
+function redoMark() {
+  const step = markFuture.pop();
+  if (!step || step.key !== state.selectedDate) return;
+  const entry = currentEntry();
+  markHistory.push({ ...step, before: marksFor(entry, step.side) });
+  entry.marks = { ...entry.marks, [step.side]: step.before };
+  persistState();
+  renderMarks();
+}
+
+function ensureMarkLayer(page, side) {
+  let canvas = page.querySelector(":scope > canvas.mark-layer");
+  if (canvas) return canvas;
+  canvas = document.createElement("canvas");
+  canvas.className = "mark-layer";
+  canvas.dataset.side = side;
+  canvas.setAttribute("aria-label", "页面书写层");
+  page.prepend(canvas);
+  canvas.addEventListener("pointerdown", startMark);
+  canvas.addEventListener("pointermove", moveMark);
+  canvas.addEventListener("pointerup", endMark);
+  canvas.addEventListener("pointercancel", endMark);
+  if (typeof ResizeObserver === "function") new ResizeObserver(() => requestAnimationFrame(() => renderMarks())).observe(page);
+  return canvas;
+}
+
+function markPoint(event, canvas) {
+  const rect = canvas.getBoundingClientRect();
+  const width = rect.width || 1;
+  const pressure = event.pointerType === "pen" && event.pressure ? event.pressure : 0.5;
+  return [Math.round(((event.clientX - rect.left) / width) * 10000) / 10000, Math.round(((event.clientY - rect.top) / width) * 10000) / 10000, Math.round(pressure * 100) / 100];
+}
+
+function startMark(event) {
+  if (activeTool === "type") return;
+  if (elements.stylusOnlyToggle?.checked && event.pointerType === "touch") return;
+  event.preventDefault();
+  const canvas = event.currentTarget;
+  try {
+    canvas.setPointerCapture(event.pointerId);
+  } catch {
+    // The pointer has gone; the stroke still collects what arrives.
+  }
+  if (activeTool === "eraser") {
+    markStroke = { erase: true, side: canvas.dataset.side, canvas, removed: 0, before: marksFor(currentEntry(), canvas.dataset.side) };
+    eraseAt(event, canvas);
+    return;
+  }
+  markStroke = { side: canvas.dataset.side, canvas, t: activeTool, b: activeTool === "pen" ? penKind : undefined, c: activeTool === "marker" ? highlightColor : toolColor, s: toolSize, p: [markPoint(event, canvas)] };
+}
+
+function eraseAt(event, canvas) {
+  const entry = currentEntry();
+  const side = canvas.dataset.side;
+  const [x, y] = markPoint(event, canvas);
+  const reach = 0.018;
+  const list = marksFor(entry, side);
+  const kept = list.filter((stroke) => !stroke.p.some(([px, py]) => Math.hypot(px - x, py - y) < reach));
+  if (kept.length !== list.length) {
+    entry.marks = { ...entry.marks, [side]: kept };
+    markStroke.removed += list.length - kept.length;
+    renderMarks();
+  }
+}
+
+function moveMark(event) {
+  if (!markStroke) return;
+  if (markStroke.erase) {
+    eraseAt(event, event.currentTarget);
+    return;
+  }
+  const events = typeof event.getCoalescedEvents === "function" ? event.getCoalescedEvents() : [event];
+  (events.length ? events : [event]).forEach((sample) => markStroke.p.push(markPoint(sample, event.currentTarget)));
+  renderMarks(markStroke);
+}
+
+function endMark() {
+  if (!markStroke) return;
+  const entry = currentEntry();
+  if (markStroke.erase) {
+    if (markStroke.removed) {
+      markHistory.push({ key: state.selectedDate, group: entry.activePageGroup || 0, side: markStroke.side, before: markStroke.before });
+      markFuture.length = 0;
+      persistState();
+    }
+  } else {
+    const { side, canvas, ...stroke } = markStroke;
+    setMarksFor(entry, side, [...marksFor(entry, side), stroke]);
+    persistState();
+  }
+  markStroke = null;
+  renderMarks();
+  renderToolDock();
+}
+
+function drawMark(ctx, stroke, width) {
+  if (!Array.isArray(stroke?.p) || !stroke.p.length) return;
+  const points = stroke.p.map(([x, y, pressure = 0.5]) => [x * width, y * width, pressure]);
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = stroke.c;
+  ctx.fillStyle = stroke.c;
+  if (stroke.t === "marker") {
+    ctx.globalCompositeOperation = "multiply";
+    ctx.globalAlpha = 0.42;
+    ctx.lineCap = "butt";
+    ctx.lineWidth = MARKER_WIDTH * width;
+    ctx.beginPath();
+    ctx.moveTo(points[0][0], points[0][1]);
+    points.slice(1).forEach(([x, y]) => ctx.lineTo(x, y));
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
+  const base = (PEN_SIZES[stroke.s] || PEN_SIZES[2]) * width;
+  if (points.length === 1) {
+    ctx.beginPath();
+    ctx.arc(points[0][0], points[0][1], Math.max(0.8, base / 2), 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    return;
+  }
+  // Each kind is one smooth outline filled at once (no beads where segments meet), its width
+  // following pressure in its own way.
+  const kind = stroke.b || "fountain";
+  if (points.length > 1) {
+    const smooth = smoothPoints(points);
+    const widthAt = (i, n) => {
+      const pressure = smooth[i][2];
+      const ends = Math.min(1, (i + 1) / 5, (n - i) / 5 + 0.25);
+      if (kind === "gel") return Math.max(0.9, base * 1.05);
+      if (kind === "brush") return Math.max(0.6, base * (0.3 + 2.2 * pressure) * (0.3 + 0.7 * ends));
+      if (kind === "pencil") return Math.max(0.7, base * 0.75);
+      return Math.max(0.8, base * (0.55 + 0.9 * pressure) * (0.55 + 0.45 * ends));
+    };
+    ctx.globalAlpha = kind === "pencil" ? 0.78 : 1;
+    fillStrokeOutline(ctx, smooth, widthAt);
+    if (kind === "pencil") {
+      ctx.globalAlpha = 0.22;
+      fillStrokeOutline(ctx, smooth.map(([x, y, p]) => [x + 0.5, y + 0.4, p]), (i, n) => widthAt(i, n) * 0.8);
+    }
+    ctx.restore();
+    return;
+  }
+  const segment = (x0, y0, x1, y1, prev, lineWidth, offset = 0) => {
+    ctx.lineWidth = lineWidth;
+    ctx.beginPath();
+    ctx.moveTo((prev[0] + x0) / 2 + offset, (prev[1] + y0) / 2 + offset);
+    ctx.quadraticCurveTo(x0 + offset, y0 + offset, (x0 + x1) / 2 + offset, (y0 + y1) / 2 + offset);
+    ctx.stroke();
+  };
+  if (kind === "pencil") ctx.globalAlpha = 0.72;
+  for (let i = 1; i < points.length; i += 1) {
+    const [x0, y0, p0] = points[i - 1];
+    const [x1, y1, p1] = points[i];
+    const pressure = (p0 + p1) / 2;
+    const ease = Math.min(1, i / 4, (points.length - i) / 4 + 0.35);
+    const prev = points[i - 2] || points[i - 1];
+    if (kind === "gel") segment(x0, y0, x1, y1, prev, Math.max(0.8, base * 1.05));
+    else if (kind === "brush") segment(x0, y0, x1, y1, prev, Math.max(0.6, base * (0.3 + 2.2 * pressure) * (0.35 + 0.65 * ease)));
+    else if (kind === "pencil") {
+      // Graphite: a fine core and two fainter passes beside it.
+      segment(x0, y0, x1, y1, prev, Math.max(0.6, base * 0.7));
+      ctx.globalAlpha = 0.28;
+      segment(x0, y0, x1, y1, prev, Math.max(0.5, base * 0.5), 0.45);
+      segment(x0, y0, x1, y1, prev, Math.max(0.5, base * 0.5), -0.4);
+      ctx.globalAlpha = 0.72;
+    } else segment(x0, y0, x1, y1, prev, Math.max(0.7, base * (0.55 + 0.9 * pressure) * (0.6 + 0.4 * ease)));
+  }
+  ctx.restore();
+}
+
+// Averages each point with its neighbours (twice), so a hand's tremor and the sensor's jitter do not
+// show as a wobble at the edge of the ink.
+function smoothPoints(points) {
+  let pts = points;
+  for (let pass = 0; pass < 2; pass += 1) {
+    pts = pts.map((point, i) => {
+      if (i === 0 || i === pts.length - 1) return point;
+      const [ax, ay, ap] = pts[i - 1];
+      const [bx, by, bp] = pts[i + 1];
+      return [(ax + point[0] * 2 + bx) / 4, (ay + point[1] * 2 + by) / 4, (ap + point[2] * 2 + bp) / 4];
+    });
+  }
+  return pts;
+}
+
+function fillStrokeOutline(ctx, pts, widthAt) {
+  const n = pts.length;
+  const left = [];
+  const right = [];
+  for (let i = 0; i < n; i += 1) {
+    const a = pts[Math.max(0, i - 1)];
+    const b = pts[Math.min(n - 1, i + 1)];
+    let dx = b[0] - a[0];
+    let dy = b[1] - a[1];
+    const length = Math.hypot(dx, dy) || 1;
+    dx /= length;
+    dy /= length;
+    const half = widthAt(i, n) / 2;
+    left.push([pts[i][0] - dy * half, pts[i][1] + dx * half]);
+    right.push([pts[i][0] + dy * half, pts[i][1] - dx * half]);
+  }
+  const outline = [...left, ...right.reverse()];
+  ctx.beginPath();
+  ctx.moveTo(outline[0][0], outline[0][1]);
+  for (let i = 1; i < outline.length - 1; i += 1) {
+    const mid = [(outline[i][0] + outline[i + 1][0]) / 2, (outline[i][1] + outline[i + 1][1]) / 2];
+    ctx.quadraticCurveTo(outline[i][0], outline[i][1], mid[0], mid[1]);
+  }
+  ctx.closePath();
+  ctx.fill();
+  // Round ends, as a pen leaves them.
+  [[pts[0], widthAt(0, n)], [pts[n - 1], widthAt(n - 1, n)]].forEach(([p, w]) => {
+    ctx.beginPath();
+    ctx.arc(p[0], p[1], w / 2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+}
+
+function renderMarks(live = null) {
+  const spread = elements.journalSpread;
+  if (!spread) return;
+  const entry = currentEntry();
+  [["left", ".paper-page--left"], ["right", ".paper-page--right"]].forEach(([side, selector]) => {
+    const page = spread.querySelector(`:scope > ${selector}`);
+    if (!page || !page.getClientRects().length) return;
+    const canvas = ensureMarkLayer(page, side);
+    const width = page.clientWidth;
+    canvas.style.height = "0px";
+    const height = Math.max(page.clientHeight, page.scrollHeight);
+    canvas.style.height = `${height}px`;
+    const ratio = Math.min(Math.max(window.devicePixelRatio || 1, 1), 3);
+    if (canvas.width !== Math.round(width * ratio) || canvas.height !== Math.round(height * ratio)) {
+      canvas.width = Math.round(width * ratio);
+      canvas.height = Math.round(height * ratio);
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    ctx.clearRect(0, 0, width, height);
+    const marks = marksFor(entry, side);
+    page.classList.toggle("has-marks", marks.length > 0 || Boolean(live?.p && live.side === side));
+    marks.forEach((stroke) => drawMark(ctx, stroke, width));
+    if (live?.p && live.side === side) drawMark(ctx, live, width);
+  });
+}
+
+// ---- Motion ----
+// A segmented control's selection is a pill that slides to the chosen segment (as on Apple's),
+// rather than one segment lighting up as another goes dark.
+function bindSegmentPills() {
+  const hosts = [".calendar-scale-nav", ".mobile-page-switcher", ".sticker-category-tabs", "#toolDock .tool-dock__tools"];
+  const place = (host) => {
+    const pill = host.querySelector(":scope > .seg-pill");
+    const active = host.querySelector(':scope > button[aria-pressed="true"], :scope > button.is-active');
+    if (!pill || !active || !active.offsetWidth) {
+      if (pill) pill.style.opacity = "0";
+      return;
+    }
+    pill.style.opacity = "1";
+    pill.style.width = `${active.offsetWidth}px`;
+    pill.style.height = `${active.offsetHeight}px`;
+    pill.style.transform = `translate(${active.offsetLeft}px, ${active.offsetTop}px)`;
+  };
+  const attach = (host) => {
+    if (!host || host.dataset.pill) return;
+    host.dataset.pill = "on";
+    host.classList.add("seg-host");
+    const pill = document.createElement("span");
+    pill.className = "seg-pill";
+    pill.setAttribute("aria-hidden", "true");
+    host.prepend(pill);
+    new MutationObserver(() => requestAnimationFrame(() => place(host))).observe(host, { subtree: true, attributes: true, attributeFilter: ["aria-pressed", "class", "hidden"] });
+    if (typeof ResizeObserver === "function") new ResizeObserver(() => place(host)).observe(host);
+    // The first placement is instant; later moves slide.
+    place(host);
+    requestAnimationFrame(() => host.classList.add("is-pill-ready"));
+  };
+  const scan = () => hosts.forEach((selector) => document.querySelectorAll(selector).forEach(attach));
+  scan();
+  new MutationObserver(scan).observe(document.body, { childList: true, subtree: true });
+}
+
+// The closed cover catches the light where the pointer is, as leather or cloth does under a lamp.
+function bindCoverSheen() {
+  const cover = document.getElementById("openCoverButton");
+  if (!cover || !window.matchMedia("(hover: hover) and (prefers-reduced-motion: no-preference)").matches) return;
+  const sheen = document.createElement("span");
+  sheen.className = "closed-cover__sheen";
+  sheen.setAttribute("aria-hidden", "true");
+  cover.append(sheen);
+  cover.addEventListener("pointermove", (event) => {
+    const rect = cover.getBoundingClientRect();
+    cover.style.setProperty("--sheen-x", `${((event.clientX - rect.left) / rect.width) * 100}%`);
+    cover.style.setProperty("--sheen-y", `${((event.clientY - rect.top) / rect.height) * 100}%`);
+    cover.classList.add("is-lit");
+  });
+  cover.addEventListener("pointerleave", () => cover.classList.remove("is-lit"));
+}
+
+// More of the notebook's own motion, each tied to something real: the closed cover tilts towards
+// the hand like a book picked up to the light; a ticked task gives a small burst of ink; a bookmark
+// drops into place; the page count and the save mark change with a little roll; a series card leans
+// to the pointer. None of it runs for someone who asked their system for less motion.
+function bindDelight() {
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const fine = window.matchMedia("(hover: hover)").matches;
+  const cover = document.getElementById("openCoverButton");
+  if (cover && fine) {
+    cover.addEventListener("pointermove", (event) => {
+      if (elements.body.dataset.book !== "closed") return;
+      const rect = cover.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      const angle = Math.min(1, Math.hypot(x, y) * 2) * 7;
+      cover.style.rotate = `${(-y).toFixed(3)} ${x.toFixed(3)} 0 ${angle.toFixed(2)}deg`;
+      cover.style.setProperty("--lift", `${(-x * 18).toFixed(1)}px ${(26 - y * 12).toFixed(1)}px`);
+    });
+    cover.addEventListener("pointerleave", () => {
+      cover.style.rotate = "";
+      cover.style.removeProperty("--lift");
+    });
+  }
+  // Ticking a task off: eight drops of ink fly from the box and fade.
+  document.addEventListener("change", (event) => {
+    const box = event.target;
+    if (!(box instanceof HTMLInputElement) || box.type !== "checkbox" || !box.checked || !box.closest("#journalSpread")) return;
+    const rect = box.getBoundingClientRect();
+    const burst = document.createElement("span");
+    burst.className = "ink-burst";
+    burst.style.left = `${rect.left + rect.width / 2}px`;
+    burst.style.top = `${rect.top + rect.height / 2}px`;
+    for (let i = 0; i < 8; i += 1) {
+      const dot = document.createElement("i");
+      dot.style.setProperty("--a", `${i * 45 + Math.random() * 20}deg`);
+      dot.style.setProperty("--d", `${14 + Math.random() * 10}px`);
+      burst.append(dot);
+    }
+    document.body.append(burst);
+    window.setTimeout(() => burst.remove(), 700);
+  });
+  const replay = (element, className) => {
+    if (!element) return;
+    element.classList.remove(className);
+    void element.offsetWidth;
+    element.classList.add(className);
+    element.addEventListener("animationend", () => element.classList.remove(className), { once: true });
+  };
+  document.getElementById("bookmarkPageButton")?.addEventListener("click", (event) => {
+    const button = event.currentTarget;
+    requestAnimationFrame(() => { if (button.getAttribute("aria-pressed") === "true") replay(button, "is-dropping"); });
+  });
+  const watchText = (element, className) => {
+    if (!element) return;
+    let last = element.textContent;
+    new MutationObserver(() => {
+      if (element.textContent === last) return;
+      last = element.textContent;
+      replay(element, className);
+    }).observe(element, { childList: true, characterData: true, subtree: true });
+  };
+  watchText(document.getElementById("spreadPosition"), "is-rolling");
+  watchText(document.querySelector("#saveDetails > summary"), "is-rolling");
+  if (fine) {
+    document.addEventListener("pointermove", (event) => {
+      const card = event.target.closest?.(".pack-card");
+      document.querySelectorAll(".pack-card.is-leaning").forEach((other) => { if (other !== card) { other.classList.remove("is-leaning"); other.style.rotate = ""; } });
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      card.classList.add("is-leaning");
+      card.style.rotate = `${(-y).toFixed(3)} ${x.toFixed(3)} 0 ${(Math.hypot(x, y) * 6).toFixed(2)}deg`;
+      card.style.setProperty("--shine-x", `${((x + 0.5) * 100).toFixed(1)}%`);
+      card.style.setProperty("--shine-y", `${((y + 0.5) * 100).toFixed(1)}%`);
+    }, { passive: true });
+  }
+}
+
+function swayRibbon() {
+  const marker = elements.journalSpread?.querySelector(":scope > .ribbon-marker");
+  if (!marker || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  marker.classList.remove("is-swaying");
+  void marker.offsetWidth;
+  marker.classList.add("is-swaying");
+  marker.addEventListener("animationend", () => marker.classList.remove("is-swaying"), { once: true });
+  // As the new page lands, its title is written in.
+  window.setTimeout(() => {
+    const spread = elements.journalSpread;
+    spread.classList.remove("is-inked");
+    void spread.offsetWidth;
+    spread.classList.add("is-inked");
+    window.setTimeout(() => spread.classList.remove("is-inked"), 900);
+  }, Math.max(200, turnDurationNow() - 120));
+}
+
+// A page shown without a leaf turning (a switch between day, week and month) settles in instead.
+function settleSpread() {
+  const spread = elements.journalSpread;
+  if (!spread || pageTurnInProgress || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  spread.classList.remove("is-arriving");
+  void spread.offsetWidth;
+  spread.classList.add("is-arriving");
+  window.setTimeout(() => spread.classList.remove("is-arriving"), 560);
+}
+
+// The rules are printed from the top of the page every --line; whatever stands above the editor
+// (title, tags, the day's prompt), its first line of writing is moved down onto the next rule.
+function snapEditorToRules() {
+  const editor = elements.journalEditor || document.getElementById("journalEditor");
+  const page = editor?.closest(".paper-page");
+  if (!editor || !page || !editor.getClientRects().length) return;
+  const line = parseFloat(getComputedStyle(elements.journalSpread).getPropertyValue("--line")) || 28;
+  // An older rule holds the editor's margin at 0 with !important, so the nudge is set the same way.
+  editor.style.setProperty("margin-top", "0px", "important");
+  const offset = (editor.getBoundingClientRect().top - page.getBoundingClientRect().top + page.scrollTop) % line;
+  const nudge = Math.round((line - offset) % line);
+  if (nudge) editor.style.setProperty("margin-top", `${nudge}px`, "important");
+}
+
+function packPreviewImages(packId) {
+  const api = packApi();
+  if (packId === "ribbon") {
+    return [["claret", "leaf"], ["navy", "moon"], ["rose", "pearl"], ["noir", "tassel"]].map(([style, charm]) => ribbonImage(style, charm, 70));
+  }
+  const types = packId
+    ? Object.keys(api.items).filter((type) => api.items[type].pack === packId).slice(0, 4)
+    : ["flora-bouquet", "ticket-postmark", "washi-sakura", "ticket-stamp-mountain"];
+  return types.map((type) => packImage(type, { date: packDateLabel(state.selectedDate) }, api.items[type].w, api.items[type].h, { lazy: true }));
+}
+
+function openPackDialog(packId) {
+  const dialog = document.getElementById("packDialog");
+  const api = packApi();
+  if (!dialog || !api || typeof dialog.showModal !== "function") return;
+  const pack = packId ? packInfo(packId) : null;
+  const owned = pack ? isPackUnlocked(pack.id) : false;
+  dialog.dataset.pack = pack?.id || "";
+  document.getElementById("packDialogTitle").textContent = pack ? pack.name : "精选系列";
+  document.getElementById("packDialogBlurb").textContent = pack
+    ? pack.blurb
+    : "和纸胶带、丝带书签、复古票据、植物标本，四套手绘素材。买了哪套，就输入那套的兑换码。";
+  document.getElementById("packDialogPreview").replaceChildren(...packPreviewImages(pack?.id || null));
+  const buy = document.getElementById("packDialogBuy");
+  buy.href = PACK_SHOP_URLS[pack?.id || "all"] || SUPPORT_URL;
+  buy.textContent = pack ? `在爱发电购买 · ${pack.price}` : `在爱发电购买 · 四套合集 ${api.bundle.price}`;
+  buy.hidden = owned || !(PACK_SHOP_URLS[pack?.id || "all"] || SUPPORT_URL);
+  const bundle = document.getElementById("packDialogBundle");
+  bundle.hidden = !pack || owned;
+  bundle.textContent = `四套一起 ${api.bundle.price}，一个兑换码全部解锁`;
+  document.getElementById("packCodeInput").value = "";
+  const message = document.getElementById("packDialogMessage");
+  message.textContent = owned ? "这套已经解锁了，在素材里直接点就能用。" : "";
+  message.dataset.tone = owned ? "ok" : "";
+  dialog.showModal();
+}
+
+async function submitPackCode() {
+  const input = document.getElementById("packCodeInput");
+  const button = document.getElementById("packRedeemButton");
+  const message = document.getElementById("packDialogMessage");
+  if (!input.value.trim()) {
+    message.textContent = "先把兑换码粘贴进来";
+    message.dataset.tone = "error";
+    input.focus();
+    return;
+  }
+  button.disabled = true;
+  message.textContent = "正在核对…";
+  message.dataset.tone = "";
+  const result = await redeemPackCode(input.value);
+  button.disabled = false;
+  message.textContent = result.ok ? `已解锁「${packInfo(result.pack)?.name || "精选系列"}」，现在就可以用了` : result.message;
+  message.dataset.tone = result.ok ? "ok" : "error";
+  if (result.ok) {
+    notify(`已解锁「${packInfo(result.pack)?.name || "精选系列"}」`);
+    window.setTimeout(() => document.getElementById("packDialog")?.close(), 1100);
+  }
+}
+
+let editingSticker = null;
+
+function openStickerEditor(id) {
+  const dialog = document.getElementById("stickerEditDialog");
+  const sticker = currentEntry().stickers.find((candidate) => candidate.id === id);
+  const item = packItem(sticker?.type);
+  if (!dialog || !item?.fields.length || typeof dialog.showModal !== "function") return;
+  const api = packApi();
+  editingSticker = { id, type: sticker.type, values: { ...api.valuesFor(sticker.type, sticker.fields || {}) } };
+  document.getElementById("stickerEditTitle").textContent = item.label;
+  const fields = document.getElementById("stickerEditFields");
+  fields.replaceChildren(...item.fields.map((field) => {
+    const label = document.createElement("label");
+    label.className = "sticker-editor__field";
+    const caption = document.createElement("span");
+    caption.textContent = field.label;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.name = field.key;
+    input.value = editingSticker.values[field.key] || "";
+    input.placeholder = field.key === "date" ? packDateLabel(state.selectedDate) : field.value;
+    input.maxLength = field.max * 2;
+    input.autocomplete = "off";
+    input.addEventListener("input", () => {
+      editingSticker.values[field.key] = input.value;
+      drawStickerEditPreview();
+    });
+    label.append(caption, input);
+    return label;
+  }));
+  drawStickerEditPreview();
+  dialog.showModal();
+}
+
+function drawStickerEditPreview() {
+  const item = packItem(editingSticker?.type);
+  if (!item) return;
+  const scale = Math.min(2, 300 / item.w, 200 / item.h);
+  document.getElementById("stickerEditPreview").replaceChildren(packImage(editingSticker.type, editingSticker.values, Math.round(item.w * scale), Math.round(item.h * scale)));
+}
+
+function resetStickerEditor() {
+  const item = packItem(editingSticker?.type);
+  if (!item) return;
+  item.fields.forEach((field) => {
+    const value = field.key === "date" ? packDateLabel(state.selectedDate) : field.value;
+    editingSticker.values[field.key] = value;
+    const input = document.querySelector(`#stickerEditFields input[name="${field.key}"]`);
+    if (input) input.value = value;
+  });
+  drawStickerEditPreview();
+}
+
+function closeStickerEditor(save) {
+  const editing = editingSticker;
+  editingSticker = null;
+  if (!save || !editing) return;
+  const sticker = currentEntry().stickers.find((candidate) => candidate.id === editing.id);
+  if (!sticker) return;
+  sticker.fields = Object.fromEntries(Object.entries(editing.values).map(([key, value]) => [key, String(value || "").trim()]).filter(([, value]) => value));
+  renderStickers();
+  persistState();
+  notify("贴纸上的字已更新");
+}
+
+function bindPackEvents() {
+  const packDialog = document.getElementById("packDialog");
+  const editDialog = document.getElementById("stickerEditDialog");
+  document.getElementById("packRedeemButton")?.addEventListener("click", submitPackCode);
+  document.getElementById("packCodeInput")?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing) return;
+    event.preventDefault();
+    submitPackCode();
+  });
+  document.getElementById("stickerEditReset")?.addEventListener("click", resetStickerEditor);
+  editDialog?.addEventListener("close", () => closeStickerEditor(editDialog.returnValue === "save"));
+  // A tap on the dimmed backdrop closes either dialog, as on a phone sheet.
+  [packDialog, editDialog].forEach((dialog) => dialog?.addEventListener("click", (event) => {
+    if (event.target === dialog) dialog.close("cancel");
+  }));
+  if (typeof ResizeObserver === "function" && elements.journalSpread) {
+    new ResizeObserver(() => renderRibbon()).observe(elements.journalSpread);
+    // Anything above the editor that grows or shrinks (tags added, the prompt answered) re-snaps it.
+    const watchAbove = new ResizeObserver(() => requestAnimationFrame(snapEditorToRules));
+    const editor = document.getElementById("journalEditor");
+    const page = editor?.closest(".paper-page");
+    if (page) [...page.children].forEach((child) => { if (!child.contains(editor)) watchAbove.observe(child); });
+    watchAbove.observe(elements.journalSpread);
+  }
+  document.addEventListener("click", (event) => {
+    if (event.target.closest?.("[data-calendar-scale]")) requestAnimationFrame(settleSpread);
+  });
 }
 
 function deleteCurrentPage() {
@@ -5315,12 +6622,14 @@ function applyGlobalSettings() {
   elements.body.dataset.theme = state.theme;
   elements.body.dataset.page = entry.pageStyle || state.pageStyle;
   elements.body.dataset.cover = state.coverTheme || "olive";
+  elements.body.dataset.coverStyle = state.coverStyle === "binder" ? "binder" : "tn";
   elements.body.dataset.paperTone = state.paperTone || "washi";
   elements.body.dataset.decorativePrints = state.decorativePrints === false ? "off" : "on";
   elements.body.style.setProperty("--custom-cover", state.customCoverColor || "#4f5b50");
   applyAppearanceTokens();
   elements.themeSelect.value = state.theme;
   elements.coverThemeSelect.value = state.coverTheme || "olive";
+  if (elements.coverStyleSelect) elements.coverStyleSelect.value = state.coverStyle === "binder" ? "binder" : "tn";
   elements.customCoverColor.value = state.customCoverColor || "#4f5b50";
   elements.paperToneSelect.value = state.paperTone || "washi";
   elements.decorativePrintToggle.checked = state.decorativePrints !== false;
@@ -5425,6 +6734,8 @@ function applyThemePreset(presetId) {
   entry.pageAccent = preset.pageAccent;
   applyGlobalSettings();
   renderPageAppearance();
+  renderRibbon();
+  renderPackShelf();
   announceAppearance(`已应用「${preset.label}」整本主题`);
   persistState();
   if (window.matchMedia("(max-width: 760px)").matches) window.setTimeout(closeMobilePanel, 140);
@@ -5690,7 +7001,8 @@ function setupCanvas() {
 
   canvas.addEventListener("pointerdown", (event) => {
     if (elements.stylusOnlyToggle.checked && event.pointerType !== "pen") return;
-    if (elements.body.dataset.inputMode !== "ink") setMobilePage("ink");
+    if (elements.journalSpread.dataset.leftInk === "on") elements.body.dataset.inputMode = "ink";
+    else if (elements.body.dataset.inputMode !== "ink") setMobilePage("ink");
     canvas.closest(".canvas-card")?.classList.remove("is-empty");
     drawActive = true;
     try {
@@ -6287,15 +7599,31 @@ function bindEvents() {
   elements.coverThemeSelect.addEventListener("change", () => {
     state.coverTheme = elements.coverThemeSelect.value;
     applyGlobalSettings();
+    renderRibbon();
+    renderPackShelf();
     const coverLabel = selectedOptionLabel(elements.coverThemeSelect);
     announceAppearance(`本册封皮：${coverLabel}`);
     persistState();
     if (window.matchMedia("(max-width: 760px)").matches) window.setTimeout(closeMobilePanel, 140);
   });
+  // A leather binder is a ring binder: choosing it brings the rings, and the traveler's notebook
+  // goes back to a sewn gutter. The binding can still be changed on its own in 精选.
+  elements.coverStyleSelect?.addEventListener("change", () => {
+    state.coverStyle = elements.coverStyleSelect.value === "binder" ? "binder" : "tn";
+    state.binding = state.coverStyle === "binder"
+      ? { kind: "rings", finish: state.binding?.kind === "rings" ? state.binding.finish : "silver" }
+      : { kind: "sewn", finish: state.binding?.finish || "silver" };
+    applyGlobalSettings();
+    renderRibbon();
+    renderPackShelf();
+    announceAppearance(`封皮款式：${selectedOptionLabel(elements.coverStyleSelect)}`);
+    persistState();
+  });
   elements.customCoverColor.addEventListener("input", () => {
     state.customCoverColor = elements.customCoverColor.value;
     state.coverTheme = "custom";
     applyGlobalSettings();
+    renderRibbon();
     persistState();
   });
   elements.customCoverColor.addEventListener("change", () => {
@@ -6317,6 +7645,7 @@ function bindEvents() {
   });
   elements.decorativePrintToggle.addEventListener("change", () => {
     state.decorativePrints = elements.decorativePrintToggle.checked;
+    state.decorativePrintsChosen = true;
     applyGlobalSettings();
     persistState();
   });
@@ -6426,6 +7755,9 @@ function bindEvents() {
     stickerSamples.forEach((sample) => {
       sample.hidden = filter !== "all" && sample.dataset.stickerCategory !== filter;
     });
+    elements.stickerPalette.hidden = filter === "packs";
+    const shelf = document.getElementById("packShelf");
+    if (shelf) shelf.hidden = !packApi() || (filter !== "all" && filter !== "packs");
   });
 
   elements.journalSpread.addEventListener("dragover", (event) => event.preventDefault());
@@ -6687,7 +8019,7 @@ const SAMPLE_PAGE_HTML = [
   '<ol class="op-guide">',
   "<li><strong>翻开与合上</strong><span>每次打开先看到封面，轻点即可翻开；顶栏的书本图标将它合上。</span></li>",
   "<li><strong>一日一页</strong><span>顶栏的箭头前后翻阅，「今天」回到当日；一页写不下，底部「续页」再添两页。</span></li>",
-  "<li><strong>书写与手绘</strong><span>左页打字，右页以笔、手指或鼠标直接书写；手机上切换到「手写页」。</span></li>",
+  "<li><strong>书写与手绘</strong><span>顶部工具栏选「键入」就能打字，选「钢笔」「荧光笔」就能在任何一页上写写画画，「橡皮」擦掉整笔。</span></li>",
   "<li><strong>周计划与月计划</strong><span>在顶栏切换，与日记同在一本之中。</span></li>",
   "<li><strong>更换内页</strong><span>「内页样式」中有阅读札记、旅途、拼贴与同日五年，纸面亦可选点阵、横线或方格。</span></li>",
   "<li><strong>贴纸与素材</strong><span>在「素材」中轻点即贴上页面，按住可以移动。</span></li>",
@@ -6868,9 +8200,17 @@ async function startApp() {
   applyGlobalSettings();
   setSaveState(state.lastSavedAt ? "saved" : "ready");
   bindInstallPrompt();
+  syncUnlockedPacks();
   bindEvents();
+  bindPackEvents();
+  bindSegmentPills();
+  bindCoverSheen();
+  bindDelight();
+  setTool("type");
   setupCanvas();
   loadEntryIntoForm();
+  renderPackShelf();
+  renderRibbon();
   if (!shouldShowCover()) {
     openNotebookWithoutCover();
     introduceSamplePage();

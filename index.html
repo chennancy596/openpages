@@ -17,7 +17,7 @@
     <link rel="icon" href="./assets/openpages-mark.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" />
     <link rel="manifest" href="./manifest.webmanifest" />
-    <link rel="stylesheet" href="./app.css?v=20261022-fill3" />
+    <link rel="stylesheet" href="./app.css?v=20261023-apple4" />
   </head>
   <body class="editor-shell" data-input-mode="write" data-view="today" data-page="dot" data-theme="daylight" data-book="closed">
     <svg class="icon-sprite" aria-hidden="true">
@@ -331,6 +331,8 @@
               <span class="closed-cover__elastic closed-cover__elastic--vertical" aria-hidden="true"></span>
               <span class="closed-cover__elastic closed-cover__elastic--horizontal" aria-hidden="true"></span>
               <span class="closed-cover__clip" aria-hidden="true"></span>
+              <span class="closed-cover__stitch" aria-hidden="true"></span>
+              <span class="closed-cover__strap" aria-hidden="true"><span class="closed-cover__snap"></span></span>
               <span class="closed-cover__stamp" aria-hidden="true">OP</span>
               <span class="closed-cover__label">
                 <strong>OpenPages</strong>
@@ -460,7 +462,7 @@
                 </div>
               </div>
 
-              <section class="canvas-card" data-hint="用笔、手指或鼠标，直接写在这一页">
+              <section class="canvas-card" data-hint="选上方的钢笔，在任何一页上写写画画">
                 <canvas id="inkCanvas" width="900" height="1260" aria-label="手写草稿画布"></canvas>
               </section>
 
@@ -645,6 +647,7 @@
             <button type="button" data-sticker-filter="washi" aria-pressed="false">胶带</button>
             <button type="button" data-sticker-filter="paper" aria-pressed="false">纸品</button>
             <button type="button" data-sticker-filter="art" aria-pressed="false">插画</button>
+            <button type="button" data-sticker-filter="packs" aria-pressed="false">精选</button>
           </div>
           <div class="sticker-palette" id="stickerPalette">
             <button class="sticker-sample tape coral" draggable="true" data-sticker="tape-coral" type="button">Memo</button>
@@ -686,6 +689,7 @@
             <button class="sticker-sample art-sticker art-bird" draggable="true" data-sticker="art-bird" type="button" aria-label="飞鸟旅行插画">旅</button>
             <button class="sticker-sample art-sticker art-lamp" draggable="true" data-sticker="art-lamp" type="button" aria-label="夜读台灯插画">灯</button>
           </div>
+          <div class="pack-shelf" id="packShelf" aria-label="精选系列"></div>
           <button class="wide-button" id="deleteStickerButton" type="button">
             <svg><use href="#icon-trash"></use></svg>
             删除选中贴纸
@@ -910,6 +914,13 @@
                 <option value="custom">自定义</option>
               </select>
             </label>
+            <label class="field settings-field">
+              <span>封皮款式</span>
+              <select id="coverStyleSelect">
+                <option value="tn">旅行者 · 松紧带</option>
+                <option value="binder">真皮活页夹 · 搭扣</option>
+              </select>
+            </label>
             <label class="field settings-field custom-cover-field">
               <span>自定义封皮色</span>
               <input id="customCoverColor" type="color" value="#4f5b50" aria-label="自定义封皮颜色" />
@@ -1083,6 +1094,41 @@
 
     <button type="button" id="sidebarScrim" class="sidebar-scrim" aria-label="关闭手帐侧栏" hidden></button>
 
+    <dialog class="pack-dialog" id="packDialog" aria-labelledby="packDialogTitle">
+      <form method="dialog" class="pack-dialog__body">
+        <p class="pack-dialog__eyebrow">精选系列</p>
+        <h2 id="packDialogTitle">精选系列</h2>
+        <p class="pack-dialog__blurb" id="packDialogBlurb"></p>
+        <div class="pack-dialog__preview" id="packDialogPreview" aria-hidden="true"></div>
+        <a class="pack-dialog__buy" id="packDialogBuy" href="#" target="_blank" rel="noopener">在爱发电购买</a>
+        <p class="pack-dialog__bundle" id="packDialogBundle"></p>
+        <div class="pack-dialog__redeem">
+          <label for="packCodeInput">已经买了？输入兑换码</label>
+          <div class="pack-dialog__row">
+            <input id="packCodeInput" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例如 WASHI-7K3M-Q9TX" />
+            <button type="button" id="packRedeemButton">解锁</button>
+          </div>
+          <p class="pack-dialog__message" id="packDialogMessage" role="status" aria-live="polite"></p>
+        </div>
+        <p class="pack-dialog__note">兑换码在爱发电的订单详情和私信里。解锁后保存在这台设备上，也会跟着备份走；换手机或电脑时，再输入一次同一个码就行。</p>
+        <button class="pack-dialog__close" type="submit" value="cancel" aria-label="关闭">×</button>
+      </form>
+    </dialog>
+
+    <dialog class="pack-dialog sticker-editor" id="stickerEditDialog" aria-labelledby="stickerEditTitle">
+      <form method="dialog" class="pack-dialog__body">
+        <p class="pack-dialog__eyebrow">改贴纸上的字</p>
+        <h2 id="stickerEditTitle">贴纸</h2>
+        <div class="sticker-editor__preview" id="stickerEditPreview" aria-hidden="true"></div>
+        <div class="sticker-editor__fields" id="stickerEditFields"></div>
+        <div class="sticker-editor__actions">
+          <button type="button" class="sticker-editor__reset" id="stickerEditReset">恢复默认</button>
+          <button type="submit" class="sticker-editor__save" value="save">完成</button>
+        </div>
+        <button class="pack-dialog__close" type="submit" value="cancel" aria-label="关闭" formnovalidate>×</button>
+      </form>
+    </dialog>
+
     <div class="action-toast" id="actionToast" role="status" aria-live="polite"></div>
 
     <nav class="bottom-nav" aria-label="移动端导航">
@@ -1105,6 +1151,7 @@
     </nav>
 
     <script src="./generated/runtime-bridge-v2.js?v=20260715-studio23-final" defer></script>
-    <script src="./app.js?v=20261022-fill3" defer></script>
+    <script src="./packs.js?v=20261023-apple4" defer></script>
+    <script src="./app.js?v=20261023-apple4" defer></script>
   </body>
 </html>

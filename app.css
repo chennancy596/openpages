@@ -1258,7 +1258,7 @@ body {
 }
 .brand-mark {
   border-color: rgba(89, 73, 55, 0.22);
-  background: url("./assets/cover-grain-fine.png"), linear-gradient(135deg, #4c3f31, #756147);
+  background: url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, #4c3f31, #756147);
   background-size: 384px 384px, auto;
 }
 .bottom-nav button,
@@ -1390,7 +1390,7 @@ button:focus-visible,
 @media (max-width: 980px) {
   .journal-spread {
     padding: 12px;
-    background: linear-gradient(90deg, rgba(71, 68, 55, 0.14) 0 10px, rgba(226, 220, 202, 0.13) 10px 16px, rgba(255, 255, 255, 0.05) 16px calc(100% - 12px), rgba(70, 67, 55, 0.06) calc(100% - 12px)), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, #625f50, #85816c);
+    background: linear-gradient(90deg, rgba(71, 68, 55, 0.14) 0 10px, rgba(226, 220, 202, 0.13) 10px 16px, rgba(255, 255, 255, 0.05) 16px calc(100% - 12px), rgba(70, 67, 55, 0.06) calc(100% - 12px)), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, #625f50, #85816c);
     background-size: auto, 384px 384px, auto;
   }
   .paper-page {
@@ -1819,7 +1819,7 @@ body.has-dock-open {
   perspective: 2200px !important;
 }
 .journal-spread {
-  background: linear-gradient(90deg, rgba(20, 13, 8, 0.42) 0 15px, rgba(214, 194, 163, 0.16) 15px 27px, transparent 27px calc(100% - 26px), rgba(255, 245, 224, 0.12) calc(100% - 26px)), repeating-linear-gradient(122deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 8px), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, var(--tn-leather-deep), var(--tn-leather) 46%, var(--tn-leather-warm) 100%) !important;
+  background: linear-gradient(90deg, rgba(20, 13, 8, 0.42) 0 15px, rgba(214, 194, 163, 0.16) 15px 27px, transparent 27px calc(100% - 26px), rgba(255, 245, 224, 0.12) calc(100% - 26px)), repeating-linear-gradient(122deg, rgba(255, 255, 255, 0.055) 0 1px, transparent 1px 8px), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, var(--tn-leather-deep), var(--tn-leather) 46%, var(--tn-leather-warm) 100%) !important;
   background-size: auto, auto, 410px 410px, auto !important;
   animation: tnNotebookOpen 0.72s cubic-bezier(0.2, 0.82, 0.24, 1) both;
 }
@@ -2670,11 +2670,11 @@ textarea {
   .journal-spread {
     gap: 26px;
     border-color: color-mix(in srgb, var(--cover-dark) 28%, transparent);
-    background: url("./assets/cover-grain-fine.png"), linear-gradient(135deg, var(--cover-dark), var(--cover) 58%, #596257);
+    background: url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, var(--cover-dark), var(--cover) 58%, #596257);
     background-size: 384px 384px, auto;
   }
   .notebook-cover {
-    background: linear-gradient(90deg, rgba(32, 38, 34, 0.12), transparent 20px, transparent calc(100% - 20px), rgba(32, 38, 34, 0.1)), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, var(--cover-dark), var(--cover));
+    background: linear-gradient(90deg, rgba(32, 38, 34, 0.12), transparent 20px, transparent calc(100% - 20px), rgba(32, 38, 34, 0.1)), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, var(--cover-dark), var(--cover));
     background-size: auto, 384px 384px, auto;
   }
   .notebook-spine {
@@ -2978,7 +2978,7 @@ button:active,
     width: 24px !important;
     transform: translateX(-50%) !important;
     border: 0 !important;
-    background: linear-gradient(90deg, transparent 0 10%, rgba(32, 38, 34, 0.18) 30%, rgba(224, 213, 180, 0.24) 50%, rgba(32, 38, 34, 0.16) 70%, transparent 100%), url("./assets/cover-grain-fine.png") !important;
+    background: linear-gradient(90deg, transparent 0 10%, rgba(32, 38, 34, 0.18) 30%, rgba(224, 213, 180, 0.24) 50%, rgba(32, 38, 34, 0.16) 70%, transparent 100%), url("./assets/cover-grain-cloth.png") !important;
     background-size: auto, 384px 384px !important;
     box-shadow: inset 6px 0 7px rgba(18, 22, 19, 0.14), inset -6px 0 7px rgba(255, 255, 255, 0.08) !important;
     opacity: 0.66 !important;
@@ -3077,7 +3077,7 @@ button:active,
 }
 /* Tactile stationery pass: richer materials and usable modules. */
 .journal-spread {
-  background: linear-gradient(90deg, rgba(48, 57, 48, 0.22) 0 12px, rgba(231, 224, 207, 0.22) 12px 25px, transparent 25px calc(100% - 22px), rgba(49, 58, 49, 0.1) calc(100% - 22px)), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, color-mix(in srgb, var(--cover-dark) 92%, black 8%), var(--cover) 64%, #7e725c);
+  background: linear-gradient(90deg, rgba(48, 57, 48, 0.22) 0 12px, rgba(231, 224, 207, 0.22) 12px 25px, transparent 25px calc(100% - 22px), rgba(49, 58, 49, 0.1) calc(100% - 22px)), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, color-mix(in srgb, var(--cover-dark) 92%, black 8%), var(--cover) 64%, #7e725c);
   background-size: auto, 384px 384px, auto;
 }
 .paper-page::before {
@@ -3789,7 +3789,7 @@ body.has-dock-open .daily-stamp {
     grid-template-columns: 1fr !important;
     padding: 20px 14px 22px !important;
     border-radius: 24px !important;
-    background: linear-gradient(90deg, rgba(37, 25, 17, 0.58) 0 11px, rgba(139, 102, 64, 0.28) 11px 18px, transparent 18px calc(100% - 13px), rgba(37, 25, 17, 0.4) calc(100% - 13px)), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, #2f231a, #5a4332 58%, #8a6948) !important;
+    background: linear-gradient(90deg, rgba(37, 25, 17, 0.58) 0 11px, rgba(139, 102, 64, 0.28) 11px 18px, transparent 18px calc(100% - 13px), rgba(37, 25, 17, 0.4) calc(100% - 13px)), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, #2f231a, #5a4332 58%, #8a6948) !important;
   }
   .notebook-cover {
     inset: -10px 0 -10px 0 !important;
@@ -4280,7 +4280,7 @@ body {
 }
 .closed-cover {
   border-radius: 28px 20px 20px 28px !important;
-  background: radial-gradient(circle at 22% 18%, rgba(255, 241, 198, 0.045), transparent 18%), radial-gradient(circle at 78% 70%, rgba(0, 0, 0, 0.28), transparent 24%), linear-gradient(90deg, rgba(13, 9, 7, 0.74) 0 4%, transparent 9% 88%, rgba(0, 0, 0, 0.22)), repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 11px), repeating-linear-gradient(5deg, rgba(0, 0, 0, 0.13) 0 1px, transparent 1px 8px), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, #20281f 0%, #364134 45%, #5a604c 100%) !important;
+  background: radial-gradient(circle at 22% 18%, rgba(255, 241, 198, 0.045), transparent 18%), radial-gradient(circle at 78% 70%, rgba(0, 0, 0, 0.28), transparent 24%), linear-gradient(90deg, rgba(13, 9, 7, 0.74) 0 4%, transparent 9% 88%, rgba(0, 0, 0, 0.22)), repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 11px), repeating-linear-gradient(5deg, rgba(0, 0, 0, 0.13) 0 1px, transparent 1px 8px), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, #20281f 0%, #364134 45%, #5a604c 100%) !important;
   box-shadow: 0 30px 70px rgba(25, 29, 24, 0.34), 0 10px 24px rgba(35, 37, 29, 0.22), inset 16px 0 26px rgba(0, 0, 0, 0.36), inset -2px 0 0 rgba(235, 223, 190, 0.08), inset 0 0 0 1px rgba(237, 229, 206, 0.055) !important;
 }
 .closed-cover::before {
@@ -4389,7 +4389,7 @@ body {
   box-shadow: 0 5px 14px rgba(49, 55, 49, 0.08), inset 0 0 0 1px rgba(100, 114, 93, 0.24) !important;
 }
 .notebook-cover {
-  background: linear-gradient(90deg, rgba(34, 22, 15, 0.7) 0 20px, transparent 48px calc(100% - 24px), rgba(18, 12, 8, 0.28)), repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 12px), url("./assets/cover-grain-fine.png"), linear-gradient(135deg, #261910, #3a291e 55%, #6f523a) !important;
+  background: linear-gradient(90deg, rgba(34, 22, 15, 0.7) 0 20px, transparent 48px calc(100% - 24px), rgba(18, 12, 8, 0.28)), repeating-linear-gradient(92deg, rgba(255, 255, 255, 0.026) 0 1px, transparent 1px 12px), url("./assets/cover-grain-cloth.png"), linear-gradient(135deg, #261910, #3a291e 55%, #6f523a) !important;
 }
 .paper-page {
   background: linear-gradient(90deg, rgba(126, 103, 70, 0.11), transparent 28px), radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.48), transparent 26%), url("./assets/washi-paper-fine.png"), var(--paper) !important;
@@ -4632,32 +4632,32 @@ body.has-dock-open .right-dock {
 body[data-cover="olive"] .closed-cover,
 body[data-cover="olive"] .journal-spread {
   background-color: #435044 !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, #242d26, #465246 56%, #69705c) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, #242d26, #465246 56%, #69705c) !important;
 }
 body[data-cover="camel"] .closed-cover,
 body[data-cover="camel"] .journal-spread {
   background-color: #755237 !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, #412c20, #755137 56%, #a77d55) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, #412c20, #755137 56%, #a77d55) !important;
 }
 body[data-cover="blueblack"] .closed-cover,
 body[data-cover="blueblack"] .journal-spread {
   background-color: #27383e !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, #172126, #293b42 58%, #49606a) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, #172126, #293b42 58%, #49606a) !important;
 }
 body[data-cover="burgundy"] .closed-cover,
 body[data-cover="burgundy"] .journal-spread {
   background-color: #5b3335 !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, #321d1f, #5b3335 58%, #825154) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, #321d1f, #5b3335 58%, #825154) !important;
 }
 body[data-cover="natural"] .closed-cover,
 body[data-cover="natural"] .journal-spread {
   background-color: #8a6845 !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, #55402d, #896745 58%, #b28c62) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, #55402d, #896745 58%, #b28c62) !important;
 }
 body[data-cover="custom"] .closed-cover,
 body[data-cover="custom"] .journal-spread {
   background-color: var(--custom-cover) !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(105deg, color-mix(in srgb, var(--custom-cover) 58%, black), var(--custom-cover) 58%, color-mix(in srgb, var(--custom-cover) 76%, white)) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(105deg, color-mix(in srgb, var(--custom-cover) 58%, black), var(--custom-cover) 58%, color-mix(in srgb, var(--custom-cover) 76%, white)) !important;
 }
 body[data-decorative-prints="off"] .page-print {
   display: none !important;
@@ -4734,7 +4734,7 @@ summary:focus-visible {
   border: 0 !important;
   border-radius: 6px !important;
   background-color: var(--cover-dark) !important;
-  background-image: url("./assets/cover-grain-fine.png") !important;
+  background-image: url("./assets/cover-grain-cloth.png") !important;
   box-shadow: inset 10px 0 14px rgba(0, 0, 0, 0.2), 0 4px 10px rgba(35, 40, 35, 0.12) !important;
 }
 .brand strong {
@@ -4911,7 +4911,7 @@ summary:focus-visible {
   overflow: visible !important;
   border-radius: 10px !important;
   background-color: #392a20 !important;
-  background-image: url("./assets/cover-grain-fine.png"), linear-gradient(100deg, #241a14 0%, #3b2a20 48%, #684d36 100%) !important;
+  background-image: url("./assets/cover-grain-cloth.png"), linear-gradient(100deg, #241a14 0%, #3b2a20 48%, #684d36 100%) !important;
   box-shadow: 0 30px 68px rgba(39, 43, 38, 0.22), 0 4px 10px rgba(39, 43, 38, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
 }
 .journal-spread::before {
@@ -5707,7 +5707,7 @@ a.wide-button:hover {
   height: 42px;
   overflow: hidden;
   border-radius: 3px 6px 6px 3px;
-  background: linear-gradient(105deg, color-mix(in srgb, var(--preset-cover) 68%, black), var(--preset-cover) 62%, color-mix(in srgb, var(--preset-cover) 75%, white)), url("./assets/cover-grain-fine.png");
+  background: linear-gradient(105deg, color-mix(in srgb, var(--preset-cover) 68%, black), var(--preset-cover) 62%, color-mix(in srgb, var(--preset-cover) 75%, white)), url("./assets/cover-grain-cloth.png");
   background-size: auto, 210px 210px;
   background-blend-mode: color, multiply;
   box-shadow: 0 5px 9px rgba(34, 30, 25, 0.2), inset 5px 0 6px rgba(0, 0, 0, 0.16);
@@ -6343,7 +6343,7 @@ body[data-cover] .journal-spread,
 body[data-cover] .notebook-cover,
 body[data-cover] .theme-preview__book {
   background-color: var(--cover-b) !important;
-  background-image: linear-gradient(105deg, var(--cover-a), var(--cover-b) 57%, var(--cover-c)), url("./assets/cover-grain-fine.png") !important;
+  background-image: linear-gradient(105deg, var(--cover-a), var(--cover-b) 57%, var(--cover-c)), url("./assets/cover-grain-cloth.png") !important;
   background-size: auto, 480px 480px !important;
   background-blend-mode: color, multiply !important;
   transition: background-color 0.46s ease, filter 0.46s ease, box-shadow 0.46s ease !important;
@@ -14190,7 +14190,6 @@ body.editor-shell .action-toast { bottom: calc(max(14px, env(safe-area-inset-bot
   /* The formatting row shows while typing, the brushes while drawing; otherwise the page gets the room.
      It floats over the top of the desk in the same frosted material, so showing it never pushes the
      page down under the finger. */
-  body.editor-shell[data-input-mode=write]:not(.is-writing) .context-tools { display: none !important; }
   body.editor-shell .document-tools { position: relative; }
   body.editor-shell .document-tools > .context-tools {
     position: absolute !important;
@@ -14517,4 +14516,1082 @@ body.editor-shell .journal-spread:is([data-mode=weekly], [data-mode=monthly]) .p
   /* The sidebar's brand is centred on the single bar now, its first row level with the notebook. */
   body.editor-shell .brand { min-height: 52px !important; }
   body.editor-shell .library-nav { margin-top: 20px !important; }
+}
+
+/* ==== 精选系列 ====
+   The paid series: a shelf in the 素材 panel, painted stickers on the page, the ribbon bookmark, and
+   two small dialogs (unlocking with a 兑换码, and changing the words on a sticker). */
+body.editor-shell .sticker-palette[hidden],
+body.editor-shell .pack-shelf[hidden] { display: none !important; }
+body.editor-shell .sticker-category-tabs { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+body.editor-shell .sticker-category-tabs [data-sticker-filter="packs"] { color: #8a5a2e; }
+body.editor-shell .sticker-category-tabs [data-sticker-filter="packs"].is-active { color: #6d4421; }
+
+.pack-shelf { display: grid; gap: 14px; margin: 18px 0 20px; }
+.sticker-palette[hidden] + .pack-shelf { margin-top: 2px; }
+.pack-shelf__intro {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 0 0 12px; border-bottom: 1px solid var(--shell-line, #e2e7e4);
+}
+.pack-shelf__intro strong { display: block; font: 600 14px/1.5 var(--font-ui); color: var(--shell-ink, #2b322d); }
+.pack-shelf__intro span { display: block; font: 12px/1.6 var(--font-ui); color: var(--shell-muted, #6c736d); }
+.pack-shelf__code {
+  flex: none; height: 30px; padding: 0 12px; border: 1px solid var(--shell-line, #dfe5e1); border-radius: 999px;
+  background: transparent; font: 500 12px var(--font-ui); color: var(--shell-ink, #2b322d);
+}
+.pack-card {
+  display: grid; gap: 10px; padding: 14px 14px 12px; border: 1px solid #e6e2d6; border-radius: 8px;
+  background: linear-gradient(180deg, #fdfbf6, #f8f5ec);
+}
+.pack-card.is-owned { background: #fbfaf6; }
+.pack-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.pack-card__head h4 { margin: 0; font: 400 15px/1.5 var(--font-display, "Songti SC", serif); letter-spacing: 0.04em; color: #2f2b25; }
+.pack-card__badge { flex: none; font: 600 12px/1 var(--font-ui); color: #8a5a2e; }
+.pack-card.is-owned .pack-card__badge { color: #4f7360; font-weight: 500; }
+.pack-card > p { margin: -4px 0 2px; font: 12px/1.65 var(--font-ui); color: var(--shell-muted, #6c736d); }
+.pack-card__items { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.pack-card--ticket .pack-card__items,
+.pack-card--flora .pack-card__items { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.pack-sample {
+  position: relative; display: grid; place-items: center; height: 72px; padding: 8px; overflow: hidden;
+  border: 1px solid transparent; border-radius: 6px; background: rgba(255, 255, 255, 0.55);
+  transition: border-color 0.16s ease, background-color 0.16s ease, transform 0.16s ease;
+}
+.pack-card--washi .pack-sample { height: 46px; padding: 6px 4px; }
+.pack-card--flora .pack-sample { height: 92px; }
+.pack-sample img { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto; object-fit: contain; }
+.pack-card--washi .pack-sample img { mix-blend-mode: multiply; }
+.pack-card--ticket .pack-sample img { filter: drop-shadow(0 1px 1px rgba(50, 40, 30, 0.18)); }
+@media (hover: hover) {
+  .pack-sample:hover { border-color: #e2dccd; background: #fff; }
+  .pack-card.is-owned .pack-sample:hover { transform: translateY(-1px); }
+}
+.pack-sample:focus-visible, .ribbon-option:focus-visible { outline: 2px solid #6f8f7d; outline-offset: 1px; }
+.pack-lock {
+  position: absolute; right: 4px; top: 4px; display: grid; place-items: center; width: 16px; height: 16px;
+  border-radius: 50%; background: rgba(43, 38, 30, 0.58);
+}
+.pack-lock svg { width: 9px; height: 9px; fill: none; stroke: #fff; stroke-width: 1.3; stroke-linejoin: round; }
+.pack-card__unlock {
+  justify-self: stretch; height: 34px; margin-top: 2px; border: 0; border-radius: 6px;
+  background: #2f4a40; color: #f6f1e4; font: 500 13px var(--font-ui); letter-spacing: 0.04em;
+}
+@media (hover: hover) { .pack-card__unlock:hover { background: #355648; } }
+
+.ribbon-picker { display: grid; grid-template-columns: 34px minmax(0, 1fr); align-items: center; gap: 8px; grid-column: 1 / -1; }
+.ribbon-picker__label { font: 12px/1 var(--font-ui); color: var(--shell-muted, #6c736d); }
+.ribbon-picker__list { display: flex; flex-wrap: wrap; gap: 4px; }
+.ribbon-option {
+  position: relative; display: grid; place-items: start center; width: 38px; height: 54px; padding: 4px 0 0; overflow: hidden;
+  border: 1px solid transparent; border-radius: 6px; background: rgba(255, 255, 255, 0.6);
+}
+.ribbon-option img { display: block; max-height: 48px; width: auto; }
+.ribbon-option[aria-pressed="true"] { border-color: #6f8f7d; background: #fff; box-shadow: 0 0 0 1px #6f8f7d inset; }
+.ribbon-option__none { width: 18px; height: 40px; margin-top: 2px; border: 1px dashed #c9c3b4; border-radius: 3px; background: linear-gradient(135deg, transparent 47%, #c9c3b4 48% 52%, transparent 53%); }
+.ribbon-option .pack-lock { right: 2px; top: 2px; }
+
+/* Painted stickers on the page: the drawing is the sticker, with no card or padding of its own. */
+body.editor-shell .placed-sticker.pack-sticker {
+  min-width: 0 !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 0 !important;
+  background: none !important; box-shadow: none !important; color: transparent !important; font-size: 0 !important; line-height: 0 !important;
+  overflow: visible !important;
+}
+body.editor-shell .placed-sticker.pack-sticker::before,
+body.editor-shell .placed-sticker.pack-sticker::after { display: none !important; }
+body.editor-shell .placed-sticker.pack-sticker > img { display: block; width: 100%; height: 100%; pointer-events: none; -webkit-user-drag: none; user-select: none; }
+body.editor-shell .placed-sticker.pack-washi { mix-blend-mode: multiply; }
+body.editor-shell .placed-sticker.pack-ticket > img { filter: drop-shadow(0 1px 1.2px rgba(50, 40, 30, 0.2)) drop-shadow(0 4px 8px rgba(50, 40, 30, 0.08)); }
+body.editor-shell .placed-sticker.pack-sticker.is-selected { outline: 1px dashed rgba(53, 91, 73, 0.65) !important; outline-offset: 4px; }
+body.editor-shell .placed-sticker.pack-sticker.is-selected.is-editable::after {
+  content: "再点一下改字"; display: block !important; position: absolute; left: 50%; top: calc(100% + 8px); translate: -50% 0;
+  padding: 3px 8px; border-radius: 999px; background: rgba(38, 48, 42, 0.86); color: #fff; white-space: nowrap;
+  font: 500 11px/1.4 var(--font-ui) !important; letter-spacing: 0; pointer-events: none;
+}
+
+/* The ribbon bookmark: from the head of the gutter down the right page's inner margin; on a single
+   page, down its binding edge. It never takes a tap. */
+body.editor-shell .journal-spread > .ribbon-marker {
+  position: absolute; z-index: 6; top: var(--frame, 9px); left: calc(50% - 5px); width: 34px;
+  pointer-events: none; line-height: 0;
+}
+body.editor-shell .journal-spread > .ribbon-marker img { display: block; }
+body.editor-shell:not([data-book=open]) .journal-spread > .ribbon-marker { display: none; }
+@media screen and (max-width: 1100px) {
+  body.editor-shell .journal-spread > .ribbon-marker { left: calc(var(--frame, 9px) - 5px); }
+}
+@media screen and (min-width: 861px) and (max-width: 1100px) and (min-aspect-ratio: 5/4) {
+  body.editor-shell .journal-spread > .ribbon-marker { left: calc(50% - 5px); }
+}
+body.is-focus-mode .journal-spread > .ribbon-marker,
+body.is-ink-focus .journal-spread > .ribbon-marker { opacity: 0.35; }
+
+/* Dialogs */
+.pack-dialog {
+  width: min(400px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; overflow: auto;
+  border: 0; border-radius: 14px; background: #fbf9f3; color: #2b2a26;
+  box-shadow: 0 24px 60px rgba(30, 28, 22, 0.24), 0 2px 6px rgba(30, 28, 22, 0.1);
+}
+.pack-dialog::backdrop { background: rgba(28, 34, 30, 0.36); backdrop-filter: blur(2px); }
+.pack-dialog[open] { animation: pack-dialog-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+@keyframes pack-dialog-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } }
+@media (prefers-reduced-motion: reduce) { .pack-dialog[open] { animation: none; } }
+.pack-dialog__body { position: relative; display: grid; gap: 12px; margin: 0; padding: 26px 24px 22px; }
+.pack-dialog__eyebrow { margin: 0; font: 600 11px/1 var(--font-ui); letter-spacing: 0.16em; color: #8a7a62; }
+.pack-dialog h2 { margin: -4px 0 0; font: 400 21px/1.4 var(--font-display, "Songti SC", serif); letter-spacing: 0.04em; }
+.pack-dialog__blurb { margin: -4px 0 0; font: 13px/1.7 var(--font-ui); color: #5f625b; }
+.pack-dialog__preview {
+  display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 104px; padding: 14px 10px;
+  border-radius: 8px; background: #f3efe4 radial-gradient(circle, #d8d2c2 0.8px, transparent 1.2px) 0 0 / 12px 12px;
+  overflow: hidden;
+}
+.pack-dialog__preview img { flex: 0 1 auto; min-width: 0; max-width: 46%; max-height: 92px; width: auto; height: auto; }
+.pack-dialog[data-pack="washi"] .pack-dialog__preview { flex-direction: column; gap: 6px; }
+.pack-dialog[data-pack="washi"] .pack-dialog__preview img { max-width: 92%; max-height: 22px; mix-blend-mode: multiply; }
+.pack-dialog[data-pack="ribbon"] .pack-dialog__preview img { max-height: 100px; }
+.pack-dialog__buy {
+  display: grid; place-items: center; height: 42px; border-radius: 8px; background: #2f4a40; color: #f8f3e6;
+  font: 500 14px var(--font-ui); letter-spacing: 0.04em; text-decoration: none;
+}
+.pack-dialog__buy[hidden] { display: none; }
+@media (hover: hover) { .pack-dialog__buy:hover { background: #355648; } }
+.pack-dialog__bundle { margin: -4px 0 0; text-align: center; font: 12px/1.5 var(--font-ui); color: #8a7a62; }
+.pack-dialog__bundle[hidden] { display: none; }
+.pack-dialog__redeem { display: grid; gap: 6px; padding-top: 14px; border-top: 1px solid #e7e2d5; }
+.pack-dialog__redeem label { font: 500 12px/1.4 var(--font-ui); color: #4c4f48; }
+.pack-dialog__row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; }
+.pack-dialog input {
+  min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #d9d3c4; border-radius: 8px; background: #fff;
+  font: 15px/1 var(--font-ui); letter-spacing: 0.06em; color: #2b2a26;
+}
+.pack-dialog input:focus { outline: none; border-color: #6f8f7d; box-shadow: 0 0 0 3px rgba(111, 143, 125, 0.18); }
+#packRedeemButton {
+  height: 40px; padding: 0 18px; border: 1px solid #2f4a40; border-radius: 8px; background: #fff; color: #2f4a40;
+  font: 600 14px var(--font-ui);
+}
+#packRedeemButton:disabled { opacity: 0.5; }
+.pack-dialog__message { min-height: 1.5em; margin: 0; font: 12px/1.5 var(--font-ui); color: #6c736d; }
+.pack-dialog__message[data-tone="ok"] { color: #3f6d55; }
+.pack-dialog__message[data-tone="error"] { color: #a2483c; }
+.pack-dialog__note { margin: 0; font: 11.5px/1.7 var(--font-ui); color: #8b8c84; }
+.pack-dialog__close {
+  position: absolute; right: 12px; top: 12px; width: 32px; height: 32px; border: 0; border-radius: 50%;
+  background: transparent; color: #7b7d76; font: 20px/1 var(--font-ui);
+}
+@media (hover: hover) { .pack-dialog__close:hover { background: #efebe0; } }
+
+.sticker-editor__preview {
+  display: grid; place-items: center; min-height: 150px; padding: 18px 12px; border-radius: 8px;
+  background: #f6f3ea radial-gradient(circle, #d8d2c2 0.8px, transparent 1.2px) 0 0 / 12px 12px;
+}
+.sticker-editor__preview img { display: block; max-width: 100%; height: auto; filter: drop-shadow(0 1px 1.2px rgba(50, 40, 30, 0.2)) drop-shadow(0 6px 12px rgba(50, 40, 30, 0.08)); }
+.sticker-editor__fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 12px; }
+.sticker-editor__field { display: grid; gap: 4px; font: 12px/1.4 var(--font-ui); color: #5f625b; }
+.sticker-editor__field input { height: 38px; font-size: 15px; letter-spacing: 0.02em; }
+.sticker-editor__actions { display: flex; justify-content: space-between; gap: 10px; padding-top: 4px; }
+.sticker-editor__reset { height: 40px; padding: 0 14px; border: 0; border-radius: 8px; background: transparent; color: #6c736d; font: 500 13px var(--font-ui); }
+.sticker-editor__save { min-width: 120px; height: 40px; border: 0; border-radius: 8px; background: #2f4a40; color: #f8f3e6; font: 500 14px var(--font-ui); letter-spacing: 0.06em; }
+@media (max-width: 420px) {
+  .sticker-editor__fields { grid-template-columns: minmax(0, 1fr); }
+  .pack-card--ticket .pack-card__items, .pack-card--flora .pack-card__items { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.pack-sample img.is-painting, .pack-dialog__preview img.is-painting { opacity: 0; }
+.pack-sample img, .pack-dialog__preview img { transition: opacity 0.24s ease; }
+
+/* ==== One voice, full screen, light touch ====
+   Benchmarked on mature App Store apps: one typeface for writing everywhere; on a phone the page is
+   the whole screen under a compact, translucent bar; presses answer at once and spring back. */
+
+/* Writing is set in the book face everywhere (the daily editor had fallen back to the UI face), and
+   every hint is that same face, quieter. */
+body.editor-shell .journal-spread :is(#journalEditor, [data-source-id="journalEditor"]) {
+  font-family: var(--font-display) !important;
+}
+body.editor-shell .journal-spread .journal-editor.is-blank::before,
+body.editor-shell .journal-spread .paper-page :is(textarea, input)::placeholder {
+  font-family: var(--font-display) !important;
+  font-size: inherit !important;
+  color: var(--ink-hint, #a3a8a2) !important;
+  opacity: 1 !important;
+}
+
+/* Presses: down at once (60ms) to 96%, back with a soft spring. `scale` composes with any transform a
+   control already has, so nothing jumps. The old nudges and inset shadows are retired. */
+body.editor-shell :is(button, summary, a.wide-button, [role="button"], .sticker-sample, .pack-sample, .ribbon-option):not(.placed-sticker):not(#openCoverButton) {
+  -webkit-tap-highlight-color: transparent;
+  transition-property: scale, background-color, border-color, color, opacity, box-shadow !important;
+  transition-duration: 0.32s, 0.18s, 0.18s, 0.18s, 0.18s, 0.18s !important;
+  transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1), ease, ease, ease, ease, ease !important;
+}
+body.editor-shell :is(button, summary, a.wide-button, [role="button"], .sticker-sample, .pack-sample, .ribbon-option):not(.placed-sticker):not(#openCoverButton):not(:disabled):active {
+  transform: none !important;
+  box-shadow: none !important;
+  scale: 0.96;
+  transition-duration: 0.06s !important;
+  transition-timing-function: ease-out !important;
+}
+body.editor-shell :is(.wide-button, .pack-card__unlock, .pack-dialog__buy, .sticker-editor__save, #packRedeemButton):not(:disabled):active { scale: 0.98; }
+body.editor-shell :is(.sticker-sample, .pack-sample):active { scale: 0.93; }
+@media (hover: hover) {
+  body.editor-shell :is(.date-nav, .topbar-actions, .insert-tools, .context-tools) button:hover:not(:disabled) { background-color: color-mix(in srgb, var(--shell-ink, #2b322d) 6%, transparent); }
+}
+
+/* A sticker is laid down like a real one: it arrives a little large and lifted, then presses flat.
+   While dragged it lifts off the page. */
+@keyframes op-sticker-drop {
+  0% { scale: 1.16; opacity: 0; filter: drop-shadow(0 10px 14px rgba(40, 30, 20, 0.22)); }
+  55% { scale: 0.97; opacity: 1; filter: drop-shadow(0 2px 3px rgba(40, 30, 20, 0.16)); }
+  100% { scale: 1; filter: drop-shadow(0 0 0 rgba(40, 30, 20, 0)); }
+}
+body.editor-shell .placed-sticker.is-dropping { animation: op-sticker-drop 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+body.editor-shell .placed-sticker.is-dragging { scale: 1.04; filter: drop-shadow(0 10px 14px rgba(40, 30, 20, 0.2)); transition: scale 0.18s ease, filter 0.18s ease; z-index: 30; }
+
+/* The ribbon sways on its thread when a page turns, and settles. */
+@keyframes op-ribbon-sway {
+  0% { rotate: 0deg; }
+  25% { rotate: 1.6deg; }
+  55% { rotate: -0.9deg; }
+  80% { rotate: 0.35deg; }
+  100% { rotate: 0deg; }
+}
+body.editor-shell .journal-spread > .ribbon-marker { transform-origin: 10px 0; }
+body.editor-shell .journal-spread > .ribbon-marker.is-swaying { animation: op-ribbon-sway 1.1s cubic-bezier(0.3, 0.6, 0.3, 1); }
+
+/* A new day's page settles in: its blocks rise 6px and fade up, a beat apart. */
+@keyframes op-settle { from { opacity: 0; translate: 0 6px; } to { opacity: 1; translate: 0 0; } }
+body.editor-shell .journal-spread.is-arriving .paper-page > :not(.page-number):not(.page-print) { animation: op-settle 0.36s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+body.editor-shell .journal-spread.is-arriving .paper-page > :nth-child(2) { animation-delay: 0.03s; }
+body.editor-shell .journal-spread.is-arriving .paper-page > :nth-child(3) { animation-delay: 0.06s; }
+body.editor-shell .journal-spread.is-arriving .paper-page > :nth-child(n+4) { animation-delay: 0.09s; }
+
+/* Panels arrive with a spring; the shelf's cards rise in turn. */
+body.editor-shell .right-dock { transition-timing-function: cubic-bezier(0.32, 0.72, 0, 1) !important; transition-duration: 0.38s !important; }
+@keyframes op-rise { from { opacity: 0; translate: 0 10px; } to { opacity: 1; translate: 0 0; } }
+body.editor-shell .right-dock.is-open .pack-card,
+body.editor-shell .is-dock-open .pack-card { animation: op-rise 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+body.editor-shell .pack-card:nth-child(3) { animation-delay: 0.04s; }
+body.editor-shell .pack-card:nth-child(4) { animation-delay: 0.08s; }
+body.editor-shell .pack-card:nth-child(5) { animation-delay: 0.12s; }
+@media (hover: hover) {
+  body.editor-shell .pack-card { transition: box-shadow 0.25s ease, translate 0.25s ease; }
+  body.editor-shell .pack-card:hover { translate: 0 -2px; box-shadow: 0 10px 24px rgba(48, 40, 28, 0.08); }
+}
+
+/* The toast springs up from the bottom rather than fading in place. */
+body.editor-shell .action-toast { transition: opacity 0.2s ease, translate 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+body.editor-shell .action-toast:not(.is-visible) { translate: 0 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  body.editor-shell .placed-sticker.is-dropping,
+  body.editor-shell .journal-spread > .ribbon-marker.is-swaying,
+  body.editor-shell .journal-spread.is-arriving .paper-page > *,
+  body.editor-shell .pack-card { animation: none !important; }
+  body.editor-shell :is(button, summary, a.wide-button, [role="button"]):active { scale: 1 !important; }
+}
+
+/* ---- The phone: the page is the screen ----
+   No desk, no board, no rounded card: the paper runs from under the bar to the bottom edge, the
+   floating page controls sit on it, and the bar is the paper's own colour, translucent. */
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .view-stage { padding: 0 !important; }
+  body.editor-shell[data-book=open] .journal-spread {
+    --frame: 0px;
+    --page-w: 100cqw;
+    --pad-bottom: calc(76px + env(safe-area-inset-bottom));
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: var(--paper, #f8f6ef) !important;
+    box-shadow: none !important;
+  }
+  body.editor-shell[data-book=open] .journal-spread > :is(.notebook-cover, .notebook-spine, .brass-clip, .page-ribbon) { display: none !important; }
+  body.editor-shell[data-book=open] .journal-spread[data-mobile-page] :is(.paper-page--left, .paper-page--right),
+  body.editor-shell[data-book=open] .journal-spread .paper-page { border-radius: 0 !important; box-shadow: none !important; border: 0 !important; }
+  body.editor-shell[data-book=open] .journal-spread > .ribbon-marker { left: 7px !important; top: 0 !important; }
+
+  /* The bar: one 44px row to move about, one 40px row of the two switches and the panel buttons. */
+  body.editor-shell[data-book=open] .document-chrome {
+    position: relative;
+    z-index: 30;
+    padding-top: env(safe-area-inset-top) !important;
+    background: color-mix(in srgb, var(--paper, #f8f6ef) 86%, transparent) !important;
+    -webkit-backdrop-filter: saturate(1.4) blur(18px);
+    backdrop-filter: saturate(1.4) blur(18px);
+    border-bottom: 0.5px solid color-mix(in srgb, var(--shell-ink, #2b322d) 14%, transparent) !important;
+    box-shadow: none !important;
+  }
+  body.editor-shell[data-book=open] .document-chrome .topbar { min-height: 44px !important; height: 44px !important; padding: 0 6px !important; background: transparent !important; border: 0 !important; }
+  body.editor-shell[data-book=open] .document-chrome .document-tools {
+    display: flex !important; align-items: center !important; gap: 8px !important;
+    min-height: 40px !important; height: 40px !important; padding: 0 12px 4px !important;
+    background: transparent !important; border: 0 !important;
+  }
+  body.editor-shell[data-book=open] .document-tools .mobile-page-switcher { margin: 0 !important; height: 32px !important; }
+  body.editor-shell[data-book=open] .document-tools .insert-tools { margin-left: auto !important; gap: 2px !important; height: 36px !important; padding: 0 !important; border: 0 !important; background: transparent !important; }
+  body.editor-shell[data-book=open] .document-tools .insert-tools > button {
+    width: 36px !important; min-width: 36px !important; height: 36px !important; padding: 0 !important;
+    font-size: 0 !important; gap: 0 !important; justify-content: center !important; border-radius: 8px !important;
+  }
+  body.editor-shell[data-book=open] .document-tools .insert-tools > button svg { width: 19px !important; height: 19px !important; margin: 0 !important; }
+  /* The formatting row appears only while writing (or drawing). */
+}
+
+/* The cover: one elastic, running down its fore-edge; the band across it read as a scratch. */
+body .closed-cover .closed-cover__elastic--horizontal { display: none !important; }
+
+/* Page decorations stay away when they are turned off, whatever later rules give them. */
+body[data-decorative-prints="off"] .journal-spread .page-print { display: none !important; }
+
+@media screen and (max-width: 720px) {
+  /* A binding margin on the phone page: the ribbon lies in it, clear of the writing. */
+  body.editor-shell[data-book=open] .journal-spread[data-mobile-page] .paper-page {
+    padding: var(--pad-top) 22px var(--pad-bottom) 38px !important;
+  }
+  body.editor-shell[data-book=open] .journal-spread > .ribbon-marker { left: 3px !important; }
+}
+
+/* ---- Ring binding ---- */
+body.editor-shell .journal-spread > .ring-binding {
+  position: absolute; z-index: 7; top: 0; bottom: 0; left: calc(50% - 36px); width: 72px;
+  pointer-events: none; line-height: 0;
+}
+body.editor-shell .journal-spread > .ring-binding.is-single { left: calc(var(--frame, 9px) - 2px); width: 38px; }
+body.editor-shell .journal-spread > .ring-binding img { display: block; }
+body.editor-shell:not([data-book=open]) .journal-spread > .ring-binding { display: none; }
+/* With rings, the pages part at the gutter instead of folding into it, and the ribbon moves aside. */
+body.editor-shell[data-book=open] .journal-spread.has-rings::after {
+  width: 10px !important;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.12) 50%, rgba(0, 0, 0, 0.06)) !important;
+}
+/* The ribbon keeps its place in the gutter and runs under the rings. */
+body.editor-shell[data-book=open] .journal-spread.has-rings > .ring-binding { z-index: 8 !important; }
+body.editor-shell[data-book=open] .journal-spread.has-rings > .ribbon-marker { z-index: 6 !important; }
+/* A week's own rows are its lines; the paper's rules stay on the facing page. */
+body.editor-shell[data-book=open][data-page=line] .journal-spread[data-mode=weekly] .paper-page--right { background-image: none !important; }
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .journal-spread.has-rings[data-mobile-page] .paper-page { padding-left: 46px !important; }
+}
+
+.ring-swatch, .sewn-swatch { display: block; width: 26px; height: 40px; margin-top: 3px; }
+.ring-swatch {
+  background:
+    radial-gradient(ellipse 4px 5px at 50% 16%, rgba(30, 26, 20, 0.55) 60%, transparent 70%),
+    radial-gradient(ellipse 4px 5px at 50% 84%, rgba(30, 26, 20, 0.55) 60%, transparent 70%);
+  position: relative;
+}
+.ring-swatch::before, .ring-swatch::after {
+  content: ""; position: absolute; left: 4px; right: 4px; height: 12px; border-radius: 10px 10px 0 0;
+  border: 3px solid var(--ring-mid); border-bottom: 0;
+  box-shadow: inset 0 1px 0 var(--ring-light), 0 1px 0 var(--ring-dark);
+}
+.ring-swatch::before { top: 4px; }
+.ring-swatch::after { top: 22px; }
+.sewn-swatch {
+  background: linear-gradient(90deg, transparent 11px, #d8d2c3 11px 15px, transparent 15px),
+    repeating-linear-gradient(180deg, #8f8676 0 3px, transparent 3px 7px) 12.5px 0 / 1px 100% no-repeat;
+}
+
+/* ---- Pages that look finished ----
+   Lined paper has its rules again (the full-screen ruling had dot and grid only, so a lined page
+   came out blank), one every writing line, so text sits on them. */
+@media screen {
+  body.editor-shell[data-book=open][data-page=line] .journal-spread .paper-page {
+    background-image: linear-gradient(to bottom, transparent calc(var(--line) - 1px), color-mix(in srgb, var(--paper-rule) 34%, transparent) calc(var(--line) - 1px), color-mix(in srgb, var(--paper-rule) 34%, transparent) var(--line)) !important;
+    background-size: 100% var(--line) !important;
+    background-position: 0 0 !important;
+  }
+}
+
+/* The week fills its page: seven equal rows from under the heading to the foot of the text block,
+   like a printed weekly, instead of a short list with half a page of nothing beneath. */
+body.editor-shell[data-book=open] .journal-spread[data-mode=weekly] .paper-page > .weekly-view:not([hidden]) {
+  display: flex !important;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+body.editor-shell[data-book=open] .journal-spread[data-mode=weekly] .weekly-view > .week-grid {
+  flex: 1 1 0;
+  min-height: 0 !important;
+  grid-template-rows: repeat(7, minmax(0, 1fr)) !important;
+  grid-auto-rows: unset !important;
+  align-content: stretch !important;
+}
+body.editor-shell[data-book=open] .journal-spread .week-grid > .week-day { height: auto !important; min-height: 0 !important; align-items: stretch !important; }
+body.editor-shell[data-book=open] .journal-spread .week-grid > .week-day textarea { height: 100% !important; min-height: 0 !important; resize: none; }
+
+/* ==== Type scale ====
+   Five sizes on the page, each about a quarter larger than the one below (a major third), so the
+   eye reads the levels at once; the page had grown eleven (11, 11.52, 12, 12.16, 13, 14, 16, 17, 20,
+   22, 26), several too close to tell apart.
+     11  captions: eyebrows, weekday letters, page numbers (tracked)
+     12  labels: field labels, chips, small buttons, empty states, the tag field
+     16  writing: everything the writer types, and the day's prompt
+     20  headings: section heads, the facing page's title, the week's day numbers
+     26  the page title */
+body.editor-shell .journal-spread .paper-page > .page-number { font-size: 11px !important; }
+body.editor-shell .journal-spread .paper-page :is(
+  .entry-context > summary > span, .page-extras > summary > span, .section-title > span,
+  .field > span, .field.grow > span, .compact-focus > span, .daily-prompt__label,
+  .mood-chips > button, .daily-prompt__actions > button, .empty-state, .health-empty > span,
+  .tag-input-row > input, .tag-pill
+) { font-size: 12px !important; }
+body.editor-shell .journal-spread .paper-page :is(.daily-prompt > p, .week-day > textarea) { font-size: 16px !important; }
+body.editor-shell .journal-spread .paper-page :is(.section-title > h3, .ink-page-title, .week-day__date > small) {
+  font-size: 20px !important;
+  letter-spacing: 0.01em !important;
+}
+/* Each day's weekday sits flush under its number, on the same left edge as everything else. */
+body.editor-shell .journal-spread .week-day__date { align-items: flex-start !important; text-align: left !important; }
+body.editor-shell .journal-spread .week-day__date > :not(small) { margin-left: 1px; }
+body.editor-shell .journal-spread .paper-page :is(.daily-prompt__actions, .capture-input-row, .task-input-row) > button { font-size: 12px !important; }
+body.editor-shell .journal-spread .paper-page .mode-focus > input { font-size: 16px !important; font-family: var(--font-display) !important; }
+
+/* ---- Writing sits on the rules ----
+   One writing line is one rule (--line, 28px: 1.75 × the 16px text, the comfortable reading measure),
+   on every screen; paragraphs keep that rhythm, and the editor's first line is brought onto a rule
+   (snapEditorToRules in app.js). */
+body.editor-shell .journal-spread :is(#journalEditor, [data-source-id="journalEditor"]) {
+  font-size: 16px !important;
+  line-height: var(--line) !important;
+}
+body.editor-shell .journal-spread #journalEditor :is(p, li, blockquote, h1, h2, h3, div) { line-height: var(--line) !important; }
+body.editor-shell .journal-spread #journalEditor p { margin: 0 !important; }
+body.editor-shell .journal-spread .paper-page :is(.collection-view textarea, .mode-module textarea, .week-day > textarea) { line-height: var(--line) !important; }
+
+/* ==== 真皮活页夹 (leather binder) ====
+   What leather ring binders do well, in the manner of ROROMA, Filofax and Ashford: a pebbled hide
+   with a soft sheen, a line of saddle stitching set in from the edge, a strap across the fore-edge
+   with a metal snap, and rings inside. The traveler's notebook keeps its elastic. */
+.closed-cover__stitch, .closed-cover__strap { display: none; }
+body[data-cover-style=binder] .closed-cover {
+  background:
+    radial-gradient(130% 90% at 28% 16%, color-mix(in srgb, var(--cover-c) 46%, transparent), transparent 62%),
+    url("./assets/leather-pebble.png") 0 0 / 144px 144px,
+    linear-gradient(135deg, var(--cover-a), var(--cover-b) 58%, var(--cover-c)) !important;
+  background-blend-mode: normal, soft-light, normal !important;
+}
+body[data-cover-style=binder] .closed-cover :is(.closed-cover__elastic, .closed-cover__clip, .closed-cover__paper-edge) { display: none !important; }
+body[data-cover-style=binder] .closed-cover .closed-cover__stitch {
+  display: block; position: absolute; inset: 9px; pointer-events: none;
+  border: 1.3px dashed color-mix(in srgb, var(--cover-c) 55%, #f3e6cc 45%);
+  border-radius: 12px; opacity: 0.75;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.35));
+}
+body[data-cover-style=binder] .closed-cover .closed-cover__strap {
+  display: block; position: absolute; right: 0; top: 50%; width: 74px; height: 46px; translate: 0 -50%;
+  border-radius: 23px 0 0 23px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), transparent 45%, rgba(0, 0, 0, 0.18)),
+    url("./assets/leather-pebble.png") 0 0 / 144px 144px,
+    linear-gradient(135deg, color-mix(in srgb, var(--cover-a) 88%, black), var(--cover-a));
+  background-blend-mode: normal, soft-light, normal;
+  box-shadow: -2px 3px 7px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+body[data-cover-style=binder] .closed-cover .closed-cover__strap::before {
+  content: ""; position: absolute; inset: 5px 0 5px 5px; border-radius: 18px 0 0 18px;
+  border: 1.2px dashed color-mix(in srgb, var(--cover-c) 55%, #f3e6cc 45%); border-right: 0; opacity: 0.7;
+}
+body[data-cover-style=binder] .closed-cover .closed-cover__snap {
+  position: absolute; left: 13px; top: 50%; width: 20px; height: 20px; translate: 0 -50%; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #fff6dc 0 12%, #d8bd7c 34%, #a4823f 64%, #6f5627 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), inset 0 0 0 1.5px rgba(80, 60, 25, 0.5), inset 0 -2px 3px rgba(60, 40, 10, 0.35);
+}
+body[data-cover-style=binder] .closed-cover .closed-cover__snap::after {
+  content: ""; position: absolute; inset: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #f6e2a8, #b38f47 70%);
+  box-shadow: inset 0 0 0 1px rgba(80, 60, 25, 0.4);
+}
+/* Open, the board round the pages is the same hide, with its stitching in the frame. */
+body.editor-shell[data-cover-style=binder][data-book=open] .journal-spread {
+  background:
+    url("./assets/leather-pebble.png") 0 0 / 144px 144px,
+    linear-gradient(135deg, var(--cover-a), var(--cover-b) 60%, var(--cover-c)) !important;
+  background-blend-mode: soft-light, normal !important;
+  outline: 1.2px dashed color-mix(in srgb, var(--cover-c) 55%, #f3e6cc 45%);
+  outline-offset: -4.5px;
+}
+body.editor-shell[data-cover-style=binder][data-book=open] .journal-spread > .notebook-cover { opacity: 0 !important; }
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-cover-style=binder][data-book=open] .journal-spread { outline: 0; background: var(--paper, #f8f6ef) !important; }
+}
+
+/* ==== Week and month, cleaner and freer ==== */
+
+/* A day's row: number and weekday in a 52px column, its plans beside them starting on the same line,
+   the day's record (if any) beneath; nothing floats in the middle of the row. */
+body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day {
+  display: grid !important;
+  grid-template-columns: 52px minmax(0, 1fr) !important;
+  grid-template-rows: minmax(0, 1fr) auto !important;
+  align-items: start !important;
+  column-gap: 12px !important;
+  padding: 8px 0 6px !important;
+  border-left: 0 !important;
+  overflow: hidden;
+}
+body.editor-shell .journal-spread[data-mode=weekly] .week-day__date {
+  grid-row: 1 / span 2; align-self: start !important;
+  display: flex !important; flex-direction: column !important; gap: 0 !important;
+  padding: 0 !important; margin: 0 !important; background: none !important; border: 0 !important;
+}
+body.editor-shell .journal-spread[data-mode=weekly] .week-day__date > small { order: 1; line-height: var(--line) !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day__date > span { order: 2; line-height: 1.4 !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day > textarea {
+  grid-column: 2; grid-row: 1; align-self: stretch !important;
+  height: auto !important; min-height: var(--line) !important; margin: 0 !important; padding: 0 !important;
+  overflow-y: auto; border: 0 !important; background: transparent !important;
+}
+body.editor-shell .journal-spread[data-mode=weekly] .week-day > :not(.week-day__date):not(textarea) {
+  grid-column: 2; grid-row: 2; align-self: end; margin: 2px 0 0 !important;
+}
+/* Today: its number in the accent colour with a dot beneath the weekday, not a bar against the digits. */
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current { box-shadow: none !important; background: none !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current .week-day__date > small { color: var(--accent-strong, #2f5f4c) !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current .week-day__date > span::after {
+  content: ""; display: inline-block; width: 4px; height: 4px; margin-left: 4px; vertical-align: middle;
+  border-radius: 50%; background: var(--accent-strong, #2f5f4c);
+}
+
+/* On lined paper the paper gives the lines: headings and fields lose their own rules there, so no
+   two lines run a few pixels apart. */
+body.editor-shell[data-page=line] .journal-spread .paper-page :is(.paper-header, .paper-header--entry, .mode-focus, .mode-focus > input, .field > input, .title-input) {
+  border-bottom-color: transparent !important;
+  box-shadow: none !important;
+}
+body.editor-shell[data-page=line] .journal-spread .paper-page > .paper-header::after { display: none !important; }
+
+/* 文字 / 手写 for a week or month's left page. */
+.plan-switch {
+  display: inline-flex; align-self: flex-start; gap: 2px; margin: 0 0 12px; padding: 2px;
+  border-radius: 8px; background: color-mix(in srgb, var(--shell-ink, #2b322d) 6%, transparent);
+}
+.plan-switch[hidden] { display: none !important; }
+.plan-switch > button {
+  height: 26px; padding: 0 12px; border: 0; border-radius: 6px; background: transparent;
+  font: 500 12px/1 var(--font-ui); color: var(--ink-muted, #6c736d);
+}
+.plan-switch > button[aria-pressed="true"] { background: var(--paper, #fff); color: var(--shell-ink, #2b322d); box-shadow: 0 1px 2px rgba(30, 28, 22, 0.12); }
+body.editor-shell .journal-spread[data-left-ink=on] .paper-page--left > .field.grow { display: none !important; }
+body.editor-shell .journal-spread[data-left-ink=on] .paper-page--left > .canvas-card {
+  display: block !important; flex: 1 1 auto; min-height: 0; margin: 0 !important;
+}
+body.editor-shell .journal-spread[data-left-ink=on] .paper-page--left > .canvas-card canvas { width: 100% !important; height: auto !important; }
+/* Its pen tools come up while the hand is writing there. */
+body.editor-shell[data-input-mode=ink]:has(.journal-spread[data-left-ink=on]) .handwriting-tools { display: flex !important; }
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open][data-input-mode=ink]:has(.journal-spread[data-left-ink=on]) .document-chrome .context-tools { display: block !important; }
+}
+/* The old today bar (a 2px rule on the row) gives way to the accent number and dot. */
+body.editor-shell .journal-spread[data-mode=weekly] .week-day.is-current::after { display: none !important; }
+
+/* The week: the day's own page is a small tag at the row's top right; the row stays for writing. */
+body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day { position: relative; grid-template-rows: minmax(0, 1fr) !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day > textarea { padding-right: 52px !important; }
+body.editor-shell .journal-spread[data-mode=weekly] .week-day > .week-day__linked {
+  position: absolute !important; right: 0; top: 10px; grid-area: auto !important; margin: 0 !important;
+  height: 22px; padding: 0 8px !important; border: 0 !important; border-radius: 11px !important;
+  background: color-mix(in srgb, var(--accent-strong, #2f5f4c) 9%, transparent) !important; box-shadow: none !important;
+  font: 500 11px/22px var(--font-ui) !important; color: var(--accent-strong, #2f5f4c) !important; white-space: nowrap;
+}
+
+/* ==== The month as a printed board ====
+   A box for every day, drawn with hairlines like a printed monthly: the number small in the
+   top-left corner (it opens the day), the rest of the box for a few words or the hand. The board
+   takes the room between the heading and the two fields beneath, one equal row per week. */
+body.editor-shell .journal-spread[data-mode=monthly] .collection-view:not([hidden]) {
+  display: flex !important; flex-direction: column; flex: 1 0 auto;
+}
+body.editor-shell .journal-spread[data-mode=monthly] .month-board {
+  display: flex; flex-direction: column; flex: 1 0 auto; margin: 2px 0 12px;
+}
+.month-board__weekdays, .month-board__cells { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.month-board__weekdays { padding: 0 0 6px; }
+.month-board__weekdays > span { font: 500 11px/1 var(--font-ui); letter-spacing: 0.12em; color: var(--ink-muted, #6c736d); padding-left: 6px; }
+.month-board__weekdays > .is-saturday { color: #50709a; }
+.month-board__weekdays > .is-sunday { color: #a2564c; }
+.month-board__cells {
+  flex: 1 0 auto; grid-template-rows: repeat(var(--weeks, 5), minmax(44px, 1fr));
+  border-top: 1px solid color-mix(in srgb, var(--paper-rule, #aeb8b0) 70%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--paper-rule, #aeb8b0) 70%, transparent);
+}
+.month-cell {
+  position: relative; display: flex; flex-direction: column; min-height: 0; min-width: 0;
+  border-right: 1px solid color-mix(in srgb, var(--paper-rule, #aeb8b0) 70%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--paper-rule, #aeb8b0) 70%, transparent);
+  transition: background-color 0.2s ease;
+}
+.month-cell.is-muted { background: color-mix(in srgb, var(--paper-rule, #aeb8b0) 8%, transparent); }
+.month-cell:focus-within { background: color-mix(in srgb, var(--accent-strong, #2f5f4c) 5%, transparent); }
+body.editor-shell .month-cell__date {
+  position: relative; align-self: flex-start; min-width: 22px; height: 22px; margin: 4px 0 0 4px; padding: 0 4px !important;
+  border: 0 !important; border-radius: 11px !important; background: none !important; box-shadow: none !important;
+  font: 400 13px/22px var(--font-display) !important; color: var(--ink, #2b322d) !important; text-align: center;
+}
+.month-cell.is-muted .month-cell__date { color: color-mix(in srgb, var(--ink-muted, #6c736d) 55%, transparent) !important; }
+.month-cell.is-saturday:not(.is-muted) .month-cell__date { color: #50709a !important; }
+.month-cell.is-sunday:not(.is-muted) .month-cell__date { color: #a2564c !important; }
+.month-cell.is-today .month-cell__date { background: var(--accent-strong, #2f5f4c) !important; color: #fff !important; }
+.month-cell.has-entry .month-cell__date::after {
+  content: ""; position: absolute; left: 50%; bottom: 1px; width: 3px; height: 3px; translate: -50% 0; border-radius: 50%; background: currentColor; opacity: 0.6;
+}
+@media (hover: hover) { body.editor-shell .month-cell:not(.is-today) .month-cell__date:hover { background: color-mix(in srgb, var(--accent-strong, #2f5f4c) 10%, transparent) !important; } }
+body.editor-shell .month-cell__note {
+  flex: 1 1 0; width: 100%; min-height: 0 !important; height: 0 !important; margin: 0 !important; padding: 2px 6px 4px !important;
+  border: 0 !important; background: transparent !important; box-shadow: none !important; resize: none; overflow: hidden;
+  font: 400 12px/1.45 var(--font-ui) !important; color: var(--ink, #2b322d) !important;
+}
+body.editor-shell .month-cell__note:focus { outline: none; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-calendar { display: none !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-fields { flex: none; }
+@media screen and (max-width: 720px) {
+  body.editor-shell .month-cell__note { font-size: 11px !important; padding: 1px 3px 3px !important; }
+  body.editor-shell .month-cell__date { font-size: 12px !important; margin: 2px 0 0 2px; }
+}
+
+/* ---- The writing layer on a week's or month's right page ---- */
+.journal-spread .paper-page > canvas.mark-layer {
+  position: absolute !important; z-index: 5; left: 0; top: 0; width: 100% !important;
+  pointer-events: none; touch-action: none;
+}
+.journal-spread[data-marking=on] .paper-page > canvas.mark-layer { pointer-events: auto; cursor: crosshair; }
+body.editor-shell .journal-spread .paper-page > .mark-toggle {
+  position: absolute !important; z-index: 6; top: 14px; right: 14px; display: inline-flex !important; align-items: center; gap: 4px;
+  height: 28px; padding: 0 10px !important; border: 1px solid color-mix(in srgb, var(--shell-ink, #2b322d) 14%, transparent) !important;
+  border-radius: 14px !important; background: color-mix(in srgb, var(--paper, #fff) 80%, white) !important; box-shadow: none !important;
+  font: 500 12px/1 var(--font-ui) !important; color: var(--ink-muted, #5d645e) !important;
+}
+body.editor-shell .journal-spread .paper-page > .mark-toggle svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linejoin: round; stroke-linecap: round; }
+body.editor-shell .journal-spread[data-marking=on] .paper-page > .mark-toggle { display: none !important; }
+body.editor-shell .journal-spread .paper-page > .mark-bar {
+  position: absolute !important; z-index: 7; top: 10px; left: 50%; translate: -50% 0; display: none; align-items: center; gap: 4px;
+  margin: 0 !important; padding: 4px; width: max-content; max-width: calc(100% - 16px);
+  border-radius: 12px; background: color-mix(in srgb, #262b28 88%, transparent); box-shadow: 0 8px 22px rgba(20, 24, 22, 0.25);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+body.editor-shell .journal-spread[data-marking=on] .paper-page > .mark-bar { display: flex; animation: op-rise 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+body.editor-shell .mark-bar > button {
+  height: 28px; padding: 0 10px !important; border: 0 !important; border-radius: 8px !important; background: transparent !important;
+  font: 500 12px/1 var(--font-ui) !important; color: rgba(255, 255, 255, 0.78) !important; box-shadow: none !important;
+}
+body.editor-shell .mark-bar > button[aria-pressed="true"] { background: rgba(255, 255, 255, 0.16) !important; color: #fff !important; }
+body.editor-shell .mark-bar > button:disabled { opacity: 0.4; }
+body.editor-shell .mark-bar > [data-mark-done] { background: #f4efe3 !important; color: #262b28 !important; margin-left: 2px; }
+.mark-bar__colors { display: inline-flex; gap: 3px; padding: 0 4px; border-left: 1px solid rgba(255, 255, 255, 0.14); border-right: 1px solid rgba(255, 255, 255, 0.14); }
+body.editor-shell .mark-bar__colors > button {
+  width: 22px !important; height: 22px !important; min-width: 0 !important; padding: 0 !important; border: 2px solid transparent !important;
+  border-radius: 50% !important; background: var(--swatch) !important; box-shadow: inset 0 0 0 2px rgba(38, 43, 40, 0.9) !important;
+}
+body.editor-shell .mark-bar__colors > button[aria-pressed="true"] { border-color: #fff !important; }
+/* While writing, the page's own fields stay still under the pen. */
+body.editor-shell .journal-spread[data-marking=on] .paper-page--right :is(textarea, input, button:not(.mark-bar button)) { pointer-events: none; }
+/* A day's box keeps small type at its own leading (the page's writing rhythm is for the page). */
+body.editor-shell .journal-spread .paper-page .collection-view .month-cell__note { line-height: 1.45 !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-view:not([hidden]) { flex: 1 1 auto !important; min-height: 0 !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .month-board { flex: 1 1 0 !important; min-height: calc(var(--weeks, 5) * 40px + 20px) !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .month-board__cells { grid-template-rows: repeat(var(--weeks, 5), minmax(40px, 1fr)) !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-view > :is(.collection-heading, .collection-fields) { flex: 0 0 auto !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-view:not([hidden]) { row-gap: 10px !important; padding-bottom: 0 !important; }
+body.editor-shell .journal-spread[data-mode=monthly] .collection-view > .collection-heading { margin-bottom: 4px !important; }
+
+/* ==== Motion, in the notebook's manner ==== */
+
+/* Segmented controls: one pill slides to the chosen segment. */
+.seg-host { position: relative !important; isolation: isolate; }
+.seg-host > .seg-pill {
+  position: absolute; left: 0; top: 0; z-index: -1; border-radius: 7px; pointer-events: none;
+  background: var(--paper, #fff); box-shadow: 0 1px 2px rgba(30, 28, 22, 0.12), 0 0 0 0.5px rgba(30, 28, 22, 0.06);
+  opacity: 0;
+}
+.seg-host.is-pill-ready > .seg-pill { transition: transform 0.38s cubic-bezier(0.32, 0.72, 0, 1), width 0.38s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.2s ease; }
+body.editor-shell .seg-host > button { position: relative; z-index: 1; background: transparent !important; box-shadow: none !important; }
+body.editor-shell .seg-host > button[aria-pressed="true"], body.editor-shell .seg-host > button.is-active { color: var(--shell-ink, #2b322d) !important; }
+
+/* The cover under the lamp. */
+.closed-cover__sheen {
+  position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(420px circle at var(--sheen-x, 30%) var(--sheen-y, 20%), rgba(255, 246, 225, 0.2), transparent 55%);
+  mix-blend-mode: soft-light; transition: opacity 0.4s ease;
+}
+.closed-cover.is-lit .closed-cover__sheen { opacity: 1; }
+
+/* Washi tape is unrolled onto the page from its left end, then pressed down. */
+@keyframes op-tape-unroll {
+  0% { clip-path: inset(0 100% 0 0); scale: 1.03; }
+  70% { clip-path: inset(0 0 0 0); scale: 1.01; }
+  100% { clip-path: inset(0 0 0 0); scale: 1; }
+}
+body.editor-shell .placed-sticker.pack-washi.is-dropping { animation: op-tape-unroll 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) both !important; }
+
+/* A page's title appears as if written: the ink runs in from the left. */
+@property --reveal { syntax: "<percentage>"; inherits: false; initial-value: 100%; }
+@keyframes op-ink-reveal { from { --reveal: -15%; } to { --reveal: 100%; } }
+body.editor-shell .journal-spread:is(.is-arriving, .is-inked) :is(.title-input, .collection-heading h3, .ink-page-title, .weekly-view .section-title h3) {
+  -webkit-mask-image: linear-gradient(90deg, #000 var(--reveal), transparent calc(var(--reveal) + 15%));
+  mask-image: linear-gradient(90deg, #000 var(--reveal), transparent calc(var(--reveal) + 15%));
+  animation: op-ink-reveal 0.7s cubic-bezier(0.3, 0.6, 0.3, 1) both;
+}
+
+/* Today on the month board is drawn in with a small press. */
+@keyframes op-today { 0% { scale: 0.4; opacity: 0; } 60% { scale: 1.12; opacity: 1; } 100% { scale: 1; } }
+body.editor-shell .month-cell.is-today .month-cell__date { animation: op-today 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .seg-host.is-pill-ready > .seg-pill { transition: none; }
+  body.editor-shell .placed-sticker.pack-washi.is-dropping,
+  body.editor-shell .journal-spread:is(.is-arriving, .is-inked) :is(.title-input, .collection-heading h3, .ink-page-title, .weekly-view .section-title h3),
+  body.editor-shell .month-cell.is-today .month-cell__date { animation: none !important; -webkit-mask-image: none; mask-image: none; }
+}
+
+/* ==== One toolbar ==== */
+/* The diary's old handwriting canvas only shows what was drawn on it; all new writing goes on the
+   page layers, so two kinds of ink never compete for the same touch. */
+body.editor-shell #inkCanvas { pointer-events: none !important; }
+body.editor-shell .handwriting-tools { display: none !important; }
+/* Page layers: idle under 键入, taking every touch under a pen. */
+.journal-spread .paper-page > canvas.mark-layer { position: absolute !important; z-index: 5; left: 0; top: 0; width: 100% !important; pointer-events: none; touch-action: none; }
+.journal-spread[data-marking=on] .paper-page > canvas.mark-layer { pointer-events: auto; }
+body[data-tool=pen] .journal-spread .mark-layer, body[data-tool=marker] .journal-spread .mark-layer { cursor: crosshair; }
+body[data-tool=eraser] .journal-spread .mark-layer { cursor: cell; }
+body.editor-shell .journal-spread[data-marking=on] .paper-page :is(textarea, input, [contenteditable], button) { pointer-events: none; }
+/* The old split controls are retired. */
+#planInputSwitch, .mark-toggle, .mark-bar { display: none !important; }
+
+/* The dock: tools first, then what the chosen tool needs (formatting for 键入, ink for the pens). */
+body.editor-shell .context-tools { display: flex !important; align-items: center; gap: 10px; }
+.tool-dock { display: flex; align-items: center; gap: 10px; flex: none; }
+.tool-dock__tools { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: color-mix(in srgb, var(--shell-ink, #2b322d) 6%, transparent); }
+body.editor-shell .tool-dock__tools > button {
+  width: 34px !important; height: 30px !important; min-width: 0 !important; padding: 0 !important; display: grid; place-items: center;
+  border: 0 !important; border-radius: 7px !important; background: transparent !important; box-shadow: none !important; color: var(--ink-muted, #5d645e) !important;
+}
+body.editor-shell .tool-dock__tools > button[aria-pressed="true"] { background: var(--paper, #fff) !important; color: var(--shell-ink, #2b322d) !important; box-shadow: 0 1px 2px rgba(30, 28, 22, 0.14) !important; }
+.tool-dock svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.tool-dock__ink { display: inline-flex; align-items: center; gap: 4px; }
+body[data-tool=type] .tool-dock__ink { display: none; }
+body:not([data-tool=type]) .context-tools > .editor-toolbar { display: none !important; }
+body[data-tool=type] .context-tools > .editor-toolbar { display: flex !important; }
+body[data-tool=eraser] .tool-dock__ink > :is(.tool-swatch, .tool-size, .tool-dock__sep:first-of-type) { display: none; }
+body[data-tool=marker] .tool-dock__ink > .tool-size { display: none; }
+body.editor-shell .tool-swatch {
+  width: 22px !important; height: 22px !important; min-width: 0 !important; padding: 0 !important; border-radius: 50% !important;
+  border: 2px solid transparent !important; background: var(--swatch) !important; box-shadow: inset 0 0 0 2px var(--paper, #fff) !important;
+}
+body.editor-shell .tool-swatch[aria-pressed="true"] { border-color: var(--swatch) !important; }
+body.editor-shell .tool-size {
+  width: 26px !important; height: 26px !important; min-width: 0 !important; padding: 0 !important; display: grid; place-items: center;
+  border: 0 !important; border-radius: 7px !important; background: transparent !important; box-shadow: none !important;
+}
+.tool-size > i { width: var(--dot); height: var(--dot); border-radius: 50%; background: var(--shell-ink, #2b322d); opacity: 0.7; }
+body.editor-shell .tool-size[aria-pressed="true"] { background: color-mix(in srgb, var(--shell-ink, #2b322d) 9%, transparent) !important; }
+body.editor-shell .tool-step {
+  width: 30px !important; height: 30px !important; min-width: 0 !important; padding: 0 !important; display: grid; place-items: center;
+  border: 0 !important; border-radius: 7px !important; background: transparent !important; box-shadow: none !important; color: var(--ink-muted, #5d645e) !important;
+}
+body.editor-shell .tool-step:disabled { opacity: 0.35; }
+.tool-dock__sep { width: 1px; height: 18px; margin: 0 2px; background: color-mix(in srgb, var(--shell-ink, #2b322d) 14%, transparent); }
+
+/* On a phone the dock is always there, as the third, compact row of the bar. */
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .document-chrome .context-tools {
+    display: flex !important; height: 40px; padding: 0 10px 4px !important; overflow-x: auto; scrollbar-width: none;
+    background: transparent !important; border: 0 !important;
+  }
+  body.editor-shell[data-book=open] .document-chrome .context-tools::-webkit-scrollbar { display: none; }
+  body.editor-shell .tool-dock__tools > button { width: 36px !important; height: 32px !important; }
+}
+
+/* ==== The dock, steady ====
+   The bar never changes width: the formatting buttons keep their place (hidden, not removed, under
+   a pen), and a pen's tray (kind, colour, width, undo) floats below the bar instead of pushing it. */
+#toolDock { position: relative; }
+body:not([data-tool=type]) .context-tools > .editor-toolbar { display: flex !important; visibility: hidden; }
+#toolDock .tool-dock__ink {
+  position: absolute; top: calc(100% + 10px); left: 0; z-index: 60; display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-radius: 14px; white-space: nowrap;
+  background: color-mix(in srgb, var(--paper, #fbf9f3) 92%, white); border: 0.5px solid color-mix(in srgb, var(--shell-ink, #2b322d) 12%, transparent);
+  box-shadow: 0 12px 32px rgba(30, 28, 22, 0.16), 0 2px 6px rgba(30, 28, 22, 0.08);
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  transform-origin: 24px -10px;
+}
+body[data-tool=type] #toolDock .tool-dock__ink { display: none !important; }
+@keyframes op-tray-in { from { opacity: 0; transform: translateY(-6px) scale(0.96); } to { opacity: 1; transform: none; } }
+body:not([data-tool=type]) #toolDock .tool-dock__ink { animation: op-tray-in 0.32s cubic-bezier(0.32, 0.72, 0, 1) both; }
+#toolDock .tool-group { display: inline-flex; align-items: center; gap: 4px; }
+body.editor-shell #toolDock .tool-swatch {
+  position: relative; width: 24px !important; height: 24px !important; min-width: 0 !important; padding: 0 !important; border-radius: 50% !important;
+  border: 0 !important; background: var(--swatch) !important; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12) !important; cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease !important;
+}
+body.editor-shell #toolDock .tool-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--paper, #fff), 0 0 0 3.5px var(--swatch) !important; transform: scale(1.06); }
+body.editor-shell #toolDock .tool-swatch--custom { overflow: hidden; }
+body.editor-shell #toolDock .tool-swatch--custom[aria-pressed="false"] { background: conic-gradient(#e2685f 0 25%, #e9b84f 0 50%, #5fae84 0 75%, #5b86c9 0) !important; }
+#toolDock .tool-swatch--custom input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+body.editor-shell #toolDock .tool-kind {
+  height: 28px !important; padding: 0 10px !important; border: 0 !important; border-radius: 8px !important; background: transparent !important;
+  box-shadow: none !important; font: 500 12px/1 var(--font-ui) !important; color: var(--ink-muted, #5d645e) !important;
+}
+body.editor-shell #toolDock .tool-kind[aria-pressed="true"] { background: color-mix(in srgb, var(--shell-ink, #2b322d) 9%, transparent) !important; color: var(--shell-ink, #2b322d) !important; }
+#toolDock .tool-hint { font: 12px/1 var(--font-ui); color: var(--ink-muted, #6c736d); padding: 0 4px; }
+body.editor-shell #toolDock .tool-size, body.editor-shell #toolDock .tool-step { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+body.editor-shell #toolDock .tool-size[aria-pressed="true"] { background: color-mix(in srgb, var(--shell-ink, #2b322d) 9%, transparent) !important; }
+/* The selected tool rides on the sliding pill. */
+body.editor-shell #toolDock .tool-dock__tools > button[aria-pressed="true"] { background: transparent !important; box-shadow: none !important; }
+/* The nib under the pointer. */
+.journal-spread[data-marking=on] .paper-page > canvas.mark-layer { cursor: var(--pen-cursor, crosshair) !important; }
+@media screen and (max-width: 720px) {
+  #toolDock .tool-dock__ink { position: fixed; left: 8px; right: 8px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom)); overflow-x: auto; scrollbar-width: none; justify-content: flex-start; }
+  body:not([data-tool=type]) .context-tools > .editor-toolbar { display: none !important; }
+}
+
+/* ==== Delight ==== */
+/* The cover tilts towards the hand in a little perspective. */
+body.editor-shell[data-book=closed] .journal-spread { perspective: 1400px; }
+body.editor-shell .closed-cover { transition: rotate 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
+body.editor-shell .closed-cover.is-lit { transition: rotate 0.12s linear; }
+
+/* A ticked task's burst of ink. */
+.ink-burst { position: fixed; z-index: 400; width: 0; height: 0; pointer-events: none; }
+.ink-burst > i {
+  position: absolute; left: -2.5px; top: -2.5px; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--accent-strong, #2f5f4c); animation: op-burst 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.ink-burst > i:nth-child(3n) { background: #c9a14f; width: 4px; height: 4px; }
+.ink-burst > i:nth-child(3n + 1) { background: #b46c62; }
+@keyframes op-burst {
+  0% { transform: rotate(var(--a)) translateX(0) scale(1); opacity: 1; }
+  100% { transform: rotate(var(--a)) translateX(var(--d)) scale(0.3); opacity: 0; }
+}
+@keyframes op-check { 0% { scale: 0.7; } 55% { scale: 1.18; } 100% { scale: 1; } }
+body.editor-shell #journalSpread input[type=checkbox]:checked { animation: op-check 0.36s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+/* A bookmark drops in. */
+@keyframes op-bookmark { 0% { translate: 0 -8px; scale: 1 1.3; } 50% { translate: 0 2px; scale: 1 0.9; } 100% { translate: 0 0; scale: 1 1; } }
+.bookmark-page-button.is-dropping svg { animation: op-bookmark 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 50% 0; }
+
+/* Counts and the save mark roll to their new value. */
+@keyframes op-roll { from { translate: 0 7px; opacity: 0; } to { translate: 0 0; opacity: 1; } }
+#spreadPosition.is-rolling, #saveDetails > summary.is-rolling { animation: op-roll 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+/* A series card leans to the pointer and catches a gleam. */
+body.editor-shell .pack-card { transition: rotate 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease, translate 0.25s ease; }
+body.editor-shell .pack-card.is-leaning { transition: rotate 0.1s linear, box-shadow 0.25s ease; position: relative; }
+body.editor-shell .right-dock .pack-shelf { perspective: 900px; }
+body.editor-shell .pack-card.is-leaning::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(260px circle at var(--shine-x, 50%) var(--shine-y, 50%), rgba(255, 255, 255, 0.45), transparent 60%);
+  mix-blend-mode: soft-light;
+}
+
+/* Placed stickers lift under the pointer, a corner first. */
+@media (hover: hover) {
+  body.editor-shell .placed-sticker { transition: translate 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease; }
+  body.editor-shell .journal-spread[data-marking=off] .placed-sticker:hover:not(.is-dragging) { translate: 0 -2px; filter: drop-shadow(1px 4px 5px rgba(40, 30, 20, 0.16)); }
+  /* Month boxes and week rows answer the pointer. */
+  body.editor-shell .month-cell:not(.is-muted):hover { background: color-mix(in srgb, var(--accent-strong, #2f5f4c) 4%, transparent); }
+  body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day { transition: background-color 0.2s ease; }
+  body.editor-shell .journal-spread[data-mode=weekly] .week-grid > .week-day:hover { background: color-mix(in srgb, var(--accent-strong, #2f5f4c) 3%, transparent) !important; }
+}
+
+/* The tool pill pops as the nib changes. */
+@keyframes op-pop { 0% { scale: 0.86; } 60% { scale: 1.08; } 100% { scale: 1; } }
+body.editor-shell #toolDock .tool-dock__tools > button[aria-pressed="true"] svg { animation: op-pop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+@media (prefers-reduced-motion: reduce) {
+  body.editor-shell .closed-cover, body.editor-shell .pack-card { transition: none !important; rotate: none !important; }
+  .ink-burst, body.editor-shell #journalSpread input[type=checkbox]:checked, .bookmark-page-button.is-dropping svg,
+  #spreadPosition.is-rolling, #saveDetails > summary.is-rolling, body.editor-shell #toolDock .tool-dock__tools > button svg { animation: none !important; }
+}
+
+/* ==== A quieter bar, a calmer page ====
+   The bar holds where you are and what your hand will do: the date, the three views, the four tools,
+   素材 and 内页样式, and the three page actions. Formatting (undo, bold, list…) floats beneath it
+   only while you are typing, as Notability's text bar does, instead of standing in the bar always. */
+body.editor-shell .context-tools { position: relative; }
+body.editor-shell .context-tools > .editor-toolbar {
+  position: absolute !important; top: calc(100% + 10px); left: 0; z-index: 60;
+  display: flex !important; align-items: center; gap: 2px; padding: 5px 6px !important; white-space: nowrap;
+  border-radius: 14px !important; border: 0.5px solid color-mix(in srgb, var(--shell-ink, #2b322d) 12%, transparent) !important;
+  background: color-mix(in srgb, #ffffff 90%, transparent) !important;
+  box-shadow: 0 12px 32px rgba(30, 28, 22, 0.16), 0 2px 6px rgba(30, 28, 22, 0.08) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.3); backdrop-filter: blur(16px) saturate(1.3);
+  visibility: hidden !important; opacity: 0; transform: translateY(-6px) scale(0.97); transform-origin: 24px -10px;
+  transition: opacity 0.2s ease, transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 0.2s;
+}
+body.editor-shell.is-writing[data-tool=type] .context-tools > .editor-toolbar {
+  visibility: visible !important; opacity: 1; transform: none;
+  transition: opacity 0.2s ease, transform 0.32s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s;
+}
+/* The bar's width no longer depends on the tool: the tray floats, nothing stands in for it. */
+body.editor-shell .context-tools { min-width: 0 !important; width: auto !important; }
+
+/* The selected segment and tool sit on white, whatever the paper's colour. */
+.seg-host > .seg-pill { background: #ffffff !important; }
+
+/* Lined paper's rules are a guide, not a grille. */
+@media screen {
+  body.editor-shell[data-book=open][data-page=line] .journal-spread .paper-page {
+    background-image: linear-gradient(to bottom, transparent calc(var(--line) - 1px), color-mix(in srgb, var(--paper-rule) 20%, transparent) calc(var(--line) - 1px), color-mix(in srgb, var(--paper-rule) 20%, transparent) var(--line)) !important;
+  }
+}
+
+/* The day's stamp waits as a faint dashed ring until it is pressed; then it is a stamp in red ink. */
+body.editor-shell .journal-spread > .daily-stamp:not(.is-stamped) {
+  border: 1px dashed color-mix(in srgb, var(--ink-muted, #6c736d) 45%, transparent) !important;
+  background: transparent !important; box-shadow: none !important; color: color-mix(in srgb, var(--ink-muted, #6c736d) 70%, transparent) !important;
+  opacity: 0.7; transition: opacity 0.2s ease;
+}
+body.editor-shell .journal-spread > .daily-stamp:not(.is-stamped) :is(#dailyStampIcon, small) { color: inherit !important; }
+@media (hover: hover) { body.editor-shell .journal-spread > .daily-stamp:not(.is-stamped):hover { opacity: 1; } }
+
+
+@media screen and (max-width: 720px) {
+  /* Two rows only: the tools sit in the second, beside 左页/右页. */
+  body.editor-shell[data-book=open] .document-chrome .context-tools { display: contents !important; }
+  body.editor-shell[data-book=open] .document-tools #toolDock { margin: 0 auto; }
+  body.editor-shell[data-book=open] .document-tools #toolDock .tool-dock__tools > button { width: 32px !important; height: 30px !important; }
+  body.editor-shell[data-book=open] .document-tools .mobile-page-switcher button { padding: 0 10px !important; }
+  /* Both trays float above the page controls, within reach of the thumb. */
+  body.editor-shell .context-tools > .editor-toolbar,
+  #toolDock .tool-dock__ink {
+    position: fixed !important; left: 10px !important; right: 10px !important; top: auto !important;
+    bottom: calc(68px + env(safe-area-inset-bottom)) !important; justify-content: center; overflow-x: auto; scrollbar-width: none;
+    transform-origin: 50% 100% !important;
+  }
+}
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .document-chrome .document-tools { flex-wrap: nowrap !important; gap: 6px !important; padding: 0 8px 4px !important; }
+  body.editor-shell[data-book=open] .document-tools .mobile-page-switcher { order: 1 !important; flex: none; }
+  body.editor-shell[data-book=open] .document-tools #toolDock { order: 2 !important; flex: none; margin: 0 auto !important; }
+  body.editor-shell[data-book=open] .document-tools .insert-tools { order: 3 !important; flex: none; margin-left: 0 !important; }
+  body.editor-shell[data-book=open] .document-tools .mobile-page-switcher button { min-width: 0 !important; padding: 0 9px !important; font-size: 13px !important; }
+  body.editor-shell[data-book=open] .document-tools #toolDock .tool-dock__tools > button { width: 30px !important; }
+  body.editor-shell[data-book=open] .document-tools .insert-tools > button { width: 32px !important; min-width: 32px !important; }
+}
+@media screen and (max-width: 720px) {
+  /* The bar's frosted glass makes it the trays' frame, so they hang just under it. */
+  body.editor-shell .context-tools > .editor-toolbar,
+  #toolDock .tool-dock__ink {
+    top: calc(100% + 6px) !important; bottom: auto !important; transform-origin: 50% 0 !important;
+  }
+}
+
+/* ==== After Apple ====
+   Controls in the manner of iOS and macOS: a segmented control is a grey track with a white thumb;
+   an icon button is a 32px rounded square that greys on hover and dims a touch when pressed; the
+   pen palette is PencilKit's — little pens standing in a tray, the chosen one raised, colours as
+   true circles ringed when chosen. */
+:root { --ios-track: rgba(118, 118, 128, 0.12); --ios-label: #1d1d1f; --ios-secondary: rgba(60, 60, 67, 0.62); --ios-fill: rgba(120, 120, 128, 0.12); --ios-sep: rgba(60, 60, 67, 0.18); }
+
+/* Segmented controls. */
+body.editor-shell .seg-host {
+  background: var(--ios-track) !important; border: 0 !important; border-radius: 9px !important; padding: 2px !important; gap: 0 !important; box-shadow: none !important;
+}
+body.editor-shell .seg-host > .seg-pill { border-radius: 7px !important; background: #fff !important; box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12), 0 3px 1px rgba(0, 0, 0, 0.04) !important; }
+body.editor-shell .seg-host > button {
+  height: 28px !important; min-height: 28px !important; padding: 0 12px !important; border-radius: 7px !important; border: 0 !important;
+  font: 500 13px/28px -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif !important; letter-spacing: -0.01em !important;
+  color: var(--ios-label) !important; opacity: 0.85;
+}
+body.editor-shell .seg-host > button:is([aria-pressed="true"], .is-active) { font-weight: 600 !important; opacity: 1; }
+body.editor-shell #toolDock .tool-dock__tools.seg-host > button { width: 36px !important; padding: 0 !important; display: grid !important; place-items: center; }
+
+/* Icon buttons in the bar (a wide screen's bar; the phone keeps its own compact one). */
+@media screen and (min-width: 721px) {
+body.editor-shell .document-chrome :where(.date-nav > button, .insert-tools > button, .topbar-actions > button, .topbar-actions > .action-button, [id="sidebarToggle"]) {
+  min-width: 32px !important; height: 32px !important; padding: 0 8px !important; border: 0 !important; border-radius: 8px !important;
+  background: transparent !important; box-shadow: none !important; color: var(--ios-label) !important;
+  font: 500 13px/32px -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", sans-serif !important;
+  transition: background-color 0.15s ease, scale 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease !important;
+}
+body.editor-shell .document-chrome :where(.date-nav > button, .insert-tools > button, .topbar-actions > button, [id="sidebarToggle"]) svg { opacity: 0.82; }
+@media (hover: hover) {
+  body.editor-shell .document-chrome :where(.date-nav > button, .insert-tools > button, .topbar-actions > button, [id="sidebarToggle"]):hover:not(:disabled) { background: var(--ios-fill) !important; }
+}
+body.editor-shell .document-chrome :where(.date-nav > button, .insert-tools > button, .topbar-actions > button, [id="sidebarToggle"]):active:not(:disabled) {
+  background: rgba(120, 120, 128, 0.2) !important; scale: 0.95; opacity: 0.8;
+}
+
+}
+
+/* The pen palette. */
+#toolDock .tool-dock__ink {
+  height: 56px; padding: 0 12px !important; gap: 10px !important; border-radius: 16px !important;
+  background: rgba(255, 255, 255, 0.86) !important; border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8);
+}
+#toolDock .tool-pens { display: inline-flex; align-items: flex-end; gap: 6px; height: 56px; overflow: hidden; padding: 0 2px; }
+body.editor-shell #toolDock .tool-pen {
+  width: 26px !important; height: 52px !important; min-width: 0 !important; padding: 0 !important; border: 0 !important;
+  background: none !important; box-shadow: none !important; translate: 0 14px;
+  transition: translate 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
+}
+body.editor-shell #toolDock .tool-pen svg { width: 26px; height: 52px; display: block; }
+body.editor-shell #toolDock .tool-pen[aria-pressed="true"] { translate: 0 2px; }
+@media (hover: hover) { body.editor-shell #toolDock .tool-pen:not([aria-pressed="true"]):hover { translate: 0 9px; } }
+body.editor-shell #toolDock .tool-swatch, body.editor-shell #toolDock .tool-swatch--custom {
+  flex: none !important; width: 26px !important; height: 26px !important; min-height: 0 !important; max-height: 26px !important;
+  aspect-ratio: 1 !important; border-radius: 50% !important; padding: 0 !important; margin: 0 !important;
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.15) !important; transform: none !important;
+}
+body.editor-shell #toolDock .tool-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2.5px #fff, 0 0 0 4.5px var(--swatch) !important; }
+body.editor-shell #toolDock .tool-swatch--custom[aria-pressed="true"] { box-shadow: 0 0 0 2.5px #fff, 0 0 0 4.5px rgba(0, 0, 0, 0.35) !important; }
+body.editor-shell #toolDock .tool-size {
+  flex: none !important; width: 30px !important; height: 30px !important; min-height: 0 !important; border-radius: 50% !important;
+}
+body.editor-shell #toolDock .tool-size > i { background: var(--ios-label); opacity: 0.75; }
+body.editor-shell #toolDock .tool-size[aria-pressed="true"] { background: var(--ios-fill) !important; }
+body.editor-shell #toolDock .tool-step { flex: none !important; width: 32px !important; height: 32px !important; min-height: 0 !important; border-radius: 8px !important; color: var(--ios-label) !important; }
+body.editor-shell #toolDock .tool-step svg { width: 19px; height: 19px; }
+body.editor-shell #toolDock .tool-step:disabled { opacity: 0.28; }
+#toolDock .tool-dock__sep { width: 0.5px; height: 28px; background: var(--ios-sep); margin: 0; }
+body.editor-shell #toolDock .tool-kind { height: 30px !important; padding: 0 12px !important; border-radius: 8px !important; background: var(--ios-fill) !important; color: #c23b30 !important; font: 500 13px/30px -apple-system, "PingFang SC", sans-serif !important; }
+#toolDock .tool-hint { font: 13px/1 -apple-system, "PingFang SC", sans-serif; color: var(--ios-secondary); }
+@media (hover: hover) {
+  body.editor-shell #toolDock :is(.tool-size, .tool-step):hover:not(:disabled) { background: var(--ios-fill) !important; }
+}
+body.editor-shell #toolDock :is(.tool-swatch, .tool-size, .tool-step, .tool-kind):active:not(:disabled) { scale: 0.92; }
+
+/* The formatting bar beneath, in the same glass. */
+body.editor-shell .context-tools > .editor-toolbar {
+  height: 44px; border-radius: 12px !important; background: rgba(255, 255, 255, 0.86) !important; border: 0.5px solid rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8);
+}
+body.editor-shell .context-tools > .editor-toolbar > :is(button, details > summary) {
+  width: 34px !important; height: 34px !important; min-height: 0 !important; padding: 0 !important; border-radius: 8px !important; border: 0 !important;
+  background: transparent !important; color: var(--ios-label) !important; box-shadow: none !important;
+}
+@media (hover: hover) { body.editor-shell .context-tools > .editor-toolbar > :is(button, details > summary):hover { background: var(--ios-fill) !important; } }
+
+/* Prompts give way to the hand: a page with ink, or under a pen, shows no grey hints. */
+body.editor-shell .journal-spread .paper-page.has-marks :is(.journal-editor.is-blank)::before,
+body.editor-shell:not([data-tool=type]) .journal-spread .journal-editor.is-blank::before { content: none !important; }
+body.editor-shell .journal-spread .paper-page.has-marks .canvas-card::before,
+body.editor-shell .journal-spread .paper-page.has-marks .canvas-card::after,
+body.editor-shell:not([data-tool=type]) .journal-spread .canvas-card::before,
+body.editor-shell:not([data-tool=type]) .journal-spread .canvas-card::after { opacity: 0 !important; content: none !important; }
+body.editor-shell .journal-spread .paper-page.has-marks :is(textarea, input)::placeholder,
+body.editor-shell:not([data-tool=type]) .journal-spread .paper-page :is(textarea, input)::placeholder { color: transparent !important; }
+
+@media screen and (max-width: 720px) {
+  /* The phone keeps its compact bar: icon-only panel buttons, tight segments. */
+  body.editor-shell[data-book=open] .document-tools .insert-tools > button { font-size: 0 !important; padding: 0 !important; }
+  body.editor-shell[data-book=open] .document-chrome .seg-host > button { padding: 0 9px !important; }
+  /* The pen palette wraps to two centred rows on a phone's width. */
+  #toolDock .tool-dock__ink {
+    height: auto !important; flex-wrap: wrap !important; justify-content: center !important; row-gap: 6px !important;
+    padding: 6px 10px 8px !important; overflow: visible !important;
+  }
+  #toolDock .tool-pens { height: 46px; }
+  body.editor-shell #toolDock .tool-pen { height: 46px !important; translate: 0 12px; }
+  body.editor-shell #toolDock .tool-pen svg { height: 46px; width: 23px; }
+  body.editor-shell #toolDock .tool-pen[aria-pressed="true"] { translate: 0 2px; }
+  #toolDock .tool-dock__ink > .tool-dock__sep { display: none; }
+}
+@media screen and (max-width: 720px) {
+  body.editor-shell[data-book=open] .document-chrome .topbar { flex-wrap: nowrap !important; gap: 2px !important; }
+  body.editor-shell[data-book=open] .document-chrome .topbar > .date-nav { flex: 1 1 auto !important; min-width: 0 !important; gap: 0 !important; }
 }

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>开页 · 精选系列预览</title>
+<style>
+  :root { --ink: #2b322d; --muted: #6c736d; --paper: #fbf9f3; --rule: #d6d2c6; }
+  body { margin: 0; padding: 32px 24px 80px; background: #e9e6dc; color: var(--ink); font: 13px/1.6 -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif; }
+  header { max-width: 1040px; margin: 0 auto 8px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  h1 { margin: 0; font: 400 22px/1.4 "Songti SC", serif; }
+  header p { margin: 0; color: var(--muted); }
+  .zoom { display: inline-flex; gap: 4px; }
+  .zoom button { border: 1px solid #c9c5b8; background: #f6f3ea; border-radius: 999px; padding: 2px 12px; font: inherit; color: var(--ink); }
+  .zoom button[aria-pressed="true"] { background: #2f4a40; color: #f6f3ea; border-color: #2f4a40; }
+  section { max-width: 1040px; margin: 22px auto 0; padding: 26px 30px 30px; background: var(--paper) radial-gradient(circle, var(--rule) 0.8px, transparent 1.2px) 0 0 / 14px 14px; border-radius: 4px; box-shadow: 0 1px 2px rgba(40, 36, 28, 0.08), 0 12px 32px rgba(40, 36, 28, 0.08); }
+  h2 { margin: 0 0 4px; font: 400 17px/1.4 "Songti SC", serif; }
+  section > p { margin: 0 0 18px; color: var(--muted); font-size: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 26px 30px; align-items: flex-end; }
+  figure { margin: 0; display: grid; gap: 6px; justify-items: center; }
+  figcaption { font-size: 11px; color: var(--muted); }
+  .washi img { mix-blend-mode: multiply; }
+  .ticket img { filter: drop-shadow(0 1px 1.2px rgba(50, 40, 30, 0.2)) drop-shadow(0 4px 8px rgba(50, 40, 30, 0.08)); }
+  .page { position: relative; width: 120px; height: 300px; background: var(--paper) radial-gradient(circle, var(--rule) 0.8px, transparent 1.2px) 0 0 / 14px 14px; border-left: 1px solid #ddd8ca; }
+  .page img { position: absolute; left: -5px; top: 0; }
+  .editor { display: grid; grid-template-columns: auto 1fr; gap: 24px; align-items: center; margin-top: 8px; }
+  .editor form { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 14px; }
+  .editor label { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
+  .editor input { border: 1px solid #d3cfc2; border-radius: 6px; padding: 6px 8px; font: 13px/1.4 -apple-system, "PingFang SC", sans-serif; background: #fffdf8; color: var(--ink); }
+</style>
+</head>
+<body>
+<header>
+  <div><h1>精选系列预览</h1><p>开发用：全部付费素材，按在本子里的样子显示，不需要解锁。</p></div>
+  <div class="zoom" role="group" aria-label="放大"><button type="button" data-zoom="1" aria-pressed="true">原大</button><button type="button" data-zoom="2" aria-pressed="false">2×</button><button type="button" data-zoom="3" aria-pressed="false">3×</button></div>
+</header>
+<div id="out"></div>
+<script src="../packs.js"></script>
+<script>
+  const api = window.OpenPagesPacks;
+  const out = document.getElementById("out");
+  const DATE = "2026.10.22";
+  let zoom = 1;
+  const image = (markup, w, h) => {
+    const img = new Image(w * zoom, h * zoom);
+    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(markup)}`;
+    img.alt = "";
+    return img;
+  };
+  function render() {
+    out.innerHTML = "";
+    api.list.forEach((pack) => {
+      const section = document.createElement("section");
+      section.className = pack.id;
+      section.innerHTML = `<h2>${pack.name} · ${pack.price}</h2><p>${pack.blurb}</p>`;
+      const row = document.createElement("div");
+      row.className = "row";
+      if (pack.id === "ribbon") {
+        const charms = Object.keys(api.ribbonCharms);
+        Object.keys(api.ribbonStyles).concat("noir").forEach((style, i) => {
+          const charm = i === 6 ? "tassel" : charms[i % charms.length];
+          const f = document.createElement("figure");
+          const page = document.createElement("div");
+          page.className = "page";
+          page.style.width = `${120 * zoom}px`;
+          page.style.height = `${300 * zoom}px`;
+          const length = 236;
+          page.append(image(api.ribbon(style, charm, length), 34, length + (charm === "cut" ? 2 : 34)));
+          f.append(page);
+          f.insertAdjacentHTML("beforeend", `<figcaption>${api.ribbonStyles[style].name} · ${api.ribbonCharms[charm].name}</figcaption>`);
+          row.append(f);
+        });
+      } else {
+        Object.entries(api.items).filter(([, item]) => item.pack === pack.id).forEach(([type, item]) => {
+          const f = document.createElement("figure");
+          f.append(image(api.art(type, { date: DATE }), item.w, item.h));
+          f.insertAdjacentHTML("beforeend", `<figcaption>${item.label}${item.fields.length ? " · 可改字" : ""}</figcaption>`);
+          row.append(f);
+        });
+      }
+      section.append(row);
+      if (pack.id === "ticket") section.append(editorFor("ticket-postmark"), editorFor("ticket-train"));
+      if (pack.id === "flora") section.append(editorFor("flora-label"));
+      out.append(section);
+    });
+  }
+  function editorFor(type) {
+    const item = api.items[type];
+    const values = { date: DATE };
+    const wrap = document.createElement("div");
+    wrap.className = "editor";
+    const holder = document.createElement("div");
+    const form = document.createElement("form");
+    const draw = () => { holder.replaceChildren(image(api.art(type, values), item.w, item.h)); };
+    item.fields.forEach((f) => {
+      const label = document.createElement("label");
+      label.textContent = `${item.label} · ${f.label}`;
+      const input = document.createElement("input");
+      input.value = f.key === "date" ? DATE : f.value;
+      input.maxLength = f.max * 2;
+      input.addEventListener("input", () => { values[f.key] = input.value; draw(); });
+      label.append(input);
+      form.append(label);
+    });
+    draw();
+    wrap.append(holder, form);
+    return wrap;
+  }
+  document.querySelector(".zoom").addEventListener("click", (event) => {
+    const button = event.target.closest("[data-zoom]");
+    if (!button) return;
+    zoom = Number(button.dataset.zoom);
+    document.querySelectorAll("[data-zoom]").forEach((b) => b.setAttribute("aria-pressed", String(b === button)));
+    render();
+  });
+  if (location.search.includes("bench")) {
+    const times = {};
+    Object.keys(api.items).forEach((type) => {
+      const start = performance.now();
+      api.art(type, { date: DATE });
+      times[type] = Math.round(performance.now() - start);
+    });
+    window.benchTimes = times;
+  }
+  render();
+</script>
+</body>
+</html>

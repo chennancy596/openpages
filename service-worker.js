@@ -1,11 +1,13 @@
-const CACHE_NAME = "openpages-v137-fill";
+const CACHE_NAME = "openpages-v164-apple";
 const ASSETS = [
   "./",
   "./index.html",
   "./privacypolicy.html",
   "./app.css",
   "./generated/runtime-bridge-v2.js",
+  "./packs.js",
   "./app.js",
+  "./assets/pack-codes.json",
   "./manifest.webmanifest",
   "./service-worker.js",
   "./assets/icon.png",
@@ -18,7 +20,8 @@ const ASSETS = [
   "./assets/cover-grain.png",
   "./assets/washi-paper-fine.png",
   "./assets/desk-cloth-fine.png",
-  "./assets/cover-grain-fine.png",
+  "./assets/cover-grain-cloth.png",
+  "./assets/leather-pebble.png",
 ];
 
 const CORE_DESTINATIONS = new Set(["document", "script", "style"]);

@@ -38,7 +38,7 @@ jobs:
       - name: Collect the web app
         run: |
           mkdir _site
-          cp index.html privacypolicy.html app.css app.js manifest.webmanifest service-worker.js _site/
+          cp index.html privacypolicy.html app.css app.js packs.js manifest.webmanifest service-worker.js _site/
           cp -R assets generated _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
